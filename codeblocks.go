@@ -12,10 +12,12 @@ import "bytes"
 // `<td {% if x %}class="a"{% endif %}>` into `<td {% if x %}class="a" endif %}>`.
 // We add it, which is a deliberate divergence from the reference.
 
-type codeBlock struct{ start, end string }
+// CodeBlock is a pair of template delimiters whose contents are left untouched.
+type CodeBlock struct{ Start, End string }
 
-func defaultCodeBlocks() []codeBlock {
-	return []codeBlock{
+// DefaultCodeBlocks returns a fresh copy of the delimiters protected by default.
+func DefaultCodeBlocks() []CodeBlock {
+	return []CodeBlock{
 		{"{{", "}}"}, // Handlebars, Liquid output, Go templates
 		{"{%", "%}"}, // Liquid statements, Jinja, Nunjucks
 		{"<%", "%>"}, // EJS, ERB
@@ -28,7 +30,7 @@ const placeholderPrefix = "juice_code_block_"
 // only of identifier characters, so it survives tokenizing in text, attribute
 // value and tag position alike. The placeholder is lowercase because attribute
 // names are lowercased during parsing.
-func encodeCodeBlocks(src []byte, blocks []codeBlock) ([]byte, [][]byte) {
+func encodeCodeBlocks(src []byte, blocks []CodeBlock) ([]byte, [][]byte) {
 	if len(blocks) == 0 {
 		return src, nil
 	}
@@ -40,8 +42,8 @@ func encodeCodeBlocks(src []byte, blocks []codeBlock) ([]byte, [][]byte) {
 		// in source order rather than delimiter order.
 		best, bestEnd := -1, ""
 		for _, b := range blocks {
-			if j := bytes.Index(src[i:], []byte(b.start)); j >= 0 && (best < 0 || j < best) {
-				best, bestEnd = j, b.end
+			if j := bytes.Index(src[i:], []byte(b.Start)); j >= 0 && (best < 0 || j < best) {
+				best, bestEnd = j, b.End
 			}
 		}
 		if best < 0 {
