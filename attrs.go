@@ -93,11 +93,11 @@ var tableElements = map[string]bool{
 	"colgroup": true, "col": true, "thead": true, "tbody": true, "tfoot": true,
 }
 
-var styleToAttribute = []struct{ prop, attr string }{
-	{"background-color", "bgcolor"},
-	{"background-image", "background"},
-	{"text-align", "align"},
-	{"vertical-align", "valign"},
+var styleToAttribute = map[string]string{
+	"background-color": "bgcolor",
+	"background-image": "background",
+	"text-align":       "align",
+	"vertical-align":   "valign",
 }
 
 func (in *pass) promoteAttributes(root *html.Node) {
@@ -105,36 +105,43 @@ func (in *pass) promoteAttributes(root *html.Node) {
 	for _, el := range in.resolved {
 		n, m := el.node, el.props
 		if o.applyWidthAttributes {
-			setDimension(n, m, "width")
+			in.setDimension(n, m, "width")
 		}
 		if o.applyHeightAttributes {
-			setDimension(n, m, "height")
+			in.setDimension(n, m, "height")
 		}
 		if o.applyAttributesTableElement && tableElements[n.Data] {
-			for _, sa := range styleToAttribute {
-				i := m.find(sa.prop)
-				if i < 0 {
+			// juice walks the element's properties, so attributes land in
+			// property order rather than table order.
+			for _, i := range m.order() {
+				attr, ok := styleToAttribute[m.slots[i].prop]
+				if !ok {
 					continue
 				}
-				v := string(m.slots[i].value)
+				v := in.attrValue(m.slots[i].value)
+				if attr == "background" {
+					v = extractURL(v)
+				}
 				// A gradient cannot go in a presentational attribute.
-				if strings.Contains(v, "linear-gradient(") || strings.Contains(v, "radial-gradient(") {
+				if l := strings.ToLower(v); strings.Contains(l, "linear-gradient(") || strings.Contains(l, "radial-gradient(") {
 					continue
 				}
-				if sa.prop == "background-image" {
-					u, ok := extractURL(v)
-					if !ok {
-						continue
-					}
-					v = u
-				}
-				setAttr(n, sa.attr, v)
+				setAttr(n, attr, v)
 			}
 		}
 	}
 }
 
-func setDimension(n *html.Node, m *propMap, dim string) {
+// attrValue drops a preserved !important, which has no place in an attribute.
+func (in *pass) attrValue(v []byte) string {
+	s := string(v)
+	if in.o.preserveImportant && strings.HasSuffix(s, "!important") {
+		s = strings.TrimRight(strings.TrimSuffix(s, "!important"), " \t\n\r\f")
+	}
+	return s
+}
+
+func (in *pass) setDimension(n *html.Node, m *propMap, dim string) {
 	if !widthHeightElements[n.Data] {
 		return
 	}
@@ -142,7 +149,7 @@ func setDimension(n *html.Node, m *propMap, dim string) {
 	if i < 0 {
 		return
 	}
-	v := string(m.slots[i].value)
+	v := in.attrValue(m.slots[i].value)
 	// juice tests for px or auto anywhere in the value, then strips the first
 	// "px". That really does turn `height: auto` into height="auto".
 	if strings.Contains(v, "px") || strings.Contains(v, "auto") {
@@ -154,17 +161,22 @@ func setDimension(n *html.Node, m *propMap, dim string) {
 	}
 }
 
-// extractURL unwraps url("x") to x.
-func extractURL(v string) (string, bool) {
-	if !strings.HasPrefix(v, "url(") || !strings.HasSuffix(v, ")") {
-		return "", false
+// extractURL unwraps url(x), url('x') or url("x") to x, exactly as juice's
+// /^url\((["'])?([^"']+)\1\)$/ does: whitespace is kept, and anything else,
+// including `none` or an empty url(""), passes through unchanged.
+func extractURL(v string) string {
+	inner, ok := strings.CutPrefix(v, "url(")
+	if !ok {
+		return v
 	}
-	inner := strings.TrimSpace(v[4 : len(v)-1])
+	if inner, ok = strings.CutSuffix(inner, ")"); !ok {
+		return v
+	}
 	if len(inner) >= 2 && (inner[0] == '"' || inner[0] == '\'') && inner[len(inner)-1] == inner[0] {
 		inner = inner[1 : len(inner)-1]
 	}
-	if inner == "" {
-		return "", false
+	if inner == "" || strings.ContainsAny(inner, `"'`) {
+		return v
 	}
-	return inner, true
+	return inner
 }

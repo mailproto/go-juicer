@@ -25,7 +25,7 @@ func (in *pass) resolveVariables() {
 			if bytes.HasPrefix([]byte(p.prop), []byte("--")) {
 				continue
 			}
-			if !bytes.Contains(p.value, []byte("var(")) {
+			if at, _ := findVar(p.value, 0); at < 0 {
 				continue
 			}
 			p.value = in.substitute(el.node, p.value, 0)
@@ -46,18 +46,17 @@ func (in *pass) substitute(n *html.Node, v []byte, depth int) []byte {
 	// cannot be found again on the following pass.
 	from := 0
 	for from < len(out) {
-		rel := bytes.Index(out[from:], []byte("var("))
-		if rel < 0 {
+		at, open := findVar(out, from)
+		if at < 0 {
 			return out
 		}
-		at := from + rel
-		end := parenEnd(out, at+3)
+		end := parenEnd(out, open)
 		// parenEnd falls back to the end of input when the parenthesis is
 		// never closed, which is not a usable span.
-		if end < at+5 || out[end-1] != ')' {
+		if end < open+2 || out[end-1] != ')' {
 			return out
 		}
-		name, fallback := splitVarArgs(out[at+4 : end-1])
+		name, fallback := splitVarArgs(out[open+1 : end-1])
 
 		var repl []byte
 		switch val, ok := in.lookupVar(n, string(bytes.TrimSpace(name))); {
@@ -93,6 +92,31 @@ func (in *pass) lookupVar(n *html.Node, name string) ([]byte, bool) {
 		}
 	}
 	return nil, false
+}
+
+// findVar locates the next var() call at or after from, returning where its
+// name starts and the index of its "(", or -1. Like juice, the name is the
+// run of letters and hyphens before the parenthesis, matched case-insensitively
+// and allowed to be separated from it by whitespace, so `somevar(` is not a
+// var() call but `VAR (` is.
+func findVar(v []byte, from int) (at, open int) {
+	for i := from; i < len(v); i++ {
+		if v[i] != '(' {
+			continue
+		}
+		e := i
+		for e > from && isCSSSpace(v[e-1]) {
+			e--
+		}
+		s := e
+		for s > from && (v[s-1] == '-' || v[s-1]|0x20 >= 'a' && v[s-1]|0x20 <= 'z') {
+			s--
+		}
+		if bytes.EqualFold(v[s:e], []byte("var")) {
+			return s, i
+		}
+	}
+	return -1, -1
 }
 
 // splitVarArgs divides a var() argument list into the name and its optional
