@@ -132,3 +132,20 @@ preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comme
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: same divergence as juice 12 (HTML comment markers around a stylesheet)
 
+
+# Found by the generated differential against juice
+default/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
+default/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
+default/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
+inline-pseudo-elements/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
+inline-pseudo-elements/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
+inline-pseudo-elements/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
+no-attributes/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
+no-attributes/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
+no-attributes/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
+no-css-variables/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
+no-css-variables/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
+no-css-variables/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
+preserve-important/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
+preserve-important/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
+preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line

@@ -45,6 +45,25 @@ var ignoredPseudos = map[string]bool{
 	"hover": true, "active": true, "focus": true, "visited": true, "link": true,
 }
 
+// hasIgnoredPseudo is juice's matchesPseudo: a plain substring test for
+// ":hover" and friends, so ":hovered" and "::link" count too.
+func hasIgnoredPseudo(sel []byte) bool {
+	for i := bytes.IndexByte(sel, ':'); i >= 0; {
+		rest := sel[i+1:]
+		for p := range ignoredPseudos {
+			if len(rest) >= len(p) && string(rest[:len(p)]) == p {
+				return true
+			}
+		}
+		j := bytes.IndexByte(rest, ':')
+		if j < 0 {
+			break
+		}
+		i += 1 + j
+	}
+	return false
+}
+
 // nonVisualElements never receive a style attribute. This is an element-level
 // test, not subtree pruning: juice styles a <b> inside <noscript>.
 var nonVisualElements = map[string]bool{

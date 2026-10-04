@@ -12,6 +12,7 @@ import (
 type decl struct {
 	prop      string
 	value     []byte // sliced from the source, so original spacing survives
+	text      []byte // value and !important as written, for a preserved block
 	important bool
 	ord       uint32 // position in the stylesheet; breaks specificity ties
 }
@@ -31,7 +32,7 @@ func (d decl) writeTo(b *bytes.Buffer) {
 	}
 	b.WriteString(d.prop)
 	b.WriteString(": ")
-	b.Write(d.value)
+	b.Write(d.text)
 	b.WriteByte(';')
 }
 
@@ -145,10 +146,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				b := stack[len(stack)-1]
 				b.decls = appendComments(b.decls, d.before)
 				if len(v) > 0 {
-					if d.important {
-						v = append(append([]byte{}, v...), importantText(src[start:end])...)
-					}
-					b.decls = append(b.decls, decl{prop: d.name, value: v})
+					b.decls = append(b.decls, decl{prop: d.name, value: v, text: d.text})
 				}
 				b.decls = appendComments(b.decls, d.after)
 				continue
@@ -160,18 +158,21 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				if d.important && opts.preserveImportant {
 					v = append(append([]byte{}, v...), " !important"...)
 				}
-				decls = append(decls, decl{prop: d.name, value: v, important: d.important, ord: ord})
+				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, ord: ord})
 				ord++
 			}
 			decls = appendComments(decls, d.after)
 
 		case css.CustomPropertyGrammar:
+			d := declParts(src[start:end], true)
 			if len(stack) > 0 {
+				b := stack[len(stack)-1]
+				b.decls = appendComments(b.decls, d.before)
+				b.decls = append(b.decls, decl{prop: d.name, value: d.value, text: d.text})
 				continue
 			}
-			d := declParts(src[start:end], true)
 			decls = appendComments(decls, d.before)
-			decls = append(decls, decl{prop: d.name, value: d.value, important: d.important, ord: ord})
+			decls = append(decls, decl{prop: d.name, value: d.value, text: d.text, important: d.important, ord: ord})
 			ord++
 
 		case css.EndRulesetGrammar:
@@ -193,21 +194,18 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			// it has a pseudo-class arm.
 			empty := !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" })
 			shared := append([]decl(nil), decls...)
-			anyIgnored := false
-			for _, arm := range splitSelector(sel) {
+			arms := splitSelector(sel)
+			for _, arm := range arms {
 				armRules, ignored := compileRule(arm, shared)
-				if ignored {
-					anyIgnored = true
-					continue
-				}
-				if !empty {
+				if !ignored && !empty {
 					rules = append(rules, armRules...)
 				}
 			}
 			// juice preserves the rule as written, selector list and all, so
 			// a:hover keeps its :hover arm in <style> while the plain arm is
-			// still inlined.
-			if anyIgnored && opts.preservePseudos {
+			// still inlined. It only looks at the first arm, though, so
+			// "td, a:hover" is not preserved at all.
+			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) {
 				keep = append(keep, preserved{"pseudo", ruleText(sel, shared)})
 			}
 		}
@@ -236,32 +234,6 @@ func preludeText(src []byte, start, end int) []byte {
 		s = s[:i]
 	}
 	return trimCSS(s)
-}
-
-// importantText recovers the !important suffix as written, since juice keeps
-// the author's spacing ("blue!important" stays tight).
-func importantText(span []byte) []byte {
-	i := bytes.IndexByte(span, ':')
-	if i < 0 {
-		return nil
-	}
-	v := span[i+1:]
-	if j := bytes.LastIndexByte(v, '}'); j >= 0 {
-		v = v[:j]
-	}
-	v = trimCSS(v)
-	if j := importantSuffix(v); j >= 0 {
-		return v[j-countTrailingSpace(v[:j]):]
-	}
-	return nil
-}
-
-func countTrailingSpace(b []byte) int {
-	n := 0
-	for n < len(b) && isCSSSpace(b[len(b)-1-n]) {
-		n++
-	}
-	return n
 }
 
 func atRuleKind(data []byte) string {
@@ -330,10 +302,12 @@ func declParts(span []byte, custom bool) (d parsedDecl) {
 	}
 	d.name = string(span[:n])
 	if custom {
-		d.value = trimCSS(v)
+		// postcss keeps a custom property's trailing whitespace however it ends.
+		d.value, d.text = trimCSS(v), bytes.TrimLeft(v, cssSpaces)
 		return d
 	}
 	d.value, d.important, d.after = postcssValue(v, closed)
+	d.text = declText(v, closed)
 	return d
 }
 
@@ -341,7 +315,36 @@ type parsedDecl struct {
 	before, after [][]byte
 	name          string
 	value         []byte
+	text          []byte
 	important     bool
+}
+
+const cssSpaces = " \t\n\r\f"
+
+// declText is a value as postcss re-emits it in a preserved block: its raw
+// value and raw !important rejoined, which is the source text less leading
+// whitespace and comments, and less trailing ones when "}" closed it.
+func declText(v []byte, closed bool) []byte {
+	for {
+		v = bytes.TrimLeft(v, cssSpaces)
+		if !bytes.HasPrefix(v, []byte("/*")) {
+			break
+		}
+		k := bytes.Index(v[2:], []byte("*/"))
+		if k < 0 {
+			return nil
+		}
+		v = v[k+4:]
+	}
+	for closed {
+		v = bytes.TrimRight(v, cssSpaces)
+		k := bytes.LastIndex(v, []byte("/*"))
+		if k < 0 || !bytes.HasSuffix(v, []byte("*/")) {
+			break
+		}
+		v = v[:k]
+	}
+	return v
 }
 
 func leadingComments(span []byte) ([][]byte, []byte) {
