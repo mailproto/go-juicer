@@ -128,3 +128,6 @@ no-attributes/comments/preserved  juice 9's CSS parser (mensch) drops comments f
 no-css-variables/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 */malformed/unclosed-pseudo-arg  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+
+# premailer's test suite (testdata/in/premailer-suite)
+*/premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: same divergence as juice 12 (HTML comment markers around a stylesheet)

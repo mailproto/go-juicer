@@ -42,3 +42,6 @@ keep-style-tags/juice-suite/inline-content/normalize  pseudo-class rules from ex
 no-attributes/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 no-css-variables/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+
+# premailer's test suite (testdata/in/premailer-suite)
+*/premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.
