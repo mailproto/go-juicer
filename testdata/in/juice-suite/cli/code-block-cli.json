@@ -1,0 +1,22 @@
+{
+  "client": {
+    "codeBlocks": {
+      "EJS": {
+        "start": "<%",
+        "end": "%>"
+      },
+      "HBS": {
+        "start": "{{",
+        "end": "}}"
+      },
+      "freeMarkerStart": {
+        "start": "<#",
+        "end": ">"
+      },
+      "freeMarkerEnd": {
+        "start": "</#",
+        "end": ">"
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "p {\n  border: 1px solid #f00;\n  margin: 1px;\n}\n"
+  }
+}

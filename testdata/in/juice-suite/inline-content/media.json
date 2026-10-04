@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "@media only screen and (-webkit-min-device-pixel-ratio: 2) {\n  color: blue;\n}\n"
+  }
+}

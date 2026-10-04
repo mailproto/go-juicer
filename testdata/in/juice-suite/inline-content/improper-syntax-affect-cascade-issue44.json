@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "body {\n  padding: 5px;\n}\na {\n  color: ;\n}\ntable {\n  padding: 5px;\n  color: #333;\n}"
+  }
+}

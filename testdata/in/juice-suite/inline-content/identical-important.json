@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "div {\n    color: black !important;\n}\n\ndiv {\n    color: blue !important;\n}"
+  }
+}

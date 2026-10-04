@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "p em {\n  background: blue;\n}\np > em {\n  color: red;\n}\n"
+  }
+}

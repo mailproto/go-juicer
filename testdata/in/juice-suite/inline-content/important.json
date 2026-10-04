@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "a {\n  color: red !important;\n  background: blue !important;\n  border-style: dashed !important;\n}\n\n#a {\n  color: purple;\n  background: purple;\n  border-style: solid;\n}\n"
+  }
+}

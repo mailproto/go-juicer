@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "#test {\n  border: 1px solid #f00;\n}\n.woot {\n  display: inline-block;\n}\n"
+  }
+}

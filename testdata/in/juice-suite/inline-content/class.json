@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": ".woot {\n  overflow: hidden;\n}\n"
+  }
+}

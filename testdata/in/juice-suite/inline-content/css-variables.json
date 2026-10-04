@@ -1,0 +1,7 @@
+{
+  "options": {
+    "resolveCSSVariables": true,
+    "applyAttributesTableElements": true,
+    "extraCss": ":root{\n\t--border-width:1px;\n\t--border-color:red;\n\t--border-style-default:solid;\n}\np {\n  --border-width:2px;\n  --border-style:var(--border-style-default);\n  border: VAR(--border-width) var(--border-style) var(--border-color);\n  background: var(--bg);\n}\n\ntd{\n  background-color: var(--bg,var(--border-color,rgb(255,0,0)));\n}\n"
+  }
+}
