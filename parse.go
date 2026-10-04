@@ -50,6 +50,10 @@ var openImpliesClose = map[string]map[string]bool{
 	"optgroup": {"optgroup": true, "option": true},
 	"dd":       {"dt": true, "dd": true},
 	"dt":       {"dt": true, "dd": true},
+	"rt":       {"rt": true, "rp": true},
+	"rp":       {"rt": true, "rp": true},
+	"tbody":    {"thead": true, "tbody": true},
+	"tfoot":    {"thead": true, "tbody": true},
 }
 
 var formTags = map[string]bool{
@@ -66,8 +70,7 @@ func init() {
 		"p", "h1", "h2", "h3", "h4", "h5", "h6",
 		"address", "article", "aside", "blockquote", "details", "div", "dl",
 		"fieldset", "figcaption", "figure", "footer", "form", "header",
-		"hgroup", "hr", "main", "menu", "nav", "ol", "pre", "section",
-		"table", "ul",
+		"hr", "main", "nav", "ol", "pre", "section", "table", "ul",
 	} {
 		openImpliesClose[t] = pTag
 	}

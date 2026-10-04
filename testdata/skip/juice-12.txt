@@ -46,26 +46,3 @@ preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.
 
-# Found by the generated differential against juice
-*/roundtrip/table-sections  <tbody>/<tfoot> do not close an open <thead>/<tbody> as htmlparser2 does
-*/roundtrip/ruby  <rt>/<rp> do not close an open <rt>/<rp> as htmlparser2 does
-*/roundtrip/p-not-closed  <menu> and <hgroup> close an open <p>; htmlparser2 does not
-default/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
-inline-pseudo-elements/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
-no-attributes/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
-no-css-variables/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
-preserve-important/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
-*/cascade/pseudo-element-untouched  a ::before/::after rule rewrites the element's style attribute; juice leaves the element untouched
-*/serialization/attr-odd-names  attributes named like array indices are not ordered first (juice keeps them in a JS object), and "=" is dropped as an attribute name
-default/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
-default/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
-inline-pseudo-elements/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
-inline-pseudo-elements/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
-no-attributes/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
-no-attributes/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
-no-css-variables/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
-no-css-variables/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
-preserve-important/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
-preserve-important/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
-*/cascade/selector-list-ties  two arms of one selector list tie exactly; juice lets the later arm win, we keep the earlier
-*/l4-spec/is-type-argument  a type selector inside :is()/:where() is spliced mid-compound ("p.c:where(p)" becomes "p.cp")

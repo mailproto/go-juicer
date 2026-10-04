@@ -189,9 +189,9 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				continue
 			}
 			decls = appendComments(decls, comments)
-			if !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" }) {
-				continue
-			}
+			// An empty rule inlines nothing, but juice still preserves it when
+			// it has a pseudo-class arm.
+			empty := !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" })
 			shared := append([]decl(nil), decls...)
 			anyIgnored := false
 			for _, arm := range splitSelector(sel) {
@@ -200,7 +200,9 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 					anyIgnored = true
 					continue
 				}
-				rules = append(rules, armRules...)
+				if !empty {
+					rules = append(rules, armRules...)
+				}
 			}
 			// juice preserves the rule as written, selector list and all, so
 			// a:hover keeps its :hover arm in <style> while the plain arm is
