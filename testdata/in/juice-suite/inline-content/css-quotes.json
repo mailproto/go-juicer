@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "p {\n  background: url(\"/woot\");\n}\n"
+  }
+}

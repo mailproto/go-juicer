@@ -23,7 +23,9 @@ const TARGETS = { 'juice-12': 'juice', 'juice-9': 'juice-9' };
 
 // Module-global settings on the juice client rather than per-call options.
 // Without a reset between fixtures, one fixture's `client` overrides leak into
-// every later golden.
+// every later golden. They are reset in place because juice's internals hold
+// references to them (codeBlocks is read from the cheerio module's object), so
+// reassigning the property on the client would silently do nothing.
 const GLOBALS = [
   'ignoredPseudos', 'widthElements', 'heightElements', 'tableElements',
   'nonVisualElements', 'styleToAttribute', 'excludedProperties', 'codeBlocks',
@@ -78,7 +80,15 @@ for (const [target, pkg] of Object.entries(TARGETS)) {
     const html = await fs.readFile(file, 'utf8');
 
     for (const [variant, options] of Object.entries(variants)) {
-      Object.assign(juice, structuredClone(defaults), cfg.client ?? {});
+      for (const [k, v] of Object.entries({ ...structuredClone(defaults), ...cfg.client })) {
+        if (!(k in defaults)) throw new Error(`${rel}: unknown client setting ${k}`);
+        const g = juice[k];
+        if (Array.isArray(g)) g.splice(0, g.length, ...v);
+        else {
+          for (const key of Object.keys(g)) delete g[key];
+          Object.assign(g, v);
+        }
+      }
       let body, outPath;
       try {
         body = juice(html, { ...options, ...cfg.options });

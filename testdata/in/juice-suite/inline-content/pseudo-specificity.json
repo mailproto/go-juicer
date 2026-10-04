@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "span.a {\n  color: red;\n  background-color: red;\n}\n.a:first-child {\n  color: blue;\n  background-color: blue;\n}\n.a:not(div) {\n  background-color: green;\n  padding: 0px;\n}\n.a:first-child {\n  padding: 10px;\n}\nspan.b {\n  padding: 20px;\n}\n"
+  }
+}

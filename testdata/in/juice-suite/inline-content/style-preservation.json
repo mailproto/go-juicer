@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "p { color: blue; background: blue; }\n"
+  }
+}

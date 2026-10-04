@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "div.a.b.c.d.e.f.g.h.i.j {\n  padding: 10px;\n}\ndiv div.a {\n  padding-top: 0;\n}"
+  }
+}

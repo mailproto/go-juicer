@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "div{background-image: linear-gradient(to right, #0099E5, #7C37FF);}"
+  }
+}

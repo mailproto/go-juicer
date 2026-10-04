@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "a,\np {\n  color: red;\n}\n"
+  }
+}

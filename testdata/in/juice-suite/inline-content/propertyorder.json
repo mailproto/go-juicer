@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": ".b {\n  padding: 20px;\n  padding-top: 10px;\n  color: red;\n}\n.a {\n  padding-top: 0;\n  padding: 5px;\n  padding: 10px;\n}\n"
+  }
+}

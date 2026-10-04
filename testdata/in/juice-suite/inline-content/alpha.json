@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "body {\t\n\tpadding: 0;\n}\n"
+  }
+}

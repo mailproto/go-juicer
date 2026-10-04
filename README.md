@@ -69,8 +69,11 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 847 | 836 | 11: one deliberate divergence across all 7 variants, and 4 for unimplemented `inlinePseudoElements` |
-| juice 9.1.0 | 847 | 706 | 141: behaviour juice 12 changed, listed by reason |
+| juice 12.1.3 | 1330 | 1196 | 134, each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 1330 | 1045 | 285: the same, plus behaviour juice 12 changed |
+
+`testdata/in/juice-suite` holds the inputs from juice's own test suite, so
+passing it there is part of the same check.
 
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.

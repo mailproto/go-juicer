@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "#test {\n  display: none;\n}\n"
+  }
+}

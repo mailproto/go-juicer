@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "#wrap #a { /* [2, 0, 0] - winner */\n  color: red;\n}\n#wrap a { /* [1, 0, 1] */\n  color: #000;\n}\n#a { /* [1, 0, 0] */\n  color: #00f;\n}\ndiv[a=b] .wrap div { /* [0, 2, 2] */\n  display: block;\n}\n#wrap .wrap { /* [1, 1, 0] - winner */\n  display: inline-block;\n}\n#wrap div.wrap #a { /* [2, 1, 1] */\n  background: #000;\n}\n#wrap[a=b] div.wrap #a { /* [2, 2, 1] - winner */\n  background: green;\n}\n#wrap[a=c] div.wrap #a { /* [2, 2, 1] - no match */\n  background: #00f;\n}\n\n#wrap .wrap #a { /* [2, 1, 0] */\n  background: #f00;\n}\n#wrap .wrap #a { /* [2, 1, 0] - winner */\n  border-color: green;\n}\ndiv #wrap-2 #a { /* [2, 0, 1] */\n  border-color: #008000;\n}\n"
+  }
+}

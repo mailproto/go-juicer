@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "a,\np {\n  color: green;\n}\n\n@media only screen and (max-width: 600px) {\n  a { color: red; }\n}"
+  }
+}

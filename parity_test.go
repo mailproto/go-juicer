@@ -88,11 +88,14 @@ func parityVariant(t *testing.T, target, variant string, variantOpts map[string]
 				t.Fatal(err)
 			}
 			// Fixture sidecar options are deliberate, so they win over the variant.
-			opts := append(mapOptions(t, variantOpts), loadOptions(t, strings.TrimSuffix(p, ".html")+".json")...)
+			opts, unsupported := mapOptions(t, variantOpts)
+			fixtureOpts, fixtureUnsupported := loadOptions(t, strings.TrimSuffix(p, ".html")+".json")
+			opts = append(opts, fixtureOpts...)
+			unsupported = append(unsupported, fixtureUnsupported...)
 			want, wantErr := loadGolden(t, filepath.Join(target, name))
 
 			got, gotErr := New(opts...).InlineBytes(in)
-			ok := (gotErr != nil) == wantErr && (wantErr || bytes.Equal(got, want))
+			ok := len(unsupported) == 0 && (gotErr != nil) == wantErr && (wantErr || bytes.Equal(got, want))
 
 			reason, isSkipped := skips[skipKey]
 			switch {
@@ -103,6 +106,9 @@ func parityVariant(t *testing.T, target, variant string, variantOpts map[string]
 				t.Skipf("known gap: %s", reason)
 			case !ok:
 				n.failed++
+				if len(unsupported) > 0 {
+					t.Fatalf("uses juice options this package does not support: %v", unsupported)
+				}
 				if gotErr != nil {
 					t.Fatalf("Inline returned an error, juice did not: %v", gotErr)
 				}
@@ -152,11 +158,11 @@ func loadSkips(t *testing.T, target string) map[string]string {
 	return out
 }
 
-func loadOptions(t *testing.T, path string) []Option {
+func loadOptions(t *testing.T, path string) (opts []Option, unsupported []string) {
 	t.Helper()
 	b, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return nil
+		return nil, nil
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -165,15 +171,27 @@ func loadOptions(t *testing.T, path string) []Option {
 	if err := json.Unmarshal(b, &f); err != nil {
 		t.Fatalf("bad options sidecar: %v", err)
 	}
-	return mapOptions(t, f.Options)
+	for k, v := range f.Client {
+		if k != "codeBlocks" {
+			t.Fatalf("juice client setting %q is not mapped in parity_test.go", k)
+		}
+		var blocks []codeBlock
+		for _, name := range slices.Sorted(maps.Keys(v.(map[string]any))) {
+			d := v.(map[string]any)[name].(map[string]any)
+			blocks = append(blocks, codeBlock{d["start"].(string), d["end"].(string)})
+		}
+		opts = append(opts, CodeBlocks(blocks))
+	}
+	more, unsupported := mapOptions(t, f.Options)
+	return append(opts, more...), unsupported
 }
 
 // mapOptions maps juice options onto Go Options. Only the options a fixture
 // or variant actually uses need a case here; an unmapped one is a test bug,
-// not a silent pass.
-func mapOptions(t *testing.T, juiceOpts map[string]any) []Option {
+// not a silent pass. Options juice has and this package lacks are returned as
+// unsupported, which fails the case unless it is skip-listed.
+func mapOptions(t *testing.T, juiceOpts map[string]any) (opts []Option, unsupported []string) {
 	t.Helper()
-	var opts []Option
 	for k, v := range juiceOpts {
 		b, _ := v.(bool)
 		s, _ := v.(string)
@@ -206,11 +224,14 @@ func mapOptions(t *testing.T, juiceOpts map[string]any) []Option {
 			opts = append(opts, InlinePseudoElements(b))
 		case "styleAttributeName":
 			opts = append(opts, StyleAttributeName(s))
+		case "insertPreservedExtraCss", "preserveContainerQueries", "preserveLayers", "xmlMode":
+			unsupported = append(unsupported, k)
 		default:
 			t.Fatalf("juice option %q is not mapped in parity_test.go", k)
 		}
 	}
-	return opts
+	slices.Sort(unsupported)
+	return opts, unsupported
 }
 
 func loadGolden(t *testing.T, name string) (content []byte, isErr bool) {

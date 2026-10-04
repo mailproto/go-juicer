@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "ul li {\n  display: block;\n}\nli {\n  color: #f00;\n}\n"
+  }
+}

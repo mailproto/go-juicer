@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": ".a {\n  color: #800000;\n  color: red;\n  color: rgba(255,0,0,.5);\n  color: -prefix-unknownvalue;\n}\n.b {\n  color: blue;\n}\n.b {\n  color: rgba(0,0,255,.5);\n}\n.c {\n  color: red !important;\n  color: rgba(255,0,0,.5) !important;\n  color: blue;\n}\n.d {\n  padding: 5px;\n  padding-top: 20px;\n  padding: 10px;\n  padding-top: unexpected value;\n  padding: unknown;\n  padding-top: again something unexpected;\n}\n"
+  }
+}

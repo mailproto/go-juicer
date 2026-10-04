@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "a {\n  text-decoration: underline;\n}\n\na:hover {\n  text-decoration: none;\n}\n\na:link, a:visited {\n  font-weight: bold;\n}\n"
+  }
+}
