@@ -69,11 +69,13 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 1505 | 1406 | 99, each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 1505 | 1214 | 291: the same, plus behaviour juice 12 changed |
+| juice 12.1.3 | 2009 | 1903 | 106, each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 2009 | 1711 | 298: the same, plus behaviour juice 12 changed |
 
-`testdata/in/juice-suite` holds the inputs from juice's own test suite, so
-passing it there is part of the same check.
+`testdata/in/juice-suite` and `testdata/in/premailer-suite` hold the inputs
+from juice's and premailer's own test suites, so passing those is part of the
+same check. premailer's documents are checked against juice's output, since
+premailer re-serializes through libxml2 and cannot be compared byte for byte.
 
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
@@ -120,8 +122,8 @@ as quick as the full parser, and nothing is escaped on the way out.
 
 ## Deliberate divergences from juice
 
-Three cases where matching juice would mean matching a bug. Each is covered by
-a test in `divergence_test.go`.
+Four cases where matching juice would mean matching a bug. The first three
+are covered by tests in `divergence_test.go`, the fourth by an `ALLOW` fixture.
 
 1. **Liquid templates.** juice's default `codeBlocks` covers Handlebars and
    EJS but not Liquid's `{% %}`, so it corrupts
@@ -133,6 +135,11 @@ a test in `divergence_test.go`.
 3. **Encoded quotes in a style attribute.** juice throws a `CssSyntaxError` on
    `style="font-family:&quot;A B&quot;"`, because `decodeStyleAttributes`
    defaults off and the raw entity reaches postcss. This package inlines it.
+4. **HTML comment markers around a stylesheet.** Old email templates wrap
+   CSS as `<style><!-- p { color: red } --></style>`. CSS ignores `<!--` and
+   `-->` there, so browsers and premailer apply the rule; juice reads
+   `<!-- p` as a selector and silently drops it. This package applies it.
+   premailer's own `test_commented_out_styles_in_the_body` asserts the same.
 
 ## Status
 

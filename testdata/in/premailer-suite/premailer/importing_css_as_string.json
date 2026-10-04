@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "/*\n * Premailer styles - should import\n *\n * $Package: Premailer $\n * $Date: 2009-02-09 17:15:56 -0800 (Mon, 09 Feb 2009) $WCDATE$ $\n * $Rev: 95 $WCREV$ $\n */\n\n.hide {\n\tdisplay: none;\n}\n"
+  }
+}
