@@ -1,9 +1,0 @@
-# Fixtures not yet passing, with the reason. Format: <name>  <reason>
-#
-# This list is self-ratcheting: a skipped fixture that starts passing FAILS the
-# build until its line is removed, and a line naming a fixture that no longer
-# exists fails too. It can only shrink. `wc -l` is the progress metric.
-#
-# An ALLOW entry is a divergence we have decided to keep. Those are described
-# in the README and should stay rare.
-inline-seed/quotes  ALLOW: juice throws a CssSyntaxError on style="font-family:&quot;A B&quot;" because it feeds the undecoded attribute to postcss. Crashing on ordinary email is not worth matching.

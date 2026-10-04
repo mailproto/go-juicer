@@ -312,18 +312,23 @@ func declValue(span []byte) ([]byte, bool) {
 
 // importantSuffix reports where a trailing !important begins, or -1.
 func importantSuffix(v []byte) int {
-	const kw = "!important"
+	const kw = "important"
 	end := len(v)
 	for end > 0 && isCSSSpace(v[end-1]) {
 		end--
 	}
-	if end < len(kw) {
+	if end < len(kw) || !bytes.EqualFold(v[end-len(kw):end], []byte(kw)) {
 		return -1
 	}
-	if !bytes.EqualFold(v[end-len(kw):end], []byte(kw)) {
+	// CSS allows whitespace between the bang and the keyword.
+	end -= len(kw)
+	for end > 0 && isCSSSpace(v[end-1]) {
+		end--
+	}
+	if end == 0 || v[end-1] != '!' {
 		return -1
 	}
-	return end - len(kw)
+	return end - 1
 }
 
 func isCSSSpace(c byte) bool {

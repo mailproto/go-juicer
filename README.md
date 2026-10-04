@@ -60,14 +60,26 @@ input.
 
 ## Correctness
 
-juice itself is the oracle. `testdata/in` holds inputs, `testdata/out` holds
-juice's output for them, and the suite asserts **raw byte equality with no
-normalization**. 118 of 119 fixtures match exactly; the suite prints a parity
-percentage on every run and `testdata/skip.txt` lists anything that does not.
+juice itself is the oracle. `testdata/in` holds inputs, and
+`testdata/out/<target>/<variant>` holds juice's output for each of them under
+every pinned juice version (`juice-12`, `juice-9`) and every option set in
+`testdata/variants.json`. The suite asserts **raw byte equality with no
+normalization**, prints a parity percentage per target on every run, and
+`testdata/skip/<target>.txt` lists anything that does not match.
+
+| target | cases | match | skipped |
+|---|---|---|---|
+| juice 12.1.3 | 847 | 836 | 11: one deliberate divergence across all 7 variants, and 4 for unimplemented `inlinePseudoElements` |
+| juice 9.1.0 | 847 | 706 | 141: behaviour juice 12 changed, listed by reason |
+
+juice 12 is what this package implements. juice 9 is tracked because it is
+still widely deployed, and its list shows exactly where the two disagree.
+juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;
+its `^1.0.0-rc.12` range now resolves to cheerio 1.x, whose serializer differs.
 
 ```
 make test             # parity suite, race detector on
-make goldens-verify   # committed goldens still match pinned juice 12.1.3
+make goldens-verify   # committed goldens still match pinned juice
 make goldens          # regenerate after a deliberate juice upgrade
 ```
 

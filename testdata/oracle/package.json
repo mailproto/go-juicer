@@ -4,6 +4,12 @@
   "type": "module",
   "description": "Generates golden files from juice, the reference implementation this package ports.",
   "dependencies": {
-    "juice": "12.1.3"
+    "juice": "12.1.3",
+    "juice-9": "npm:juice@9.1.0"
+  },
+  "overrides": {
+    "juice-9": {
+      "cheerio": "1.0.0-rc.12"
+    }
   }
 }

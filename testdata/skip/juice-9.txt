@@ -1,0 +1,80 @@
+# Cases not yet passing against juice 9.1.0, with the reason.
+# Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
+#
+# The Go package targets juice 12, so every entry here is a juice 9 behaviour
+# it does not reproduce. Ratcheting works as in juice-12.txt.
+default/at-rules/font-face  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+inline-pseudo-elements/at-rules/font-face  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-attributes/at-rules/font-face  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-css-variables/at-rules/font-face  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+preserve-important/at-rules/font-face  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+default/at-rules/keyframes  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+inline-pseudo-elements/at-rules/keyframes  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-attributes/at-rules/keyframes  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-css-variables/at-rules/keyframes  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+preserve-important/at-rules/keyframes  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+default/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+inline-pseudo-elements/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-attributes/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+no-css-variables/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+preserve-important/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
+preserve-important/cascade/important-beats-inline  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+preserve-important/cascade/inline-important-wins  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+inline-pseudo-elements/cascade/pseudo-element-no-leak  inlinePseudoElements is not implemented yet
+default/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
+inline-pseudo-elements/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
+no-attributes/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
+no-css-variables/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
+preserve-important/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
+preserve-important/important/beats-id  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+*/important/spaced-bang  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
+*/important/spacing  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
+preserve-important/important/strip-default  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+*/inline-seed/important-spellings  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
+*/inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
+*/l4-spec/is  juice 9 does not match :is() or :where()
+*/l4-spec/is-nested  juice 9 does not match :is() or :where()
+*/l4-spec/where  juice 9 does not match :is() or :where()
+*/l4-spec/where-zero  juice 9 does not match :is() or :where()
+*/malformed/bad-css  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+*/malformed/var-unresolvable-bare  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+*/malformed/var-unterminated  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+inline-pseudo-elements/pseudo-elements/dropped-by-default  inlinePseudoElements is not implemented yet
+inline-pseudo-elements/pseudo-elements/single-colon  inlinePseudoElements is not implemented yet
+preserve-important/real-world/cerberus-fluid  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+default/variables/ancestor  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/ancestor  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/ancestor  juice 9 does not resolve CSS custom properties
+no-attributes/variables/ancestor  juice 9 does not resolve CSS custom properties
+no-preserve/variables/ancestor  juice 9 does not resolve CSS custom properties
+preserve-important/variables/ancestor  juice 9 does not resolve CSS custom properties
+default/variables/basic  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/basic  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/basic  juice 9 does not resolve CSS custom properties
+no-attributes/variables/basic  juice 9 does not resolve CSS custom properties
+no-preserve/variables/basic  juice 9 does not resolve CSS custom properties
+preserve-important/variables/basic  juice 9 does not resolve CSS custom properties
+default/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+no-attributes/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+no-preserve/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+preserve-important/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
+default/variables/fallback  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/fallback  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/fallback  juice 9 does not resolve CSS custom properties
+no-attributes/variables/fallback  juice 9 does not resolve CSS custom properties
+no-preserve/variables/fallback  juice 9 does not resolve CSS custom properties
+preserve-important/variables/fallback  juice 9 does not resolve CSS custom properties
+default/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+no-attributes/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+no-preserve/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+preserve-important/variables/in-shorthand  juice 9 does not resolve CSS custom properties
+default/variables/nested  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/variables/nested  juice 9 does not resolve CSS custom properties
+keep-style-tags/variables/nested  juice 9 does not resolve CSS custom properties
+no-attributes/variables/nested  juice 9 does not resolve CSS custom properties
+no-preserve/variables/nested  juice 9 does not resolve CSS custom properties
+preserve-important/variables/nested  juice 9 does not resolve CSS custom properties

@@ -153,6 +153,9 @@ func (m *propMap) seedInline(style []byte, o *options) {
 		prio := 1
 		if d.important {
 			prio += 2
+			if o.preserveImportant {
+				d.value = append(d.value[:len(d.value):len(d.value)], " !important"...)
+			}
 		}
 		m.add(property{
 			prop:  d.prop,

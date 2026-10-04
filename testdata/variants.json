@@ -1,0 +1,18 @@
+{
+  "default": {},
+  "preserve-important": { "preserveImportant": true },
+  "keep-style-tags": { "removeStyleTags": false },
+  "no-attributes": {
+    "applyWidthAttributes": false,
+    "applyHeightAttributes": false,
+    "applyAttributesTableElements": false
+  },
+  "no-preserve": {
+    "preserveMediaQueries": false,
+    "preserveFontFaces": false,
+    "preserveKeyFrames": false,
+    "preservePseudos": false
+  },
+  "no-css-variables": { "resolveCSSVariables": false },
+  "inline-pseudo-elements": { "inlinePseudoElements": true }
+}
