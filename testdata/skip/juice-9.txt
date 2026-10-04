@@ -86,15 +86,12 @@ keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules fr
 no-attributes/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 no-css-variables/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-*/juice-suite/inline-content/integration  comments inside a declaration block leak into the style attribute
 default/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 inline-pseudo-elements/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 keep-style-tags/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 no-attributes/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 no-css-variables/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 preserve-important/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-*/juice-suite/inline-content/normalize  comments inside a declaration block leak into the style attribute
-*/juice-suite/inline-content/specificity  comments inside a declaration block leak into the style attribute
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
@@ -116,3 +113,17 @@ no-attributes/variables/function-name  juice 9 does not resolve CSS custom prope
 no-preserve/variables/function-name  juice 9 does not resolve CSS custom properties
 preserve-important/variables/function-name  juice 9 does not resolve CSS custom properties
 preserve-important/attrs/important-values  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+default/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+inline-pseudo-elements/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+keep-style-tags/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+no-attributes/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+no-css-variables/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+preserve-important/juice-suite/inline-content/integration  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
+*/comments/between-declarations  juice 9's CSS parser (mensch) strips every comment and trims what is left
+*/comments/in-values  juice 9's CSS parser (mensch) strips every comment, even between tokens, and drops a declaration with one inside url()
+default/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
+inline-pseudo-elements/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
+no-attributes/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
+no-css-variables/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
+preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks

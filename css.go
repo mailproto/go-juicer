@@ -2,6 +2,7 @@ package juicer
 
 import (
 	"bytes"
+	"slices"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/css"
@@ -13,6 +14,25 @@ type decl struct {
 	value     []byte // sliced from the source, so original spacing survives
 	important bool
 	ord       uint32 // position in the stylesheet; breaks specificity ties
+}
+
+// A decl with no prop is a comment, kept so a preserved block can re-emit it.
+func appendComments(decls []decl, comments [][]byte) []decl {
+	for _, c := range comments {
+		decls = append(decls, decl{value: c})
+	}
+	return decls
+}
+
+func (d decl) writeTo(b *bytes.Buffer) {
+	if d.prop == "" {
+		b.Write(d.value)
+		return
+	}
+	b.WriteString(d.prop)
+	b.WriteString(": ")
+	b.Write(d.value)
+	b.WriteByte(';')
 }
 
 // preserved is a rule that cannot be inlined and is re-emitted into a
@@ -44,10 +64,7 @@ func (b *cssBlock) text(indent int) []byte {
 		out.WriteByte('\n')
 		out.Write(pad)
 		out.WriteString("  ")
-		out.WriteString(d.prop)
-		out.WriteString(": ")
-		out.Write(d.value)
-		out.WriteByte(';')
+		d.writeTo(&out)
 	}
 	for _, c := range b.blocks {
 		out.WriteByte('\n')
@@ -122,40 +139,47 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			}
 
 		case css.DeclarationGrammar:
+			d := declParts(src[start:end], false)
+			v := d.value
 			if len(stack) > 0 {
-				name, v, imp := declParts(src[start:end])
+				b := stack[len(stack)-1]
+				b.decls = appendComments(b.decls, d.before)
 				if len(v) > 0 {
-					if imp {
+					if d.important {
 						v = append(append([]byte{}, v...), importantText(src[start:end])...)
 					}
-					b := stack[len(stack)-1]
-					b.decls = append(b.decls, decl{prop: name, value: v})
+					b.decls = append(b.decls, decl{prop: d.name, value: v})
 				}
+				b.decls = appendComments(b.decls, d.after)
 				continue
 			}
-			name, v, imp := declParts(src[start:end])
-			if len(v) == 0 {
-				// juice drops empty values, preserving mensch behaviour.
-				continue
+			decls = appendComments(decls, d.before)
+			// juice drops empty values, preserving mensch behaviour.
+			if len(v) > 0 {
+				// Scored as important either way; only the text may be dropped.
+				if d.important && opts.preserveImportant {
+					v = append(append([]byte{}, v...), " !important"...)
+				}
+				decls = append(decls, decl{prop: d.name, value: v, important: d.important, ord: ord})
+				ord++
 			}
-			if imp && !opts.preserveImportant {
-				// Scored as important either way; only the text is dropped.
-			} else if imp {
-				v = append(append([]byte{}, v...), " !important"...)
-			}
-			decls = append(decls, decl{prop: name, value: v, important: imp, ord: ord})
-			ord++
+			decls = appendComments(decls, d.after)
 
 		case css.CustomPropertyGrammar:
 			if len(stack) > 0 {
 				continue
 			}
-			name, v, imp := declParts(src[start:end])
-			decls = append(decls, decl{prop: name, value: v, important: imp, ord: ord})
+			d := declParts(src[start:end], true)
+			decls = appendComments(decls, d.before)
+			decls = append(decls, decl{prop: d.name, value: d.value, important: d.important, ord: ord})
 			ord++
 
 		case css.EndRulesetGrammar:
+			// Comments after the last declaration arrive with the closing brace.
+			comments, _ := leadingComments(src[start:end])
 			if len(stack) > 0 {
+				b := stack[len(stack)-1]
+				b.decls = appendComments(b.decls, comments)
 				// A ruleset nested in an at-rule is preserved, never inlined.
 				if len(stack) > 1 {
 					done := stack[len(stack)-1]
@@ -164,7 +188,8 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				}
 				continue
 			}
-			if len(decls) == 0 {
+			decls = appendComments(decls, comments)
+			if !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" }) {
 				continue
 			}
 			shared := append([]decl(nil), decls...)
@@ -196,10 +221,7 @@ func ruleText(sel []byte, decls []decl) []byte {
 	b.WriteString(" {")
 	for _, d := range decls {
 		b.WriteString("\n  ")
-		b.WriteString(d.prop)
-		b.WriteString(": ")
-		b.Write(d.value)
-		b.WriteByte(';')
+		d.writeTo(&b)
 	}
 	b.WriteString("\n}")
 	return b.Bytes()
@@ -280,34 +302,220 @@ func selectorText(src []byte, start, end int) []byte {
 // name is sliced from the source rather than taken from the parser, which
 // lowercases it; juice keys styleProps by the name as written, so a stylesheet
 // declaring "A: red" emits "A: red".
-func declParts(span []byte) (name string, value []byte, important bool) {
+//
+// Comments ahead of the property, and after a value closed by "}", are nodes
+// of their own to postcss; they are returned separately so a preserved block
+// can re-emit them.
+func declParts(span []byte, custom bool) (d parsedDecl) {
+	d.before, span = leadingComments(span)
 	i := bytes.IndexByte(span, ':')
 	if i < 0 {
-		return "", nil, false
+		return d
 	}
-	v, imp := declValue(span)
-	return string(trimCSS(span[:i])), v, imp
-}
-
-// declValue pulls the value out of a declaration span, which may carry a
-// leading separator from the previous declaration.
-func declValue(span []byte) ([]byte, bool) {
-	i := bytes.IndexByte(span, ':')
-	if i < 0 {
-		return nil, false
+	n := 0
+	for n < i && !isCSSSpace(span[n]) && !bytes.HasPrefix(span[n:], []byte("/*")) {
+		n++
 	}
 	v := span[i+1:]
-	// The last declaration of a ruleset runs up to and past the closing
-	// brace. Trim it before looking for !important, which would otherwise
-	// never be recognised there.
+	// The last declaration of a ruleset runs up to and past the closing brace.
+	closed := false
 	if j := bytes.LastIndexByte(v, '}'); j >= 0 {
-		v = v[:j]
+		v, closed = v[:j], true
+	} else if t := bytes.TrimRight(v, " \t\n\r\f"); len(t) > 0 && t[len(t)-1] == ';' {
+		v = t[:len(t)-1]
+	} else {
+		closed = true
 	}
-	v = trimCSS(v)
-	if j := importantSuffix(v); j >= 0 {
-		return trimCSS(v[:j]), true
+	d.name = string(span[:n])
+	if custom {
+		d.value = trimCSS(v)
+		return d
 	}
-	return v, false
+	d.value, d.important, d.after = postcssValue(v, closed)
+	return d
+}
+
+type parsedDecl struct {
+	before, after [][]byte
+	name          string
+	value         []byte
+	important     bool
+}
+
+func leadingComments(span []byte) ([][]byte, []byte) {
+	var out [][]byte
+	for {
+		span = trimCSSLeft(span)
+		if !bytes.HasPrefix(span, []byte("/*")) {
+			return out, span
+		}
+		end := len(span)
+		if k := bytes.Index(span[2:], []byte("*/")); k >= 0 {
+			end = k + 4
+		}
+		out = append(out, span[:end])
+		span = span[end:]
+	}
+}
+
+func trimCSSLeft(b []byte) []byte {
+	for len(b) > 0 && (isCSSSpace(b[0]) || b[0] == ';') {
+		b = b[1:]
+	}
+	return b
+}
+
+// cssToken is a postcss token, reduced to the kinds comment handling tells
+// apart.
+type cssToken struct {
+	kind byte // ' ' whitespace, '/' comment, 'w' word, 'o' anything else
+	text []byte
+}
+
+// tokenizeValue splits a declaration value along postcss's token boundaries.
+func tokenizeValue(v []byte) []cssToken {
+	var toks []cssToken
+	var lastWord []byte // postcss tests the most recent word for url(
+	for i := 0; i < len(v); {
+		c, j, kind := v[i], i+1, byte('o')
+		switch {
+		case isCSSSpace(c):
+			for j < len(v) && isCSSSpace(v[j]) {
+				j++
+			}
+			kind = ' '
+		case c == '/' && j < len(v) && v[j] == '*':
+			j = len(v)
+			if k := bytes.Index(v[i+2:], []byte("*/")); k >= 0 {
+				j = i + 2 + k + 2
+			}
+			kind = '/'
+		case c == '"' || c == '\'':
+			for j < len(v) && v[j] != c {
+				if v[j] == '\\' {
+					j++
+				}
+				j++
+			}
+			j = min(j+1, len(v))
+		case c == '(':
+			prev := lastWord
+			lastWord = nil
+			// An unquoted url() is a single token, comments and all.
+			if string(prev) == "url" && j < len(v) && v[j] != '"' && v[j] != '\'' && !isCSSSpace(v[j]) {
+				for j < len(v) && v[j] != ')' {
+					if v[j] == '\\' {
+						j++
+					}
+					j++
+				}
+				j = min(j+1, len(v))
+			}
+		case bytes.IndexByte([]byte(")[]{}:;"), c) >= 0:
+		default:
+			for j < len(v) && !isWordEnd(v, j) {
+				j++
+			}
+			kind = 'w'
+			lastWord = v[i:j]
+		}
+		toks = append(toks, cssToken{kind, v[i:j]})
+		i = j
+	}
+	return toks
+}
+
+func isWordEnd(v []byte, i int) bool {
+	switch v[i] {
+	case '\t', '\n', '\f', '\r', ' ', '!', '"', '#', '\'', '(', ')', ':', ';', '@', '[', '\\', ']', '{', '}':
+		return true
+	}
+	return v[i] == '/' && i+1 < len(v) && v[i+1] == '*'
+}
+
+// postcssValue reproduces how postcss reads a declaration value: what it
+// strips as !important, and which comments it drops. closed means the
+// declaration ended at "}" or end of input rather than at ";", in which case
+// postcss hands trailing whitespace and comments back to the rule.
+func postcssValue(v []byte, closed bool) (value []byte, important bool, after [][]byte) {
+	if !bytes.Contains(v, []byte("/*")) {
+		// Without comments postcss's rules reduce to a trim.
+		v = trimCSS(v)
+		if j := importantSuffix(v); j >= 0 {
+			return trimCSS(v[:j]), true, nil
+		}
+		return v, false, nil
+	}
+	toks := tokenizeValue(v)
+	blank := func(t cssToken) bool { return t.kind == ' ' || t.kind == '/' }
+	if closed {
+		end := len(toks)
+		for end > 0 && blank(toks[end-1]) {
+			end--
+		}
+		for _, t := range toks[end:] {
+			if t.kind == '/' {
+				after = append(after, t.text)
+			}
+		}
+		toks = toks[:end]
+	}
+	first := 0
+	for first < len(toks) && blank(toks[first]) {
+		first++
+	}
+	lead, toks := toks[:first], toks[first:]
+
+	for i := len(toks) - 1; i >= 0; i-- {
+		t := toks[i]
+		if bytes.EqualFold(t.text, []byte("!important")) {
+			important = true
+			toks = toks[:i]
+			for len(toks) > 0 && toks[len(toks)-1].kind == ' ' {
+				toks = toks[:len(toks)-1]
+			}
+			break
+		}
+		if bytes.EqualFold(t.text, []byte("important")) {
+			// "! important": postcss pops tokens off the end until the text it
+			// has collected starts with a bang.
+			cache := slices.Clone(toks)
+			var str []byte
+			bang := func() bool { return bytes.HasPrefix(bytes.TrimSpace(str), []byte("!")) }
+			for j := i; j > 0; j-- {
+				if bang() && cache[j].kind != ' ' {
+					break
+				}
+				str = append(slices.Clone(cache[len(cache)-1].text), str...)
+				cache = cache[:len(cache)-1]
+			}
+			if bang() {
+				important, toks = true, cache
+			}
+		}
+		if !blank(t) {
+			break
+		}
+	}
+
+	if !slices.ContainsFunc(toks, func(t cssToken) bool { return !blank(t) }) {
+		toks = append(lead, toks...)
+	}
+	var out []byte
+	for i, t := range toks {
+		switch {
+		case t.kind == ' ' && i == len(toks)-1:
+		case t.kind == '/':
+			// A comment survives only with no whitespace on either side, as in
+			// "1px/**/solid".
+			if i > 0 && toks[i-1].kind != ' ' && i+1 < len(toks) && toks[i+1].kind != ' ' && !bytes.HasSuffix(out, []byte(",")) {
+				out = append(out, t.text...)
+			}
+		default:
+			out = append(out, t.text...)
+		}
+	}
+	return out, important, after
 }
 
 // importantSuffix reports where a trailing !important begins, or -1.

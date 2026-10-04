@@ -69,8 +69,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 1358 | 1244 | 114, each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 1358 | 1079 | 279: the same, plus behaviour juice 12 changed |
+| juice 12.1.3 | 1386 | 1287 | 99, each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 1386 | 1102 | 284: the same, plus behaviour juice 12 changed |
 
 `testdata/in/juice-suite` holds the inputs from juice's own test suite, so
 passing it there is part of the same check.
