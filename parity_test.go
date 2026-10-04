@@ -175,10 +175,10 @@ func loadOptions(t *testing.T, path string) (opts []Option, unsupported []string
 		if k != "codeBlocks" {
 			t.Fatalf("juice client setting %q is not mapped in parity_test.go", k)
 		}
-		var blocks []codeBlock
+		var blocks []CodeBlock
 		for _, name := range slices.Sorted(maps.Keys(v.(map[string]any))) {
 			d := v.(map[string]any)[name].(map[string]any)
-			blocks = append(blocks, codeBlock{d["start"].(string), d["end"].(string)})
+			blocks = append(blocks, CodeBlock{d["start"].(string), d["end"].(string)})
 		}
 		opts = append(opts, CodeBlocks(blocks))
 	}

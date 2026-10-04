@@ -35,7 +35,7 @@ type options struct {
 	resolveCSSVariables         bool
 	inlinePseudoElements        bool
 	styleAttributeName          string
-	codeBlocks                  []codeBlock
+	codeBlocks                  []CodeBlock
 
 	// Document cleanup, carried over from the Ruby premailer this package
 	// used to wrap. juice has no equivalent.
@@ -62,7 +62,7 @@ func defaults() options {
 		applyAttributesTableElement: true,
 		resolveCSSVariables:         true,
 		styleAttributeName:          "style",
-		codeBlocks:                  defaultCodeBlocks(),
+		codeBlocks:                  DefaultCodeBlocks(),
 	}
 }
 
@@ -118,8 +118,10 @@ func StyleAttributeName(name string) Option {
 }
 
 // CodeBlocks replaces the template delimiters protected from the HTML parser.
-// The default set covers Liquid, Handlebars and EJS.
-func CodeBlocks(b []codeBlock) Option { return func(o *options) { o.codeBlocks = b } }
+// The default set covers Liquid, Handlebars and EJS. juice adds to its default
+// set by mutating the global juice.codeBlocks; the Go equivalent is
+// appending to DefaultCodeBlocks().
+func CodeBlocks(b []CodeBlock) Option { return func(o *options) { o.codeBlocks = b } }
 
 // RemoveIDs replaces id attributes with a hash, rewriting internal anchors.
 func RemoveIDs(v bool) Option { return func(o *options) { o.removeIDs = v } }
