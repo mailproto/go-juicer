@@ -88,25 +88,77 @@ func parseDocument(src []byte) *html.Node {
 	cur := root
 	foreign := 0
 	z := html.NewTokenizer(bytes.NewReader(src))
+	pos := 0 // offset in src of the tokenizer's next byte
+
+	closeTag := func(name string) {
+		open := false
+		for p := cur; p != root; p = p.Parent {
+			if p.Data == name {
+				open = true
+				break
+			}
+		}
+		if open {
+			for cur.Data != name {
+				if isForeign(cur.Data) {
+					foreign--
+				}
+				cur = cur.Parent
+			}
+			if isForeign(cur.Data) {
+				foreign--
+			}
+			if reparseRaw[cur.Data] {
+				reparseChildren(cur)
+			}
+			cur = cur.Parent
+		} else if name == "br" || name == "p" {
+			// htmlparser2 turns an unmatched </br> into <br> and an
+			// unmatched </p> into an empty <p></p>.
+			cur.AppendChild(&html.Node{Type: html.ElementNode, Data: name})
+		}
+		// Any other unmatched end tag is dropped.
+	}
+	// resume restarts the tokenizer where htmlparser2 says a construct ends,
+	// when x/net/html ended it elsewhere.
+	resume := func(end int) {
+		if end != pos {
+			pos = end
+			z = html.NewTokenizer(bytes.NewReader(src[end:]))
+		}
+	}
 
 	for {
 		tt := z.Next()
 		if tt == html.ErrorToken {
 			break
 		}
-		// z.Raw() points into the tokenizer's buffer, which it compacts and
-		// reallocates as it reads, so spans must be copied out now.
-		raw := string(z.Raw())
+		// Slice the token out of src rather than z.Raw(), which points into a
+		// buffer the tokenizer reuses.
+		start := pos
+		pos += len(z.Raw())
+		raw := src[start:pos]
 
 		switch tt {
 		case html.TextToken:
-			cur.AppendChild(&html.Node{Type: html.TextNode, Data: raw})
+			cur.AppendChild(&html.Node{Type: html.TextNode, Data: string(raw)})
 
-		case html.CommentToken:
-			cur.AppendChild(&html.Node{Type: html.CommentNode, Data: raw})
-
-		case html.DoctypeToken:
-			cur.AppendChild(&html.Node{Type: html.DoctypeNode, Data: raw})
+		case html.CommentToken, html.DoctypeToken:
+			var n *html.Node
+			var end int
+			if bytes.HasPrefix(raw, []byte("</")) {
+				var name string
+				n, name, end = closeTagLike(src, start)
+				if name != "" {
+					closeTag(name)
+				}
+			} else {
+				n, end = markupDecl(src, start)
+			}
+			if n != nil {
+				cur.AppendChild(n)
+			}
+			resume(end)
 
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, attrs := scanStartTag(raw)
@@ -137,41 +189,136 @@ func parseDocument(src []byte) *html.Node {
 			}
 
 		case html.EndTagToken:
-			name := scanEndTag(raw)
-			if name == "" {
-				continue
+			if name := scanEndTag(raw); name != "" {
+				closeTag(name)
 			}
-			open := false
-			for p := cur; p != root; p = p.Parent {
-				if p.Data == name {
-					open = true
-					break
-				}
-			}
-			if open {
-				for cur.Data != name {
-					if isForeign(cur.Data) {
-						foreign--
-					}
-					cur = cur.Parent
-				}
-				if isForeign(cur.Data) {
-					foreign--
-				}
-				if reparseRaw[cur.Data] {
-					reparseChildren(cur)
-				}
-				cur = cur.Parent
-			} else if name == "br" || name == "p" {
-				// htmlparser2 turns an unmatched </br> into <br> and an
-				// unmatched </p> into an empty <p></p>.
-				cur.AppendChild(&html.Node{Type: html.ElementNode, Data: name})
-			}
-			// Any other unmatched end tag is dropped.
 		}
 	}
 	// Anything still open at EOF stays open; the serializer closes it.
 	return root
+}
+
+// markupDecl reads the "<!" or "<?" construct at src[p:] the way htmlparser2's
+// tokenizer does, which is not the HTML5 spec x/net/html follows. It returns
+// the node produced, if any, and where the construct ends.
+//
+//   - <!-- ends at the first "-->", counting the opening dashes, so <!--> is
+//     an empty comment and "--!>" ends nothing.
+//   - <![CDATA[ (exact case) ends at "]]>" and becomes a comment, since there
+//     is no CDATA outside XML mode.
+//   - Anything else ends at the next ">", but the character right after "<!"
+//     or "<!-" is never that ">".
+//   - Unterminated at end of input, a comment or CDATA is closed, and
+//     anything else becomes text minus its "<!" or "<?".
+func markupDecl(src []byte, p int) (*html.Node, int) {
+	n := len(src)
+	tail := func() (*html.Node, int) {
+		if p+2 >= n {
+			return nil, n
+		}
+		return &html.Node{Type: html.TextNode, Data: string(src[p+2:])}, n
+	}
+	untilGt := func(from int) (*html.Node, int) {
+		k := bytes.IndexByte(src[min(from, n):], '>')
+		if k < 0 {
+			return tail()
+		}
+		end := from + k + 1
+		typ := html.CommentNode
+		if len(src)-p >= 9 && bytes.EqualFold(src[p:p+9], []byte("<!doctype")) {
+			typ = html.DoctypeNode
+		}
+		return &html.Node{Type: typ, Data: string(src[p:end])}, end
+	}
+
+	i := p + 2
+	switch {
+	case src[p+1] == '?':
+		return untilGt(i)
+	case i >= n:
+		return tail()
+	case src[i] == '[':
+		const seq = "CDATA["
+		j := i + 1
+		for j < n && j-i-1 < len(seq) && src[j] == seq[j-i-1] {
+			j++
+		}
+		if j-i-1 == len(seq) {
+			return commentLike(src, j, "]]>", 0, "<!--[CDATA[", "]]-->")
+		}
+		if j >= n {
+			return tail()
+		}
+		return untilGt(j) // the mismatched character is reconsumed
+	case src[i] == '-':
+		if i+1 >= n {
+			return tail()
+		}
+		if src[i+1] == '-' {
+			return commentLike(src, i+2, "-->", 2, "<!--", "-->")
+		}
+		return untilGt(i + 2)
+	default:
+		return untilGt(i + 1)
+	}
+}
+
+// closeTagLike reads the "</" construct at src[p:] the way htmlparser2 does,
+// where x/net/html makes a bogus comment of anything not starting with a
+// letter: whitespace after the slash is skipped, "</>" stays as text, a
+// letter starts an end tag running to the next ">", and anything else is a
+// comment up to it. It returns a node or an end tag name, and where the construct ends.
+func closeTagLike(src []byte, p int) (n *html.Node, name string, end int) {
+	i := p + 2
+	for i < len(src) && isSpace(src[i]) {
+		i++
+	}
+	if i >= len(src) {
+		return &html.Node{Type: html.TextNode, Data: string(src[p:])}, "", len(src)
+	}
+	k := bytes.IndexByte(src[i:], '>')
+	switch c := src[i]; {
+	case c == '>':
+		// Back to text without moving the text start, so it is kept verbatim.
+		return &html.Node{Type: html.TextNode, Data: string(src[p : i+1])}, "", i + 1
+	case 'a' <= c|0x20 && c|0x20 <= 'z':
+		if k < 0 {
+			return nil, "", len(src)
+		}
+		j := i
+		for j < i+k && !isSpace(src[j]) {
+			j++
+		}
+		return nil, lowerASCII(src[i:j]), i + k + 1
+	case k < 0:
+		return &html.Node{Type: html.TextNode, Data: string(src[i:])}, "", len(src)
+	default:
+		return &html.Node{Type: html.CommentNode, Data: "<!--" + string(src[i:i+k]) + "-->"}, "", i + k + 1
+	}
+}
+
+// commentLike scans from the start of a comment's or CDATA section's content
+// for its end sequence, with htmlparser2's matching: the sequence may already
+// be partly matched (idx), and a run of its first character is allowed, as in
+// "--->". The content is re-emitted between open and close.
+func commentLike(src []byte, from int, seq string, idx int, open, close string) (*html.Node, int) {
+	node := func(data []byte) *html.Node {
+		return &html.Node{Type: html.CommentNode, Data: open + string(data) + close}
+	}
+	for k := from; k < len(src); k++ {
+		switch c := src[k]; {
+		case c == seq[idx]:
+			if idx++; idx == len(seq) {
+				return node(src[from:max(from, k-2)]), k + 1
+			}
+		case idx > 0 && c != seq[idx-1]:
+			idx = 0
+		}
+	}
+	if from >= len(src) {
+		return nil, len(src)
+	}
+	return node(src[from:]), len(src)
 }
 
 // reparseChildren re-parses an element the tokenizer treated as raw text but
@@ -214,8 +361,7 @@ func lowerASCII(b []byte) string {
 // scanStartTag reads a tag name and attributes from raw start-tag bytes,
 // keeping values exactly as written. x/net/html's TagAttr decodes entities,
 // which loses the difference between "&amp;" and a literal "&".
-func scanStartTag(raw string) (string, []html.Attribute) {
-	b := []byte(raw)
+func scanStartTag(b []byte) (string, []html.Attribute) {
 	i := 1 // skip '<'
 	start := i
 	for i < len(b) && !isSpace(b[i]) && b[i] != '>' && b[i] != '/' {
@@ -285,8 +431,7 @@ func scanStartTag(raw string) (string, []html.Attribute) {
 	return name, attrs
 }
 
-func scanEndTag(raw string) string {
-	b := []byte(raw)
+func scanEndTag(b []byte) string {
 	if len(b) < 3 {
 		return ""
 	}
@@ -303,19 +448,8 @@ func scanEndTag(raw string) string {
 // escaped inside attribute values.
 func render(buf *bytes.Buffer, n *html.Node) {
 	switch n.Type {
-	case html.TextNode, html.DoctypeNode:
-		buf.WriteString(n.Data)
-		return
-	case html.CommentNode:
-		// htmlparser2 has no CDATA section outside XML mode, so it reports one
-		// as a bogus comment and serializes it as a comment. Other bogus
-		// constructs (<!decl>, <?pi?>) pass through untouched.
-		if strings.HasPrefix(n.Data, "<![CDATA[") && strings.HasSuffix(n.Data, ">") {
-			buf.WriteString("<!--")
-			buf.WriteString(n.Data[2 : len(n.Data)-1])
-			buf.WriteString("-->")
-			return
-		}
+	case html.TextNode, html.DoctypeNode, html.CommentNode:
+		// Comments hold their markup as htmlparser2 would serialize it.
 		buf.WriteString(n.Data)
 		return
 	}

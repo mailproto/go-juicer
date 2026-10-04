@@ -127,3 +127,4 @@ inline-pseudo-elements/comments/preserved  juice 9's CSS parser (mensch) drops c
 no-attributes/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 no-css-variables/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
+*/malformed/unclosed-pseudo-arg  juice 9's CSS parser (mensch) recovers from malformed CSS differently

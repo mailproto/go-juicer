@@ -227,7 +227,13 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			var arg []byte
 			if ne < len(arm) && arm[ne] == '(' {
 				ae = parenEnd(arm, ne)
-				arg = arm[ne+1 : ae-1]
+				// parenEnd runs to the end of input when the parenthesis is
+				// never closed.
+				if ae >= ne+2 && arm[ae-1] == ')' {
+					arg = arm[ne+1 : ae-1]
+				} else {
+					arg = arm[ne+1 : ae]
+				}
 			}
 			switch {
 			case ignoredPseudos[name]:
