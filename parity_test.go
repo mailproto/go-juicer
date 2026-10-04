@@ -2,7 +2,9 @@ package juicer
 
 // Differential test against juice, the reference implementation.
 //
-// Goldens in testdata/out are produced ONLY by testdata/oracle/generate.mjs.
+// Goldens in testdata/out/<target>/<variant> are produced ONLY by
+// testdata/oracle/generate.mjs, one target per pinned juice version and one
+// variant per option set in testdata/variants.json.
 // There is deliberately no -update flag here: regenerating expectations from
 // the code under test would certify this implementation against itself and
 // destroy the oracle. Run `make goldens` instead.
@@ -17,8 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -29,10 +33,39 @@ type fixtureOptions struct {
 }
 
 func TestParity(t *testing.T) {
-	skips := loadSkips(t)
-	seen := map[string]bool{}
-	var pass, skipped int
+	variants := loadVariants(t)
+	for _, target := range []string{"juice-12", "juice-9"} {
+		t.Run(target, func(t *testing.T) {
+			skips := loadSkips(t, target)
+			var n tally
+			for _, variant := range slices.Sorted(maps.Keys(variants)) {
+				t.Run(variant, func(t *testing.T) {
+					parityVariant(t, target, variant, variants[variant], skips, &n)
+				})
+			}
 
+			// A skip naming a variant or fixture that no longer exists is stale.
+			for name, reason := range skips {
+				variant, fixture, _ := strings.Cut(name, "/")
+				_, okVariant := variants[variant]
+				_, err := os.Stat(filepath.Join("testdata", "in", fixture+".html"))
+				if !(okVariant || variant == "*") || err != nil {
+					t.Errorf("testdata/skip/%s.txt names missing case %q (%s)", target, name, reason)
+				}
+			}
+			if total := n.pass + n.skipped + n.failed; total > 0 {
+				t.Logf("%s parity: %d/%d cases (%.1f%%), %d skipped, %d failed",
+					target, n.pass, total, 100*float64(n.pass)/float64(total), n.skipped, n.failed)
+			}
+		})
+	}
+}
+
+type tally struct{ pass, skipped, failed int }
+
+// parityVariant runs every fixture under one option variant. A skip line
+// names "<variant>/<fixture>", or "*/<fixture>" for every variant.
+func parityVariant(t *testing.T, target, variant string, variantOpts map[string]any, skips map[string]string, n *tally) {
 	root := filepath.Join("testdata", "in")
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") {
@@ -42,34 +75,40 @@ func TestParity(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		name := filepath.ToSlash(strings.TrimSuffix(rel, ".html"))
-		seen[name] = true
+		fixture := filepath.ToSlash(strings.TrimSuffix(rel, ".html"))
+		name := variant + "/" + fixture
+		skipKey := name
+		if _, ok := skips[skipKey]; !ok {
+			skipKey = "*/" + fixture
+		}
 
-		t.Run(name, func(t *testing.T) {
+		t.Run(fixture, func(t *testing.T) {
 			in, err := os.ReadFile(p)
 			if err != nil {
 				t.Fatal(err)
 			}
-			opts := loadOptions(t, strings.TrimSuffix(p, ".html")+".json")
-			want, wantErr := loadGolden(t, name)
+			// Fixture sidecar options are deliberate, so they win over the variant.
+			opts := append(mapOptions(t, variantOpts), loadOptions(t, strings.TrimSuffix(p, ".html")+".json")...)
+			want, wantErr := loadGolden(t, filepath.Join(target, name))
 
 			got, gotErr := New(opts...).InlineBytes(in)
 			ok := (gotErr != nil) == wantErr && (wantErr || bytes.Equal(got, want))
 
-			reason, isSkipped := skips[name]
+			reason, isSkipped := skips[skipKey]
 			switch {
 			case isSkipped && ok:
-				t.Errorf("fixture now passes; drop its line from testdata/skip.txt\n  was: %s", reason)
+				t.Errorf("case now passes; drop its line from testdata/skip/%s.txt\n  was: %s", target, reason)
 			case isSkipped:
-				skipped++
+				n.skipped++
 				t.Skipf("known gap: %s", reason)
 			case !ok:
+				n.failed++
 				if gotErr != nil {
 					t.Fatalf("Inline returned an error, juice did not: %v", gotErr)
 				}
 				t.Errorf("%s\n%s", classify(got, want), contextDiff(got, want))
 			default:
-				pass++
+				n.pass++
 			}
 		})
 		return nil
@@ -77,23 +116,24 @@ func TestParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// A skip naming a fixture that no longer exists is stale.
-	for name, reason := range skips {
-		if !seen[name] {
-			t.Errorf("testdata/skip.txt names missing fixture %q (%s)", name, reason)
-		}
-	}
-	total := pass + skipped
-	if total > 0 {
-		t.Logf("parity: %d/%d fixtures (%.0f%%), %d skipped",
-			pass, total, 100*float64(pass)/float64(total), skipped)
-	}
 }
 
-func loadSkips(t *testing.T) map[string]string {
+func loadVariants(t *testing.T) map[string]map[string]any {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join("testdata", "skip.txt"))
+	b, err := os.ReadFile(filepath.Join("testdata", "variants.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var v map[string]map[string]any
+	if err := json.Unmarshal(b, &v); err != nil {
+		t.Fatalf("bad testdata/variants.json: %v", err)
+	}
+	return v
+}
+
+func loadSkips(t *testing.T, target string) map[string]string {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join("testdata", "skip", target+".txt"))
 	if os.IsNotExist(err) {
 		return map[string]string{}
 	}
@@ -112,9 +152,6 @@ func loadSkips(t *testing.T) map[string]string {
 	return out
 }
 
-// loadOptions maps the fixture's juice options onto Go Options. Only the
-// options a fixture actually uses need a case here; an unmapped one is a test
-// bug, not a silent pass.
 func loadOptions(t *testing.T, path string) []Option {
 	t.Helper()
 	b, err := os.ReadFile(path)
@@ -128,8 +165,16 @@ func loadOptions(t *testing.T, path string) []Option {
 	if err := json.Unmarshal(b, &f); err != nil {
 		t.Fatalf("bad options sidecar: %v", err)
 	}
+	return mapOptions(t, f.Options)
+}
+
+// mapOptions maps juice options onto Go Options. Only the options a fixture
+// or variant actually uses need a case here; an unmapped one is a test bug,
+// not a silent pass.
+func mapOptions(t *testing.T, juiceOpts map[string]any) []Option {
+	t.Helper()
 	var opts []Option
-	for k, v := range f.Options {
+	for k, v := range juiceOpts {
 		b, _ := v.(bool)
 		s, _ := v.(string)
 		switch k {
@@ -162,7 +207,7 @@ func loadOptions(t *testing.T, path string) []Option {
 		case "styleAttributeName":
 			opts = append(opts, StyleAttributeName(s))
 		default:
-			t.Fatalf("options sidecar uses %q, which parity_test.go does not map", k)
+			t.Fatalf("juice option %q is not mapped in parity_test.go", k)
 		}
 	}
 	return opts

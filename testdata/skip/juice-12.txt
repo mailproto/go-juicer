@@ -1,0 +1,14 @@
+# Cases not yet passing against juice 12, with the reason.
+# Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
+#
+# This list is self-ratcheting: a skipped fixture that starts passing FAILS the
+# build until its line is removed, and a line naming a fixture that no longer
+# exists fails too. It can only shrink. `wc -l` is the progress metric.
+#
+# An ALLOW entry is a divergence we have decided to keep. Those are described
+# in the README and should stay rare.
+*/inline-seed/quotes  ALLOW: juice throws a CssSyntaxError on style="font-family:&quot;A B&quot;" because it feeds the undecoded attribute to postcss. Crashing on ordinary email is not worth matching.
+inline-pseudo-elements/cascade/pseudo-element-no-leak  inlinePseudoElements is not implemented yet
+inline-pseudo-elements/pseudo-elements/dropped-by-default  inlinePseudoElements is not implemented yet
+inline-pseudo-elements/pseudo-elements/single-colon  inlinePseudoElements is not implemented yet
+inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is not implemented yet
