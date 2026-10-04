@@ -21,15 +21,12 @@ keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules fr
 no-attributes/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 no-css-variables/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-*/juice-suite/inline-content/integration  comments inside a declaration block leak into the style attribute
 default/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 inline-pseudo-elements/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 keep-style-tags/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 no-attributes/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 no-css-variables/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 preserve-important/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-*/juice-suite/inline-content/normalize  comments inside a declaration block leak into the style attribute
-*/juice-suite/inline-content/specificity  comments inside a declaration block leak into the style attribute
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
 default/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
 inline-pseudo-elements/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
@@ -47,3 +44,9 @@ preserve-important/juice-suite/juice-content/important  attributes promoted from
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/table-attr  promoted background/bgcolor attributes are emitted in a different order
 */juice-suite/juice-content/xml  xmlMode is not supported
+default/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+inline-pseudo-elements/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+keep-style-tags/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+no-attributes/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+no-css-variables/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
+preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them

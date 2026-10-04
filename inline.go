@@ -285,6 +285,9 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				return
 			}
 			for _, d := range r.decls {
+				if d.prop == "" {
+					continue
+				}
 				prio := 0
 				if d.important {
 					prio = 2
