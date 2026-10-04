@@ -131,3 +131,13 @@ preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comme
 
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: same divergence as juice 12 (HTML comment markers around a stylesheet)
+
+# Found by the generated differential against juice
+*/roundtrip/table-sections  <tbody>/<tfoot> do not close an open <thead>/<tbody> as htmlparser2 does
+*/roundtrip/ruby  <rt>/<rp> do not close an open <rt>/<rp> as htmlparser2 does
+*/roundtrip/p-not-closed  <menu> and <hgroup> close an open <p>; htmlparser2 does not
+default/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
+inline-pseudo-elements/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
+no-attributes/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
+no-css-variables/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
+preserve-important/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
