@@ -149,3 +149,4 @@ no-css-variables/cascade/pseudo-first-selector  juice 9 writes a preserved selec
 preserve-important/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
 preserve-important/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
 preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
+*/l4-spec/is-type-argument  juice 9 does not match :is() or :where()
