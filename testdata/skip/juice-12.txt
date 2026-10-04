@@ -46,4 +46,3 @@ preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.
 
-*/l4-spec/is-matches-twice  a selector applies once per :is()/:where() alternative that matches; juice applies it once

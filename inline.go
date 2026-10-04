@@ -187,13 +187,23 @@ func (in *Inliner) process(root *html.Node) error {
 	return p.run(root)
 }
 
+// appendRules adds one stylesheet's rules, keeping their groups distinct from
+// those of earlier stylesheets.
+func appendRules(dst, src []rule) []rule {
+	off := int32(len(dst))
+	for i := range src {
+		src[i].group += off
+	}
+	return append(dst, src...)
+}
+
 func (in *pass) run(root *html.Node) error {
 	o := in.o
 
 	rules, keep := in.collectCSS(root)
 	if extra := strings.TrimSpace(o.extraCSS); extra != "" {
 		r, k, _ := parseStylesheet([]byte(extra), o, uint32(len(rules))<<8)
-		rules = append(rules, r...)
+		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
 
@@ -241,7 +251,7 @@ func (in *pass) collectCSS(root *html.Node) ([]rule, []preserved) {
 		var k []preserved
 		if o.applyStyleTags {
 			r, k, ord = parseStylesheet([]byte(s.FirstChild.Data), o, ord)
-			rules = append(rules, r...)
+			rules = appendRules(rules, r)
 		}
 
 		if !o.removeStyleTags {
@@ -270,6 +280,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 			return
 		}
 		var m *propMap
+		applied := int32(-1)
 		rs.forEach(n, &sc, func(i int, r *rule) {
 			if r.pseudo != pseudoNone {
 				// Declarations for ::before/::after belong to a detached
@@ -277,6 +288,12 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// and the base element is not touched at all.
 				return
 			}
+			// One selector applies once, however many of its :is()
+			// expansions match.
+			if r.group == applied {
+				return
+			}
+			applied = r.group
 			if m == nil {
 				m = &propMap{}
 				// The existing style attribute seeds the map on first match.
