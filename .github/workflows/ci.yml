@@ -46,3 +46,29 @@ jobs:
         with:
           name: ${{ matrix.target }}-crashers
           path: testdata/fuzz
+
+  # Generated documents against juice, with a fresh seed each night. A small
+  # run on every change keeps the harness itself from rotting.
+  differential:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+          cache-dependency-path: testdata/oracle/package-lock.json
+      - name: differential against juice
+        env:
+          JUICER_DIFFERENTIAL_DUMP: ${{ runner.temp }}/mismatches.jsonl
+        run: make differential SEED=${{ github.run_id }} COUNT=${{ github.event_name == 'schedule' && '50000' || '2000' }}
+      # Each line is a minimized document with both outputs; add it as a fixture.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: differential-mismatches
+          path: ${{ runner.temp }}/mismatches.jsonl

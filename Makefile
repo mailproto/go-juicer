@@ -1,4 +1,4 @@
-.PHONY: test vet goldens goldens-verify bench fmt
+.PHONY: test vet goldens goldens-verify bench fmt differential
 
 ORACLE := testdata/oracle
 
@@ -25,3 +25,11 @@ bench-node: ## juice on the same document, for comparison
 
 bench:
 	go test -run "^$$" -bench . -benchmem -count 10
+
+SEED ?= 1
+COUNT ?= 10000
+CORPUS ?= $(CURDIR)/testdata/differential.jsonl
+
+differential: ## compare with juice on COUNT generated documents from SEED, minimizing mismatches
+	cd $(ORACLE) && npm ci --silent && node differential.mjs --seed $(SEED) --count $(COUNT) > $(CORPUS)
+	JUICER_DIFFERENTIAL=$(CORPUS) JUICER_MINIMIZE=1 go test -run TestDifferential -v -timeout 60m .

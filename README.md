@@ -99,6 +99,14 @@ depends on insertion order, so any accidental reliance on Go map iteration
 shows up there and nowhere else. CI runs each for 30 seconds on every change
 and 5 minutes nightly.
 
+`make differential SEED=n COUNT=n` generates random email-like documents
+(`testdata/oracle/differential.mjs`), inlines each with juice under random
+options, and requires byte-identical output from this package. A mismatch is
+minimized against a live juice process before it is reported, so it arrives
+as a few bytes of HTML ready to become a fixture. CI runs 2,000 documents on
+every change and 50,000 with a fresh seed nightly; the generator avoids the
+deliberate divergences below, so any mismatch is a bug.
+
 ### Why the HTML parser is not `html.Parse`
 
 Byte-exactness rules out `x/net/html`'s `Parse` and `Render`. juice parses
