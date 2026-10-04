@@ -2,6 +2,9 @@ package juicer
 
 import (
 	"bytes"
+	"cmp"
+	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -50,6 +53,10 @@ var openImpliesClose = map[string]map[string]bool{
 	"optgroup": {"optgroup": true, "option": true},
 	"dd":       {"dt": true, "dd": true},
 	"dt":       {"dt": true, "dd": true},
+	"rt":       {"rt": true, "rp": true},
+	"rp":       {"rt": true, "rp": true},
+	"tbody":    {"thead": true, "tbody": true},
+	"tfoot":    {"thead": true, "tbody": true},
 }
 
 var formTags = map[string]bool{
@@ -66,8 +73,7 @@ func init() {
 		"p", "h1", "h2", "h3", "h4", "h5", "h6",
 		"address", "article", "aside", "blockquote", "details", "div", "dl",
 		"fieldset", "figcaption", "figure", "footer", "form", "header",
-		"hgroup", "hr", "main", "menu", "nav", "ol", "pre", "section",
-		"table", "ul",
+		"hr", "main", "nav", "ol", "pre", "section", "table", "ul",
 	} {
 		openImpliesClose[t] = pTag
 	}
@@ -380,7 +386,9 @@ func scanStartTag(b []byte) (string, []html.Attribute) {
 		if i >= len(b) || b[i] == '>' {
 			break
 		}
+		// Any first character starts a name, "=" included, as in htmlparser2.
 		ns := i
+		i++
 		for i < len(b) && !isSpace(b[i]) && b[i] != '=' && b[i] != '>' && b[i] != '/' {
 			i++
 		}
@@ -457,7 +465,7 @@ func render(buf *bytes.Buffer, n *html.Node) {
 	if n.Type == html.ElementNode {
 		buf.WriteByte('<')
 		buf.WriteString(n.Data)
-		for _, a := range n.Attr {
+		for _, a := range jsKeyOrder(n.Attr) {
 			buf.WriteByte(' ')
 			buf.WriteString(a.Key)
 			if a.Val != "" {
@@ -505,6 +513,39 @@ func renderDocument(n *html.Node) []byte {
 	var buf bytes.Buffer
 	render(&buf, n)
 	return buf.Bytes()
+}
+
+// jsKeyOrder orders attributes the way juice emits them from a JavaScript
+// object: names that are array indices first, ascending, then the rest in
+// insertion order.
+func jsKeyOrder(attrs []html.Attribute) []html.Attribute {
+	if !slices.ContainsFunc(attrs, func(a html.Attribute) bool { _, ok := arrayIndex(a.Key); return ok }) {
+		return attrs
+	}
+	out := slices.Clone(attrs)
+	slices.SortStableFunc(out, func(a, b html.Attribute) int {
+		x, xok := arrayIndex(a.Key)
+		y, yok := arrayIndex(b.Key)
+		switch {
+		case xok && yok:
+			return cmp.Compare(x, y)
+		case xok:
+			return -1
+		case yok:
+			return 1
+		}
+		return 0
+	})
+	return out
+}
+
+// arrayIndex reports whether s is a canonical JavaScript array index.
+func arrayIndex(s string) (uint64, bool) {
+	if s == "" || len(s) > 10 || s[0] < '0' || s[0] > '9' || (s[0] == '0' && s != "0") {
+		return 0, false
+	}
+	v, err := strconv.ParseUint(s, 10, 64)
+	return v, err == nil && v <= 1<<32-2
 }
 
 // --- small helpers over html.Node ---

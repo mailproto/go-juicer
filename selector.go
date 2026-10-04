@@ -2,6 +2,7 @@ package juicer
 
 import (
 	"bytes"
+	"slices"
 	"strings"
 
 	"github.com/andybalholm/cascadia"
@@ -43,6 +44,25 @@ const (
 // because they have no inline equivalent.
 var ignoredPseudos = map[string]bool{
 	"hover": true, "active": true, "focus": true, "visited": true, "link": true,
+}
+
+// hasIgnoredPseudo is juice's matchesPseudo: a plain substring test for
+// ":hover" and friends, so ":hovered" and "::link" count too.
+func hasIgnoredPseudo(sel []byte) bool {
+	for i := bytes.IndexByte(sel, ':'); i >= 0; {
+		rest := sel[i+1:]
+		for p := range ignoredPseudos {
+			if len(rest) >= len(p) && string(rest[:len(p)]) == p {
+				return true
+			}
+		}
+		j := bytes.IndexByte(rest, ':')
+		if j < 0 {
+			break
+		}
+		i += 1 + j
+	}
+	return false
 }
 
 // nonVisualElements never receive a style attribute. This is an element-level
@@ -145,11 +165,9 @@ func expandFunctional(arm []byte) [][]byte {
 				if len(next) >= maxExpansion {
 					break
 				}
-				v := make([]byte, 0, len(cand)+len(alt))
-				v = append(v, cand[:at]...)
-				v = append(v, alt...)
-				v = append(v, cand[end:]...)
-				next = append(next, v)
+				if v, ok := spliceAlternative(cand, at, end, alt); ok {
+					next = append(next, v)
+				}
 			}
 		}
 		out = next
@@ -157,6 +175,53 @@ func expandFunctional(arm []byte) [][]byte {
 			return out
 		}
 	}
+}
+
+// spliceAlternative replaces cand[at:end], an :is()-style call, with one of
+// its alternatives. A type selector in the alternative has to lead its
+// compound, so "p.c:where(p)" becomes "p.c" rather than "p.cp", and one that
+// conflicts with the compound's own type can never match (ok is false).
+// Alternatives with combinators are spliced as they are.
+func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool) {
+	splice := func(pre, mid []byte) []byte {
+		v := make([]byte, 0, len(cand)+len(alt))
+		v = append(v, pre...)
+		v = append(v, mid...)
+		return append(v, cand[end:]...)
+	}
+	altType := typeSelectorLen(alt)
+	if altType == 0 || bytes.ContainsAny(alt, " \t\n>+~") {
+		return splice(cand[:at], alt), true
+	}
+	cs := at
+	for cs > 0 && !bytes.ContainsRune([]byte(" \t\n>+~("), rune(cand[cs-1])) {
+		cs--
+	}
+	altT, rest := alt[:altType], alt[altType:]
+	pre := cand[:at]
+	switch pt := cand[cs : cs+typeSelectorLen(cand[cs:at])]; {
+	case len(pt) == 0:
+		pre = slices.Concat(cand[:cs], altT, cand[cs:at])
+	case string(altT) == "*" || bytes.EqualFold(pt, altT):
+	case string(pt) == "*":
+		pre = slices.Concat(cand[:cs], altT, cand[cs+1:at])
+	default:
+		return nil, false
+	}
+	return splice(pre, rest), true
+}
+
+// typeSelectorLen is the length of the type or universal selector leading s.
+func typeSelectorLen(s []byte) int {
+	switch {
+	case len(s) == 0:
+		return 0
+	case s[0] == '*':
+		return 1
+	case isSelectorNameStart(s[0]):
+		return identEnd(s, 0)
+	}
+	return 0
 }
 
 // findSelectorList locates the first top-level :is()/:where()/:matches().

@@ -63,8 +63,10 @@ func (m *propMap) add(p property) {
 	p.next = -1
 	if cur := m.find(p.prop); cur >= 0 {
 		e := &m.slots[cur]
-		// The incumbent keeps the property unless the newcomer outranks it.
-		if p.key < e.key || (p.key == e.key && p.ord <= e.ord) {
+		// The incumbent keeps the property only if it strictly outranks the
+		// newcomer. Two arms of one selector list tie exactly, since they
+		// share declarations, and juice lets the later arm win.
+		if p.key < e.key || (p.key == e.key && p.ord < e.ord) {
 			return
 		}
 		e.dead = true

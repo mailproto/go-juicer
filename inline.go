@@ -271,6 +271,12 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		}
 		var m *propMap
 		rs.forEach(n, &sc, func(i int, r *rule) {
+			if r.pseudo != pseudoNone {
+				// Declarations for ::before/::after belong to a detached
+				// element; without materialization they are simply dropped,
+				// and the base element is not touched at all.
+				return
+			}
 			if m == nil {
 				m = &propMap{}
 				// The existing style attribute seeds the map on first match.
@@ -279,12 +285,6 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
 					m.seedInline([]byte(v), o)
 				}
-			}
-			if r.pseudo != pseudoNone {
-				// Declarations for ::before/::after belong to a detached
-				// element; without materialization they are simply dropped,
-				// but they must not leak onto the base element.
-				return
 			}
 			for _, d := range r.decls {
 				if d.prop == "" {
