@@ -55,3 +55,15 @@ inline-pseudo-elements/cascade/empty-pseudo-rules  an empty top-level rule with 
 no-attributes/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
 no-css-variables/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
 preserve-important/cascade/empty-pseudo-rules  an empty top-level rule with a pseudo-class is dropped; juice preserves it
+*/cascade/pseudo-element-untouched  a ::before/::after rule rewrites the element's style attribute; juice leaves the element untouched
+*/serialization/attr-odd-names  attributes named like array indices are not ordered first (juice keeps them in a JS object), and "=" is dropped as an attribute name
+default/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
+default/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
+inline-pseudo-elements/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
+inline-pseudo-elements/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
+no-attributes/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
+no-attributes/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
+no-css-variables/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
+no-css-variables/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
+preserve-important/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
+preserve-important/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
