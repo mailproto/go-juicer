@@ -26,6 +26,7 @@ type rule struct {
 	spec    [3]int // ids, classes+attrs, types+pseudos
 	pseudo  uint8
 	order   uint32
+	group   int32 // index of the first rule expanded from the same selector
 	key     keyKind
 	keyName string
 	decls   []decl
