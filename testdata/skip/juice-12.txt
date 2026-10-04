@@ -67,3 +67,5 @@ no-css-variables/cascade/preserved-declarations  preserved rules drop !important
 no-css-variables/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
 preserve-important/cascade/preserved-declarations  preserved rules drop !important as written, comments in values, custom properties and whitespace before ;
 preserve-important/cascade/pseudo-first-selector  a rule is preserved when any selector has a pseudo-class; juice checks only the first
+*/cascade/selector-list-ties  two arms of one selector list tie exactly; juice lets the later arm win, we keep the earlier
+*/l4-spec/is-type-argument  a type selector inside :is()/:where() is spliced mid-compound ("p.c:where(p)" becomes "p.cp")
