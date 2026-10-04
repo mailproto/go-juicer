@@ -90,9 +90,12 @@ Goldens are written only by `testdata/oracle/generate.mjs`. There is no
 `-update` flag on the Go side: regenerating expectations from the code under
 test would certify the implementation against itself.
 
-`FuzzCSS` checks that inlining never panics and is deterministic. Determinism
-is the one that earns its keep — the cascade depends on insertion order, so
-any accidental reliance on Go map iteration shows up there and nowhere else.
+`FuzzCSS` (stylesheets) and `FuzzDocument` (whole documents under every
+combination of boolean options) check that inlining never panics and is
+deterministic. Determinism is the one that earns its keep — the cascade
+depends on insertion order, so any accidental reliance on Go map iteration
+shows up there and nowhere else. CI runs each for 30 seconds on every change
+and 5 minutes nightly.
 
 ### Why the HTML parser is not `html.Parse`
 

@@ -1,5 +1,9 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 6 * * *'
 
 jobs:
   test:
@@ -21,3 +25,24 @@ jobs:
       # release silently change our expectations with nobody reviewing it.
       - name: goldens match pinned juice
         run: make goldens-verify
+
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [FuzzCSS, FuzzDocument]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      # A smoke run on every change; the nightly run digs deeper.
+      - run: go test -run '^$' -fuzz '^${{ matrix.target }}$' -fuzztime ${{ github.event_name == 'schedule' && '5m' || '30s' }} .
+      # Commit a failing input under testdata/fuzz so it replays as a regression test.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-crashers
+          path: testdata/fuzz

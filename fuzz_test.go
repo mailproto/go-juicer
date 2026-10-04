@@ -43,6 +43,60 @@ func FuzzCSS(f *testing.F) {
 	})
 }
 
+// fuzzOptions maps each bit of a fuzzed mask to one boolean option, so the
+// fuzzer explores option combinations alongside documents.
+var fuzzOptions = []func(bool) Option{
+	ApplyStyleTags, RemoveStyleTags, PreserveMediaQueries, PreserveFontFaces,
+	PreserveKeyFrames, PreservePseudos, PreserveImportant, ApplyWidthAttributes,
+	ApplyHeightAttributes, ApplyAttributesTableElements, ResolveCSSVariables,
+	InlinePseudoElements, RemoveIDs, RemoveClasses, RemoveComments,
+	ResetContentEditable,
+}
+
+// FuzzDocument fuzzes whole documents under every option combination, which
+// reaches the HTML parser, serializer and code-block masking that FuzzCSS
+// never touches.
+func FuzzDocument(f *testing.F) {
+	for _, doc := range seedDocs(f) {
+		f.Add(doc, uint16(0))
+		f.Add(doc, uint16(0xFFFF))
+	}
+
+	f.Fuzz(func(t *testing.T, doc string, mask uint16) {
+		if len(doc) > 16384 {
+			t.Skip()
+		}
+		var opts []Option
+		for i, opt := range fuzzOptions {
+			opts = append(opts, opt(mask&(1<<i) != 0))
+		}
+		in := New(opts...)
+		a, errA := in.Inline(doc)
+		b, errB := in.Inline(doc)
+		if (errA == nil) != (errB == nil) {
+			t.Fatalf("nondeterministic error: %v vs %v", errA, errB)
+		}
+		if a != b {
+			t.Fatalf("nondeterministic output for %q:\n  %q\n  %q", doc, a, b)
+		}
+	})
+}
+
+func seedDocs(f *testing.F) []string {
+	f.Helper()
+	var out []string
+	root := filepath.Join("testdata", "in")
+	_ = filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && strings.HasSuffix(p, ".html") {
+			if b, err := os.ReadFile(p); err == nil {
+				out = append(out, string(b))
+			}
+		}
+		return nil
+	})
+	return out
+}
+
 func seedCSS(f *testing.F) []string {
 	f.Helper()
 	var out []string
