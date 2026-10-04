@@ -14,7 +14,6 @@ inline-pseudo-elements/pseudo-elements/single-colon  inlinePseudoElements is not
 inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is not implemented yet
 
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/inline-content/css-variables  var() is matched case-sensitively; CSS function names are case-insensitive (`VAR(--x)`)
 default/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 inline-pseudo-elements/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
@@ -28,12 +27,6 @@ no-attributes/juice-suite/inline-content/media  @media from extraCss is not pres
 no-css-variables/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 preserve-important/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
-default/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
-inline-pseudo-elements/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
-keep-style-tags/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
-no-css-variables/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
-no-preserve/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
-preserve-important/juice-suite/juice-content/important  attributes promoted from an !important value keep the suffix (`width="100% !important"`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/layers-preserve  preserveLayers is not supported
 */juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
@@ -42,7 +35,6 @@ preserve-important/juice-suite/juice-content/important  attributes promoted from
 */juice-suite/juice-content/nesting-pseudo  CSS nesting is not flattened, and a nested `&:hover` is preserved verbatim, twice
 */juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
-*/juice-suite/juice-content/table-attr  promoted background/bgcolor attributes are emitted in a different order
 */juice-suite/juice-content/xml  xmlMode is not supported
 default/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 inline-pseudo-elements/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them

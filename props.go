@@ -2,6 +2,8 @@ package juicer
 
 import (
 	"bytes"
+	"cmp"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -73,6 +75,26 @@ func (m *propMap) add(p property) {
 		}
 	}
 	m.slots = append(m.slots, p)
+}
+
+// order returns the live properties in juice's styleProps key order: where a
+// property was first set, except that an override from a different rule moves
+// it to the end. A same-rule chain therefore sits where its oldest slot does.
+func (m *propMap) order() []int32 {
+	pos := func(i int32) int32 {
+		for m.slots[i].next >= 0 {
+			i = m.slots[i].next
+		}
+		return i
+	}
+	var heads []int32
+	for i := range m.slots {
+		if !m.slots[i].dead {
+			heads = append(heads, int32(i))
+		}
+	}
+	slices.SortFunc(heads, func(a, b int32) int { return cmp.Compare(pos(a), pos(b)) })
+	return heads
 }
 
 // live returns the emittable slots, newest-wins order resolved, chains
