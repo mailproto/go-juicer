@@ -58,19 +58,38 @@ func BenchmarkParseCSS(b *testing.B) {
 // TestAllocBudget gates on allocations rather than wall time: benchmark
 // timings on shared CI runners are noisy enough that any threshold is either
 // useless or a flake generator, while allocation counts are deterministic.
+//
+// Every benchmark document has a budget. Raise one deliberately, in a reviewed
+// commit; lower it when an improvement lands so the gain cannot quietly erode.
 func TestAllocBudget(t *testing.T) {
-	doc := []byte(benchDoc())
+	budgets := map[string]float64{
+		"inline":            31000,
+		"tiny":              75,
+		"small":             950,
+		"manyRulesFewNodes": 18500,
+		"fewRulesManyNodes": 79500,
+		"unbucketable":      8200,
+		"deepDescendant":    8400,
+		"large":             152000,
+	}
+	docs := map[string]string{"inline": benchDoc()}
+	for _, s := range shapes {
+		docs[s.name] = s.gen()
+	}
 	in := New()
-	r := testing.Benchmark(func(b *testing.B) {
-		for b.Loop() {
-			in.InlineBytes(doc)
+	for name, doc := range docs {
+		budget, ok := budgets[name]
+		if !ok {
+			t.Errorf("%s: no allocation budget", name)
+			continue
 		}
-	})
-	const budget = 60000 // raise deliberately, in a reviewed commit
-	if n := r.AllocsPerOp(); n > budget {
-		t.Errorf("allocs/op = %d, over the budget of %d", n, budget)
-	} else {
-		t.Logf("allocs/op = %d (budget %d), %d B/op", n, budget, r.AllocedBytesPerOp())
+		b := []byte(doc)
+		n := testing.AllocsPerRun(3, func() { in.InlineBytes(b) })
+		if n > budget {
+			t.Errorf("%s: %.0f allocs/op, over the budget of %.0f", name, n, budget)
+		} else {
+			t.Logf("%s: %.0f allocs/op (budget %.0f)", name, n, budget)
+		}
 	}
 }
 
