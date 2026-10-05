@@ -187,3 +187,4 @@ no-preserve/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve 
 no-preserve/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
 preserve-important/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
 preserve-important/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+*/malformed/atrule-bare-declarations  declarations directly inside an at-rule block lose the valid rules that follow it
