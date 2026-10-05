@@ -72,3 +72,38 @@ jobs:
         with:
           name: differential-mismatches
           path: ${{ runner.temp }}/mismatches.jsonl
+
+  # Advisory only: shared runners are too noisy for timing to fail a build.
+  # TestAllocBudget in the test job is the hard gate.
+  bench:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+          cache-dependency-path: testdata/oracle/package-lock.json
+      - name: change against base
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo '### Benchmarks: base vs this change (advisory)'
+            echo '```'
+            make -s bench-compare BASE=${{ github.event.pull_request.base.sha }}
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: this package against juice
+        if: github.event_name == 'push'
+        run: |
+          {
+            echo '### Benchmarks: this package against juice'
+            make -s bench-report
+          } >> "$GITHUB_STEP_SUMMARY"
