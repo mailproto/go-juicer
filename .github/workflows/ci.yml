@@ -79,15 +79,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LANG: C.UTF-8
-      BUNDLE_GEMFILE: testdata/oracle/premailer/Gemfile
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '4.0'
           bundler-cache: true
+          working-directory: testdata/oracle/premailer
       - name: premailer outputs match pinned premailer
-        run: cd testdata/oracle/premailer && bundle exec ruby generate.rb --check
+        working-directory: testdata/oracle/premailer
+        run: bundle exec ruby generate.rb --check
 
   # Advisory only: shared runners are too noisy for timing to fail a build.
   # TestAllocBudget in the test job is the hard gate.

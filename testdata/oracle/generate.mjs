@@ -122,10 +122,13 @@ for (const [target, pkg] of Object.entries(TARGETS)) {
 }
 
 // A golden no fixture produces is stale, and would otherwise linger unnoticed.
-for await (const f of files(OUT)) {
-  if (written.has(f)) continue;
-  if (check) drift.push(`${path.relative(OUT, f)} (stale)`);
-  else await fs.rm(f);
+// Only juice's own target directories: testdata/out also holds premailer's.
+for (const target of Object.keys(TARGETS)) {
+  for await (const f of files(path.join(OUT, target))) {
+    if (written.has(f)) continue;
+    if (check) drift.push(`${path.relative(OUT, f)} (stale)`);
+    else await fs.rm(f);
+  }
 }
 
 const targets = Object.keys(TARGETS).join(', ');
