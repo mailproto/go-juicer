@@ -69,13 +69,15 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 2086 | 1980 | 106, each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 2086 | 1759 | 327: the same, plus behaviour juice 12 changed |
+| juice 12.1.3 | 3444 | 3282 | 162, each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 3444 | 3041 | 403: the same, plus behaviour juice 12 changed |
 
-`testdata/in/juice-suite` and `testdata/in/premailer-suite` hold the inputs
-from juice's and premailer's own test suites, so passing those is part of the
-same check. premailer's documents are checked against juice's output, since
-premailer re-serializes through libxml2 and cannot be compared byte for byte.
+`testdata/in/juice-suite`, `testdata/in/premailer-suite` and
+`testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
+premailer and the Rust css-inline crate, so passing those is part of the same
+check. All are checked against juice's output: premailer re-serializes through
+libxml2 and css-inline parses to the HTML5 spec, so neither can be compared
+byte for byte.
 
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
@@ -130,8 +132,8 @@ as quick as the full parser, and nothing is escaped on the way out.
 
 ## Deliberate divergences from juice
 
-Four cases where matching juice would mean matching a bug. The first three
-are covered by tests in `divergence_test.go`, the fourth by an `ALLOW` fixture.
+Five cases where matching juice would mean matching a bug. The first three
+are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 
 1. **Liquid templates.** juice's default `codeBlocks` covers Handlebars and
    EJS but not Liquid's `{% %}`, so it corrupts
@@ -140,14 +142,19 @@ are covered by tests in `divergence_test.go`, the fourth by an `ALLOW` fixture.
 2. **Cyclic custom properties.** `--a:var(--b);--b:var(--a)` recurses until
    juice's stack overflows, which makes a cyclic stylesheet a denial of
    service. Resolution here is depth-capped.
-3. **Encoded quotes in a style attribute.** juice throws a `CssSyntaxError` on
-   `style="font-family:&quot;A B&quot;"`, because `decodeStyleAttributes`
-   defaults off and the raw entity reaches postcss. This package inlines it.
+3. **Malformed style attributes.** juice throws, failing the whole document,
+   on a `style` attribute postcss cannot parse: `ttt { 123 }`, `----`, or
+   `font-family:&quot;A B&quot;` (`decodeStyleAttributes` defaults off, so the
+   raw entity reaches postcss). This package inlines the rest of the document.
 4. **HTML comment markers around a stylesheet.** Old email templates wrap
    CSS as `<style><!-- p { color: red } --></style>`. CSS ignores `<!--` and
    `-->` there, so browsers and premailer apply the rule; juice reads
    `<!-- p` as a selector and silently drops it. This package applies it.
    premailer's own `test_commented_out_styles_in_the_body` asserts the same.
+5. **Each `<style>` block is its own stylesheet.** juice concatenates every
+   block before parsing, so an unclosed `@media` in one swallows the rules of
+   the next and they are lost. Browsers parse each block separately, and so
+   does this package.
 
 ## Status
 

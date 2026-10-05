@@ -46,3 +46,13 @@ preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.
 
+
+# css-inline's test suite (testdata/in/css-inline-suite)
+*/css-inline-suite/tests/invalid_rule-test_case_1_wrong_color_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_2_ttt_123_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_3_wrong_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
+*/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
