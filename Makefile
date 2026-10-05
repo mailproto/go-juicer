@@ -1,4 +1,4 @@
-.PHONY: test vet goldens goldens-verify bench fmt differential
+.PHONY: test vet goldens goldens-verify premailer-outputs premailer-verify bench fmt differential
 
 ORACLE := testdata/oracle
 
@@ -22,6 +22,14 @@ bench-shapes: ## juice across all seven document shapes
 
 bench-node: ## juice on the same document, for comparison
 	cd $(ORACLE) && npm ci --silent && node bench.mjs
+
+PREMAILER := testdata/oracle/premailer
+
+premailer-outputs: ## regenerate premailer's outputs from the pinned gem (needs Ruby), then review the diff
+	cd $(PREMAILER) && bundle install --quiet && LANG=en_US.UTF-8 bundle exec ruby generate.rb
+
+premailer-verify: ## fail if committed premailer outputs disagree with the pinned gem
+	cd $(PREMAILER) && bundle install --quiet && LANG=en_US.UTF-8 bundle exec ruby generate.rb --check
 
 bench:
 	go test -run "^$$" -bench . -benchmem -count 10

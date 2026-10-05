@@ -72,3 +72,19 @@ jobs:
         with:
           name: differential-mismatches
           path: ${{ runner.temp }}/mismatches.jsonl
+
+  # The committed premailer outputs must still be what the pinned gem produces;
+  # TestPremailerSemantics in the test job compares against them.
+  premailer:
+    runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      BUNDLE_GEMFILE: testdata/oracle/premailer/Gemfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      - name: premailer outputs match pinned premailer
+        run: cd testdata/oracle/premailer && bundle exec ruby generate.rb --check

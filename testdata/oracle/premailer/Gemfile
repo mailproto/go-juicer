@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+
+# premailer is the semantic oracle; its output is not byte-comparable (libxml2).
+gem 'premailer', '1.31.0'
+gem 'nokogiri', '1.19.1'
