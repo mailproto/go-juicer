@@ -73,6 +73,23 @@ jobs:
           name: differential-mismatches
           path: ${{ runner.temp }}/mismatches.jsonl
 
+  # Every fixture rendered in headless Chrome as written and as inlined must
+  # produce the same computed styles, apart from testdata/skip/cascade.txt.
+  cascade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+          cache-dependency-path: testdata/oracle/package-lock.json
+      - run: make cascade CHROME_PATH="$(command -v google-chrome)"
+
   # The committed premailer outputs must still be what the pinned gem produces;
   # TestPremailerSemantics in the test job compares against them.
   premailer:
