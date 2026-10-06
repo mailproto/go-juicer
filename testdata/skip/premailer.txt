@@ -1,0 +1,80 @@
+# Documents whose meaning differs between premailer and this package, with
+# the reason. Format: <fixture>  <reason>. Self-ratcheting like the parity
+# lists: a line whose document now agrees fails the build until it is removed.
+#
+# Most are premailer's own behaviour rather than bugs here; the reason says
+# which. A few (pseudo-class specificity, CSS nesting) are open questions or
+# missing features on this side.
+
+at-rules/nested-not-inlined  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+cascade/dup-progressive  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+cascade/pseudo-first-selector  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+cascade/selector-list-ties  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
+comments/in-values  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
+css-inline-suite/benchmarks/big_email_1  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+css-inline-suite/benchmarks/big_email_2  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
+css-inline-suite/tests/child_all_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+css-inline-suite/tests/child_follow_by_adjacent_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+css-inline-suite/tests/child_follow_by_last_child_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+css-inline-suite/tests/do_not_process_and_remove_style_tag  malformed CSS is recovered differently by css_parser and postcss
+css-inline-suite/tests/extra_css  premailer applies css_string before <style> rules; juice applies extraCss after them
+css-inline-suite/tests/first_child_descendant_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+css-inline-suite/tests/remove_inlined_selectors_only_at_rules  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+duplicates/gradient-fallback  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+important/spaced-bang  premailer's css_parser recognises only the exact !important spelling
+inline-seed/important-spellings  premailer's css_parser recognises only the exact !important spelling
+inline-seed/quotes  malformed CSS is recovered differently by css_parser and postcss
+juice-suite/cli/code-block-cli  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+juice-suite/inline-content/css-variables  premailer does not resolve CSS custom properties
+juice-suite/inline-content/entities  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+juice-suite/inline-content/ignore-pseudos  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+juice-suite/inline-content/multiple-properties-occourences  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+juice-suite/inline-content/pseudo-specificity  premailer scores pseudo-classes like classes (as CSS does); juice scores them like type selectors
+juice-suite/juice-content/media-preserve  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+juice-suite/juice-content/nesting-atrule  premailer flattens CSS nesting; this package does not yet
+juice-suite/juice-content/nesting-basic  premailer flattens CSS nesting; this package does not yet
+juice-suite/juice-content/nesting-pseudo  premailer flattens CSS nesting; this package does not yet
+l4-spec/is-matches-twice  premailer's selector engine (Nokogiri) does not support :is() or :where()
+l4-spec/is-nested  premailer's selector engine (Nokogiri) does not support :is() or :where()
+l4-spec/is-specificity  premailer's selector engine (Nokogiri) does not support :is() or :where()
+l4-spec/is-type-argument  premailer's selector engine (Nokogiri) does not support :is() or :where()
+l4-spec/is  premailer's selector engine (Nokogiri) does not support :is() or :where()
+malformed/atrule-bare-declarations  malformed CSS is recovered differently by css_parser and postcss
+malformed/unclosed-pseudo-arg  malformed CSS is recovered differently by css_parser and postcss
+malformed/var-unterminated  malformed CSS is recovered differently by css_parser and postcss
+markup-decl/cdata  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/close-tags  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/comment-ends  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/declarations  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-bang  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-cdata-partial  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-cdata  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-comment-open  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-comment  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-dash  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-declaration  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+markup-decl/eof-pi  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/links/appending_link_query_string-2  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/links/appending_link_query_string  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/links/convertable_inline_links  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/links/non_convertable_inline_links  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/misc/css_to_attributes_preserves_existing_html_attributes  premailer lets an existing bgcolor attribute beat a stylesheet rule; in CSS the rule wins
+premailer-suite/misc/handling_shorthand_auto_properties  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
+premailer-suite/misc/ignoring_link_pseudo_selectors  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+premailer-suite/misc/style_with_data_in_content  premailer keeps the content property in style attributes; juice drops it
+premailer-suite/misc/style_without_data_in_content  premailer keeps the content property in style attributes; juice drops it
+premailer-suite/premailer/detecting_plain_text  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/premailer/htmlentities  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/premailer/input_encoding  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/premailer/invalid_declaration_only_match_keeps_empty_style_nokogiri  malformed CSS is recovered differently by css_parser and postcss
+premailer-suite/premailer/output_encoding  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+premailer-suite/premailer/premailer_related_attributes  premailer turns its own -premailer-width/-premailer-height properties into attributes
+premailer-suite/premailer/preserving_ignored_link_elements  premailer honours its own data-premailer="ignore"; juice does not
+premailer-suite/premailer/rgb_color_without_commas_and_with_alpha_modifier  premailer drops a color's alpha channel when it writes bgcolor
+premailer-suite/premailer/rgb_color_without_commas_and_with_percentage_modifier  premailer drops a color's alpha channel when it writes bgcolor
+roundtrip/close-br-p  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+roundtrip/p-not-closed  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+serialization/style-in-string  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
+style-tags/data-embed  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+variables/function-name  premailer does not resolve CSS custom properties
+variables/in-shorthand  premailer does not resolve CSS custom properties

@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>a:before {
+content: "a";
+}
+a:after {
+content: "a";
+}
+* a:before {
+content: '®\+';
+}
+a:after {
+font-weight: bold;
+}
+a::after {
+font-weight: bold;
+}
+b:after {
+content: " ";
+}
+b:after {
+content: "b"; color: green;
+}
+</style>
+</head>
+<body>
+
+<a href="#" style="text-decoration: underline; color: blue;">Test</a>
+<b></b>
+<b><span style="color: red;"></span></b>
+</body>
+</html>

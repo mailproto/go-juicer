@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>body {
+--var: 'Element'; counter-reset: element 20 other;
+}
+a:before {
+content: "a";
+}
+a:after {
+content: "a";
+}
+* a:before {
+content: '®\+';
+}
+a:after {
+font-weight: bold;
+}
+a::after {
+font-weight: bold;
+}
+b:after {
+content: " ";
+}
+b:after {
+content: "b"; color: green;
+}
+d:before {
+content: url(data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=);
+}
+d:after {
+content: url('data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs='); width: 20%;
+}
+e:before {
+content: var(--var) " / " counter(element) '. ' counter(other);
+}
+e[length]:after {
+content: ' | Length: ' attr(length) ' [' counter(element, lower-roman) ':' counter(element, upper-latin) ']';
+}
+f:before {
+content: counter(other);
+}
+</style>
+</head>
+<body style="--var: 'Element'; counter-reset: element 20 other;">
+
+<a href="#" style="text-decoration: underline; color: blue;">Test</a>
+<b></b>
+<b><span style="color: red;"></span></b>
+<c style="color: red;"></c>
+<c class="not"></c>
+<d><span>test</span></d>
+<e style="counter-increment: element other -2;"><span></span></e>
+<e length="100" style="counter-increment: element other -2;"><span>Test</span></e>
+<f style="counter-increment: other;"><span></span></f>
+<f style="counter-increment: other;"><span></span></f>
+</body>
+</html>

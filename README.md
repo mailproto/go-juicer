@@ -60,6 +60,16 @@ check. All are checked against juice's output: premailer re-serializes through
 libxml2 and css-inline parses to the HTML5 spec, so neither can be compared
 byte for byte.
 
+premailer is checked by meaning instead. `testdata/out/premailer` holds the
+Ruby gem's output for every fixture (pinned in
+`testdata/oracle/premailer/Gemfile.lock`; `make premailer-outputs`), and
+`TestPremailerSemantics` parses it and this package's output with the same
+HTML5 parser, then compares every element's declarations after folding
+together what does not change rendering: presentational attributes, shorthand
+splits, quotes and color spellings. 419 of 491 documents agree; the rest are
+listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
+own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
+
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
 juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;

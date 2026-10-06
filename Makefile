@@ -1,4 +1,4 @@
-.PHONY: test vet goldens goldens-verify bench bench-report bench-compare fmt differential
+.PHONY: test vet goldens goldens-verify premailer-outputs premailer-verify bench fmt differential bench-report bench-compare
 
 ORACLE := testdata/oracle
 
@@ -16,6 +16,14 @@ goldens: ## regenerate expectations from pinned juice, then review the diff
 
 goldens-verify: ## fail if committed goldens disagree with pinned juice
 	cd $(ORACLE) && npm ci --silent && node generate.mjs --check
+
+PREMAILER := testdata/oracle/premailer
+
+premailer-outputs: ## regenerate premailer's outputs from the pinned gem (needs Ruby), then review the diff
+	cd $(PREMAILER) && bundle install --quiet && LANG=en_US.UTF-8 bundle exec ruby generate.rb
+
+premailer-verify: ## fail if committed premailer outputs disagree with the pinned gem
+	cd $(PREMAILER) && bundle install --quiet && LANG=en_US.UTF-8 bundle exec ruby generate.rb --check
 
 bench:
 	go test -run "^$$" -bench . -benchmem -count 10
