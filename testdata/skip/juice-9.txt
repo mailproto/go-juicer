@@ -172,3 +172,24 @@ keep-style-tags/juice-suite/inline-content/media  juice 9's CSS parser (mensch) 
 no-attributes/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 no-css-variables/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 preserve-important/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+*/l4-spec/empty-whitespace  :empty treats whitespace-only text as empty
+*/l4-spec/ignored-pseudo-argument  ignored pseudo-classes inside arguments are not detected, so the rule is inlined
+*/l4-spec/is-complex-inside  an :is() alternative with combinators is spliced in as text, changing which element it constrains
+*/l4-spec/is-in-not  :is() inside :not() is not expanded, so the rule is dropped
+*/l4-spec/not-never-matching  :not() of a selector that never matches drops the rule
+*/l4-spec/pseudo-element-argument  a pseudo-element inside :is() is matched rather than rejecting the rule
+*/l4-spec/universal-type  "*a" is rejected rather than read as "a"
+*/malformed/semicolon-after-rule  a semicolon after a preserved rule's closing brace is dropped
+*/malformed/stray-semicolon-at-rule  a stray semicolon before an at-rule swallows the at-rule into a selector
+*/nesting/comments  CSS nesting is not flattened
+*/nesting/complex-parent  CSS nesting is not flattened
+*/nesting/compound  CSS nesting is not flattened
+*/nesting/custom-property  CSS nesting is not flattened
+*/nesting/declarations-after  CSS nesting is not flattened
+*/nesting/deep  CSS nesting is not flattened
+*/nesting/descendant  CSS nesting is not flattened
+*/nesting/list-parent  CSS nesting is not flattened
+*/nesting/media  CSS nesting is not flattened
+*/nesting/pseudo  CSS nesting is not flattened
+*/nesting/self  CSS nesting is not flattened
+*/nesting/semicolons  CSS nesting is not flattened
