@@ -80,12 +80,6 @@ no-preserve/variables/nested  juice 9 does not resolve CSS custom properties
 preserve-important/variables/nested  juice 9 does not resolve CSS custom properties
 
 # juice's own test suite (testdata/in/juice-suite)
-default/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-inline-pseudo-elements/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-no-attributes/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-no-css-variables/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-preserve-important/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
@@ -107,12 +101,6 @@ no-attributes/variables/function-name  juice 9 does not resolve CSS custom prope
 no-preserve/variables/function-name  juice 9 does not resolve CSS custom properties
 preserve-important/variables/function-name  juice 9 does not resolve CSS custom properties
 preserve-important/attrs/important-values  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
-default/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-inline-pseudo-elements/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-keep-style-tags/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-no-attributes/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-no-css-variables/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/integration  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 */comments/between-declarations  juice 9's CSS parser (mensch) strips every comment and trims what is left
 */comments/in-values  juice 9's CSS parser (mensch) strips every comment, even between tokens, and drops a declaration with one inside url()

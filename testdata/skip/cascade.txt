@@ -7,6 +7,7 @@
 cascade/nonvisual  limit: the rule matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 cascade/selector-list-ties  limit: :only-child matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 css-inline-suite/benchmarks/big_email_1  juice bug: a <style media="..."> element's media attribute is ignored, so mobile-only rules are inlined for everyone
+juice-suite/inline-content/ignore-pseudos  juice bug: pseudo-class rules in extraCss are dropped rather than preserved, so a:link styles are lost
 juice-suite/inline-content/pseudo-specificity  juice bug: pseudo-classes are scored like type selectors; CSS and browsers score them like classes
 juice-suite/juice-content/nesting-atrule  gap: CSS nesting is not flattened yet
 juice-suite/juice-content/nesting-basic  gap: CSS nesting is not flattened yet
@@ -15,9 +16,9 @@ juice-suite/juice-content/pseudo-elements  juice bug: <style> elements are remov
 juice-suite/juice-content/pseudo-elements-and-width-attr  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 l4-spec/attr-unquoted  juice bug: [width=600] is not valid CSS (an unquoted value must be an identifier), so browsers drop the rule and juice applies it
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
-roundtrip/p-not-closed  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
 premailer-suite/misc/style_with_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/unmergable_media_queries  limit: an inlined declaration outranks a later rule kept in a preserved @media block
 premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  juice bug: an invalid color is copied into bgcolor, where legacy attribute parsing turns it into a real color
+roundtrip/p-not-closed  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
 variables/function-name  juice bug: var (--x), with a space, is resolved, but CSS treats it as invalid
