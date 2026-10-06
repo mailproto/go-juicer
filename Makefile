@@ -1,4 +1,4 @@
-.PHONY: test vet goldens goldens-verify premailer-outputs premailer-verify bench fmt differential bench-report bench-compare
+.PHONY: test vet goldens goldens-verify cascade premailer-outputs premailer-verify bench fmt differential bench-report bench-compare
 
 ORACLE := testdata/oracle
 
@@ -16,6 +16,12 @@ goldens: ## regenerate expectations from pinned juice, then review the diff
 
 goldens-verify: ## fail if committed goldens disagree with pinned juice
 	cd $(ORACLE) && npm ci --silent && node generate.mjs --check
+
+CHROME_PATH ?= $(or $(shell command -v google-chrome),/Applications/Google Chrome.app/Contents/MacOS/Google Chrome)
+
+cascade: ## render every fixture in headless Chrome as written and inlined; computed styles must match
+	cd $(ORACLE) && npm ci --silent
+	JUICER_CASCADE=1 CHROME_PATH="$(CHROME_PATH)" go test -run TestCascade -timeout 20m .
 
 PREMAILER := testdata/oracle/premailer
 

@@ -70,6 +70,16 @@ splits, quotes and color spellings. 419 of 491 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
+Finally, a browser judges whether inlining preserved the cascade at all.
+`make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
+fixture in headless Chrome twice, as written and as inlined, and compares
+every element's computed style. 471 of 488 render identically. The rest are
+listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
+this package copies for parity: `<style media>` ignored, pseudo-class
+specificity, `:first-child` seeing a tree without `<style>` elements,
+`[width=600]`, and `content` on `<img>`. Each is a candidate for a deliberate
+divergence.
+
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
 juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;
