@@ -151,3 +151,40 @@ preserve-important/cascade/preserved-declarations  juice 9's CSS parser (mensch)
 preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
 */l4-spec/is-type-argument  juice 9 does not match :is() or :where()
 */l4-spec/is-matches-twice  juice 9 does not match :is() or :where()
+
+# css-inline's test suite (testdata/in/css-inline-suite)
+*/css-inline-suite/tests/invalid_rule-test_case_1_wrong_color_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_2_ttt_123_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_3_wrong_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_4_color_red_foo_invalid_rule_foo_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
+default/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
+default/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
+default/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
+inline-pseudo-elements/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
+inline-pseudo-elements/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
+inline-pseudo-elements/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
+no-attributes/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
+no-attributes/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
+no-attributes/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
+no-css-variables/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
+no-css-variables/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
+no-css-variables/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
+preserve-important/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
+preserve-important/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
+preserve-important/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
+default/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+default/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+inline-pseudo-elements/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+keep-style-tags/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+keep-style-tags/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+no-attributes/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+no-attributes/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+no-preserve/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+no-preserve/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+preserve-important/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
+preserve-important/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
+*/malformed/atrule-bare-declarations  declarations directly inside an at-rule block lose the valid rules that follow it
