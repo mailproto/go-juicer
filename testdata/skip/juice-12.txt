@@ -20,12 +20,6 @@ keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules fr
 no-attributes/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 no-css-variables/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-default/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-inline-pseudo-elements/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-keep-style-tags/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-no-attributes/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-no-css-variables/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-preserve-important/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/layers-preserve  preserveLayers is not supported
@@ -55,5 +49,3 @@ preserve-important/juice-suite/inline-content/normalize  pseudo-class rules from
 */css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
-*/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
-*/malformed/atrule-bare-declarations  declarations directly inside an at-rule block lose the valid rules that follow it

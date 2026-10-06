@@ -2,6 +2,7 @@ package juicer
 
 import (
 	"bytes"
+	"io"
 	"slices"
 
 	"github.com/tdewolff/parse/v2"
@@ -48,8 +49,18 @@ type preserved struct {
 // source, so the structure has to be rebuilt to match it byte for byte.
 type cssBlock struct {
 	prelude []byte
-	decls   []decl
-	blocks  []*cssBlock
+	items   []blockItem // declarations, comments and nested blocks, in source order
+}
+
+type blockItem struct {
+	decl  decl
+	block *cssBlock
+}
+
+func (b *cssBlock) add(ds ...decl) {
+	for _, d := range ds {
+		b.items = append(b.items, blockItem{decl: d})
+	}
 }
 
 // text renders a block with juice's formatting: two spaces per level, one
@@ -61,15 +72,15 @@ func (b *cssBlock) text(indent int) []byte {
 	out.Write(pad)
 	out.Write(b.prelude)
 	out.WriteString(" {")
-	for _, d := range b.decls {
+	for _, it := range b.items {
 		out.WriteByte('\n')
+		if it.block != nil {
+			out.Write(it.block.text(indent + 2))
+			continue
+		}
 		out.Write(pad)
 		out.WriteString("  ")
-		d.writeTo(&out)
-	}
-	for _, c := range b.blocks {
-		out.WriteByte('\n')
-		out.Write(c.text(indent + 2))
+		it.decl.writeTo(&out)
 	}
 	out.WriteByte('\n')
 	out.Write(pad)
@@ -100,13 +111,63 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 	var sel []byte
 	var decls []decl
 
+	closeAtRule := func() {
+		// Error recovery can leave tdewolff closing a block already closed.
+		if len(stack) == 0 {
+			return
+		}
+		done := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if len(stack) > 0 {
+			stack[len(stack)-1].items = append(stack[len(stack)-1].items, blockItem{block: done})
+		} else if preserveKind(atKind, opts) {
+			keep = append(keep, preserved{atKind, done.text(0)})
+		}
+	}
+
+	// pendingClose is set when error recovery consumed an at-rule's closing
+	// brace. tdewolff then emits an empty EndAtRule for some at-rules
+	// (@font-face) but not others (@media), so the close waits for the next
+	// event to tell which.
+	pendingClose := false
+
 	for {
 		gt, _, data := p.Next()
-		if gt == css.ErrorGrammar {
-			break
-		}
 		start, end := prev, p.Offset()
 		prev = end
+		if pendingClose {
+			pendingClose = false
+			closeAtRule()
+			if gt == css.EndAtRuleGrammar && start == end {
+				continue
+			}
+		}
+		if gt == css.ErrorGrammar {
+			if p.Err() == io.EOF || len(stack) == 0 {
+				break
+			}
+			// tdewolff has no grammar for a declaration directly inside an
+			// at-rule block, as in "@media (x) { padding: 0 }": it reports an
+			// error and resumes past the block's closing brace. postcss keeps
+			// such declarations, so read them into the block and close it.
+			span := src[start:end]
+			t := bytes.TrimRight(span, cssSpaces)
+			closed := len(t) > 0 && t[len(t)-1] == '}'
+			if closed {
+				span = t[:len(t)-1]
+			}
+			b := stack[len(stack)-1]
+			for _, seg := range splitDeclarationSpans(span) {
+				d := declParts(seg, false)
+				b.add(appendComments(nil, d.before)...)
+				if len(d.value) > 0 {
+					b.add(decl{prop: d.name, value: d.value, text: d.text})
+				}
+				b.add(appendComments(nil, d.after)...)
+			}
+			pendingClose = closed
+			continue
+		}
 
 		switch gt {
 		case css.BeginAtRuleGrammar:
@@ -124,13 +185,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			}
 
 		case css.EndAtRuleGrammar:
-			done := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			if len(stack) > 0 {
-				stack[len(stack)-1].blocks = append(stack[len(stack)-1].blocks, done)
-			} else if preserveKind(atKind, opts) {
-				keep = append(keep, preserved{atKind, done.text(0)})
-			}
+			closeAtRule()
 
 		case css.BeginRulesetGrammar:
 			sel = selectorText(src, start, end)
@@ -144,11 +199,11 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			v := d.value
 			if len(stack) > 0 {
 				b := stack[len(stack)-1]
-				b.decls = appendComments(b.decls, d.before)
+				b.add(appendComments(nil, d.before)...)
 				if len(v) > 0 {
-					b.decls = append(b.decls, decl{prop: d.name, value: v, text: d.text})
+					b.add(decl{prop: d.name, value: v, text: d.text})
 				}
-				b.decls = appendComments(b.decls, d.after)
+				b.add(appendComments(nil, d.after)...)
 				continue
 			}
 			decls = appendComments(decls, d.before)
@@ -167,8 +222,8 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			d := declParts(src[start:end], true)
 			if len(stack) > 0 {
 				b := stack[len(stack)-1]
-				b.decls = appendComments(b.decls, d.before)
-				b.decls = append(b.decls, decl{prop: d.name, value: d.value, text: d.text})
+				b.add(appendComments(nil, d.before)...)
+				b.add(decl{prop: d.name, value: d.value, text: d.text})
 				continue
 			}
 			decls = appendComments(decls, d.before)
@@ -180,12 +235,12 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			comments, _ := leadingComments(src[start:end])
 			if len(stack) > 0 {
 				b := stack[len(stack)-1]
-				b.decls = appendComments(b.decls, comments)
+				b.add(appendComments(nil, comments)...)
 				// A ruleset nested in an at-rule is preserved, never inlined.
 				if len(stack) > 1 {
 					done := stack[len(stack)-1]
 					stack = stack[:len(stack)-1]
-					stack[len(stack)-1].blocks = append(stack[len(stack)-1].blocks, done)
+					stack[len(stack)-1].items = append(stack[len(stack)-1].items, blockItem{block: done})
 				}
 				continue
 			}
@@ -323,6 +378,37 @@ type parsedDecl struct {
 }
 
 const cssSpaces = " \t\n\r\f"
+
+// splitDeclarationSpans cuts a run of declarations after each top-level ";",
+// keeping the semicolon with its declaration as a parser span would.
+func splitDeclarationSpans(b []byte) [][]byte {
+	var out [][]byte
+	depth, start := 0, 0
+	var quote byte
+	for i := 0; i < len(b); i++ {
+		switch c := b[i]; {
+		case quote != 0:
+			if c == '\\' {
+				i++
+			} else if c == quote {
+				quote = 0
+			}
+		case c == '"' || c == '\'':
+			quote = c
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+		case c == ';' && depth == 0:
+			out = append(out, b[start:i+1])
+			start = i + 1
+		}
+	}
+	if len(bytes.TrimSpace(b[start:])) > 0 {
+		out = append(out, b[start:])
+	}
+	return out
+}
 
 // declText is a value as postcss re-emits it in a preserved block: its raw
 // value and raw !important rejoined, which is the source text less leading

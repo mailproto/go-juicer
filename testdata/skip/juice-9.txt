@@ -86,12 +86,6 @@ keep-style-tags/juice-suite/inline-content/ignore-pseudos  pseudo-class rules fr
 no-attributes/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 no-css-variables/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
 preserve-important/juice-suite/inline-content/ignore-pseudos  pseudo-class rules from extraCss are preserved into a <style>; juice drops them
-default/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-inline-pseudo-elements/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-keep-style-tags/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-no-attributes/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-no-css-variables/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
-preserve-important/juice-suite/inline-content/media  @media from extraCss is not preserved into a <style>; juice inserts it
 */juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
@@ -160,19 +154,14 @@ preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved sel
 */css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
-default/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
 default/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 default/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
-inline-pseudo-elements/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
 inline-pseudo-elements/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 inline-pseudo-elements/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
-no-attributes/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
 no-attributes/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 no-attributes/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
-no-css-variables/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
 no-css-variables/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 no-css-variables/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
-preserve-important/css-inline-suite/tests/do_not_process_and_remove_style_tag  declarations directly inside an at-rule block lose the valid rules that follow it
 preserve-important/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 preserve-important/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
 default/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
@@ -187,4 +176,11 @@ no-preserve/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve 
 no-preserve/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
 preserve-important/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
 preserve-important/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-*/malformed/atrule-bare-declarations  declarations directly inside an at-rule block lose the valid rules that follow it
+*/css-inline-suite/tests/do_not_process_and_remove_style_tag  juice 9's CSS parser (mensch) gives up on a stylesheet with a declaration directly inside @media and inlines nothing
+*/malformed/atrule-bare-declarations  juice 9's CSS parser (mensch) misreads a declaration directly inside an at-rule as part of the next selector
+default/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+inline-pseudo-elements/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+keep-style-tags/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+no-attributes/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+no-css-variables/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
+preserve-important/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
