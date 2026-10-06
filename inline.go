@@ -202,7 +202,10 @@ func (in *pass) run(root *html.Node) error {
 
 	rules, keep := in.collectCSS(root)
 	if extra := strings.TrimSpace(o.extraCSS); extra != "" {
-		r, k, _ := parseStylesheet([]byte(extra), o, uint32(len(rules))<<8)
+		// juice never preserves pseudo-class rules from extraCss.
+		eo := *o
+		eo.preservePseudos = false
+		r, k, _ := parseStylesheet([]byte(extra), &eo, uint32(len(rules))<<8)
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
