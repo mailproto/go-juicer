@@ -15,7 +15,27 @@ juice-suite/juice-content/nesting-pseudo  gap: CSS nesting is not flattened yet
 juice-suite/juice-content/pseudo-elements  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 juice-suite/juice-content/pseudo-elements-and-width-attr  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 l4-spec/attr-unquoted  juice bug: [width=600] is not valid CSS (an unquoted value must be an identifier), so browsers drop the rule and juice applies it
+l4-spec/empty-whitespace  gap: :empty treats whitespace-only text as empty
+l4-spec/is-complex-inside  gap: an :is() alternative with combinators is spliced in as text
+l4-spec/is-in-not  gap: :is() inside :not() is not expanded, so the rule is dropped
+l4-spec/not-never-matching  gap: :not() of a selector that never matches drops the rule
+l4-spec/pseudo-element-argument  gap: a pseudo-element inside :is() is matched rather than rejecting the rule
+malformed/semicolon-after-rule  gap: a stray semicolon before an at-rule swallows the at-rule into a selector
+malformed/stray-semicolon-at-rule  gap: a stray semicolon before an at-rule swallows the at-rule into a selector
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
+nesting/comments  gap: CSS nesting is not flattened
+nesting/complex-parent  gap: CSS nesting is not flattened
+nesting/compound  gap: CSS nesting is not flattened
+nesting/custom-property  gap: CSS nesting is not flattened
+nesting/declarations-after  gap: CSS nesting is not flattened
+nesting/descendant  gap: CSS nesting is not flattened
+nesting/list-parent  gap: CSS nesting is not flattened
+nesting/media  gap: CSS nesting is not flattened
+nesting/not-parent  gap: CSS nesting is not flattened
+nesting/pseudo  gap: CSS nesting is not flattened
+nesting/self  gap: CSS nesting is not flattened
+nesting/semicolons  gap: CSS nesting is not flattened
+nesting/top-level-amp  gap: CSS nesting is not flattened
 premailer-suite/misc/style_with_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/unmergable_media_queries  limit: an inlined declaration outranks a later rule kept in a preserved @media block

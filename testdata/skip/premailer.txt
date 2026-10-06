@@ -77,3 +77,17 @@ serialization/style-in-string  premailer parses with libxml2's HTML4 parser, whi
 style-tags/data-embed  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 variables/function-name  premailer does not resolve CSS custom properties
 variables/in-shorthand  premailer does not resolve CSS custom properties
+l4-spec/empty-whitespace  :empty treats whitespace-only text as empty
+l4-spec/ignored-pseudo-argument  ignored pseudo-classes inside arguments are not detected, so the rule is inlined
+l4-spec/not-never-matching  :not() of a selector that never matches drops the rule
+l4-spec/pseudo-element-argument  a pseudo-element inside :is() is matched rather than rejecting the rule
+malformed/stray-semicolon-at-rule  a stray semicolon before an at-rule swallows the at-rule into a selector
+nesting/comments  CSS nesting is not flattened
+nesting/compound  CSS nesting is not flattened
+nesting/declarations-after  CSS nesting is not flattened
+nesting/deep  CSS nesting is not flattened
+nesting/descendant  CSS nesting is not flattened
+nesting/media  CSS nesting is not flattened
+nesting/pseudo  CSS nesting is not flattened
+nesting/self  CSS nesting is not flattened
+nesting/semicolons  CSS nesting is not flattened
