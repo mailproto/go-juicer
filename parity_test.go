@@ -228,7 +228,13 @@ func mapOptions(t *testing.T, juiceOpts map[string]any) (opts []Option, unsuppor
 			opts = append(opts, PreserveContainerQueries(b))
 		case "preserveLayers":
 			opts = append(opts, PreserveLayers(b))
-		case "insertPreservedExtraCss", "xmlMode":
+		case "insertPreservedExtraCss":
+			if s != "" {
+				opts = append(opts, InsertPreservedExtraCSSInto(s))
+			} else {
+				opts = append(opts, InsertPreservedExtraCSS(b))
+			}
+		case "xmlMode":
 			unsupported = append(unsupported, k)
 		default:
 			t.Fatalf("juice option %q is not mapped in parity_test.go", k)

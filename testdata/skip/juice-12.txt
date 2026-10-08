@@ -14,8 +14,6 @@ inline-pseudo-elements/pseudo-elements/single-colon  inlinePseudoElements is not
 inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is not implemented yet
 
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
-*/juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/xml  xmlMode is not supported
