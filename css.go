@@ -16,6 +16,7 @@ type decl struct {
 	value     []byte // sliced from the source, so original spacing survives
 	text      []byte // value and !important as written, for a preserved block
 	important bool
+	bang      []byte // value + " !important", for elements that keep it
 	ord       uint32 // position in the stylesheet; breaks specificity ties
 }
 
@@ -217,11 +218,13 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			decls = appendComments(decls, d.before)
 			// juice drops empty values, preserving mensch behaviour.
 			if len(v) > 0 {
-				// Scored as important either way; only the text may be dropped.
-				if d.important && opts.preserveImportant {
-					v = append(append([]byte{}, v...), " !important"...)
+				// Scored as important either way; whether the text keeps it
+				// is decided per element.
+				var bang []byte
+				if d.important {
+					bang = append(append([]byte{}, v...), " !important"...)
 				}
-				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, ord: ord})
+				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, bang: bang, ord: ord})
 				ord++
 			}
 			decls = appendComments(decls, d.after)
