@@ -228,5 +228,5 @@ inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preserved
 */important/attr-pseudo  juice 9 has no data-juice-important attribute, so keeps it and ignores it
 */important/attr-selector  juice 9 has no data-juice-important attribute, so keeps it and ignores it
 */important/attr-untouched  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/pseudo-elements/empty-argument  an argument left empty once a pseudo-element is stripped is dropped here, where css-select rejects the whole selector
-*/pseudo-elements/trailing-combinator  a combinator left at the end once a pseudo-element is stripped makes the selector unparseable here; css-select reads it as followed by *
+*/pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
+*/pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
