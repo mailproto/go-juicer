@@ -109,6 +109,8 @@ function atRule() {
     () => `@keyframes k{from{opacity:0}50%{opacity:.5}to{opacity:1}}`,
     () => `@import url(x.css);`,
     () => `@supports (display:grid){${rule()}}`,
+    () => `@layer base;`,
+    () => `@layer ${pick(['base', 'theme', ''])}{${times(1, 2, rule).join('')}}`,
     () => `@container ${pick(['(min-width:400px)', 'card (max-width: 30em)'])}{${times(1, 2, rule).join('')}}`,
     () => `@charset "utf-8";`,
   ])();
@@ -171,7 +173,7 @@ const OPTIONS = {
   preserveImportant: true, removeStyleTags: false, applyWidthAttributes: false,
   applyHeightAttributes: false, applyAttributesTableElements: false, preserveMediaQueries: false,
   preserveFontFaces: false, preserveKeyFrames: false, preservePseudos: false, resolveCSSVariables: false,
-  preserveContainerQueries: false,
+  preserveContainerQueries: false, preserveLayers: false,
 };
 
 for (let i = 0; i < count; i++) {
