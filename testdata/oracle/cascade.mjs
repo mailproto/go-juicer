@@ -35,6 +35,11 @@ async function newPage() {
   if (page) await page.close().catch(() => {});
   page = await browser.newPage();
   await page.setJavaScriptEnabled(false);
+  // Animated values depend on when they are read; hold every animation at
+  // its start so both renders are sampled at the same point.
+  const cdp = await page.createCDPSession();
+  await cdp.send('Animation.enable');
+  await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 });
   await page.setViewport({ width: 1024, height: 768 });
   await page.setRequestInterception(true);
   page.on('request', (r) => (r.url() === 'about:blank' || r.url().startsWith('data:') ? r.continue() : r.abort()));
