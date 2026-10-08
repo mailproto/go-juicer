@@ -195,3 +195,10 @@ inline-pseudo-elements/nesting/media  juice 9 does not support CSS nesting: it t
 */nesting/semicolons  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */nesting/not-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 inline-pseudo-elements/serialization/style-in-string  juice 9's mensch parser drops a declaration whose string is never closed
+*/preserved-selectors/basic  preservedSelectors is not supported
+*/preserved-selectors/extra-css  preservedSelectors is not supported
+*/preserved-selectors/keep-style-tags  preservedSelectors is not supported
+*/preserved-selectors/media-and-comments  preservedSelectors is not supported
+*/preserved-selectors/several  preservedSelectors is not supported
+*/preserved-selectors/substring  preservedSelectors is not supported
+*/preserved-selectors/with-pseudo  preservedSelectors is not supported
