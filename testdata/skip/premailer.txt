@@ -33,6 +33,8 @@ juice-suite/juice-content/media-preserve  premailer inlines rules juice keeps in
 juice-suite/juice-content/nesting-atrule  premailer does not understand CSS nesting and inlines nested selectors and at-rules as declarations
 juice-suite/juice-content/nesting-basic  premailer does not understand CSS nesting and inlines nested selectors and at-rules as declarations
 juice-suite/juice-content/nesting-pseudo  premailer does not understand CSS nesting and inlines nested selectors and at-rules as declarations
+juice-suite/juice-content/pseudo-elements  premailer does not turn ::before/::after content into elements
+juice-suite/juice-content/pseudo-elements-and-width-attr  premailer does not turn ::before/::after content into elements
 l4-spec/empty-whitespace  premailer's :empty does not match an element holding only a comment
 l4-spec/is  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-complex-inside  premailer does not support :is()

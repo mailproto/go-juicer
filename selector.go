@@ -374,21 +374,43 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 					arg = arm[ne+1 : ae]
 				}
 			}
-			// juice looks for ignored pseudos inside arguments too, and its
-			// engine rejects a pseudo-element there.
-			if ignoredPseudos[name] || slices.ContainsFunc(splitSelector(arg), func(a []byte) bool {
-				_, _, p, ign := scanSelector(a)
-				return ign || p != pseudoNone
-			}) {
+			if ignoredPseudos[name] {
 				return "", spec, pseudoNone, true
+			}
+			// juice walks into arguments too: an ignored pseudo there skips
+			// the rule, and a pseudo-element makes it a rule for that
+			// pseudo-element, matched with every pseudo-element stripped.
+			call := arm[i:ae]
+			if arg != nil {
+				var parts [][]byte
+				inner := pseudoNone
+				for _, a := range splitSelector(arg) {
+					t, _, p, ign := scanSelector(a)
+					if ign {
+						return "", spec, pseudoNone, true
+					}
+					if inner == pseudoNone {
+						inner = p
+					}
+					parts = append(parts, []byte(t))
+				}
+				if inner != pseudoNone {
+					if pseudo == pseudoNone {
+						pseudo = inner
+					}
+					call = slices.Concat(arm[i:ne], []byte("("), bytes.Join(parts, []byte(",")), []byte(")"))
+				}
 			}
 			switch {
 			case name == "before" || name == "after":
 				// Matched against the base selector; declarations are routed
 				// to a side map so they cannot leak onto the element.
-				if name == "before" {
+				// juice takes the first one in "a:after:before".
+				switch {
+				case pseudo != pseudoNone:
+				case name == "before":
 					pseudo = pseudoBefore
-				} else {
+				default:
 					pseudo = pseudoAfter
 				}
 				spec[2]++
@@ -402,7 +424,7 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 				spec[0] += s[0]
 				spec[1] += s[1]
 				spec[2] += s[2]
-				out = append(out, rewriteHas(arm[i:ae], name)...)
+				out = append(out, rewriteHas(call, name)...)
 			case name == "empty" && !dbl:
 				// css-select counts whitespace text as content; cascadia does not.
 				spec[2]++
