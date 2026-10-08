@@ -15,7 +15,6 @@ juice-suite/juice-content/pseudo-elements-and-width-attr  juice bug: <style> ele
 l4-spec/attr-unquoted  juice bug: [width=600] is not valid CSS (an unquoted value must be an identifier), so browsers drop the rule and juice applies it
 l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 l4-spec/universal-type  juice bug: "*a" is not valid CSS, so browsers drop the rule and juice applies it to <a>
-l4-spec/where-attribute-combinator  gap: a combinator character inside an attribute selector is taken for the compound boundary when :where() is spliced in
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
 nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
 nesting/top-level-amp  juice bug: a top-level & means :scope, the root element, which juice never matches
