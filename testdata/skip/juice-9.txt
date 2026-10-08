@@ -252,12 +252,12 @@ no-attributes/ignore/whole-file-second-block  juice 9 has no ignore comments
 no-css-variables/ignore/whole-file-second-block  juice 9 has no ignore comments
 no-preserve/ignore/whole-file-second-block  juice 9 has no ignore comments
 preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comments
-*/remove-inlined/all-inlined  removeInlinedSelectors is not supported
-*/remove-inlined/basic  removeInlinedSelectors is not supported
-*/remove-inlined/data-embed  removeInlinedSelectors is not supported
-*/remove-inlined/extra-css  removeInlinedSelectors is not supported
-*/remove-inlined/nesting-and-empty  removeInlinedSelectors is not supported
-*/remove-inlined/preserved-selectors  removeInlinedSelectors is not supported
-*/remove-inlined/pseudo-element-and-head  removeInlinedSelectors is not supported
-*/remove-inlined/remove-style-tags  removeInlinedSelectors is not supported
-*/remove-inlined/selector-list  removeInlinedSelectors is not supported
+*/remove-inlined/all-inlined  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/basic  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/data-embed  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/extra-css  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/nesting-and-empty  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/preserved-selectors  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/pseudo-element-and-head  juice 9 has no removeInlinedSelectors option
+keep-style-tags/remove-inlined/remove-style-tags  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/selector-list  juice 9 has no removeInlinedSelectors option
