@@ -18,6 +18,14 @@ func TestAtRuleKind(t *testing.T) {
 	}
 }
 
+func TestInsertPreservedExtraCSSIntoInvalidSelector(t *testing.T) {
+	// juice throws on a selector cheerio cannot parse.
+	_, err := New(ExtraCSS("@media print{p{color:red}}"), InsertPreservedExtraCSSInto("p[")).Inline("<p>x</p>")
+	if err == nil {
+		t.Fatal("want an error for an invalid selector")
+	}
+}
+
 func TestTokenizerInput(t *testing.T) {
 	for in, want := range map[string]string{
 		"p{a:b}; @media x{}":                "p{a:b}  @media x{}",
