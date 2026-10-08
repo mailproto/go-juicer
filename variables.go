@@ -28,17 +28,23 @@ func (in *pass) resolveVariables() {
 			if at, _ := findVar(p.value, 0); at < 0 {
 				continue
 			}
-			p.value = in.substitute(el.node, p.value, 0)
+			budget := maxVarSubstitutions
+			p.value = in.substitute(el.node, p.value, 0, &budget)
 		}
 	}
 }
 
 const maxVarDepth = 16
 
+// maxVarSubstitutions bounds the work for one value. Depth alone does not: a
+// property referring to itself twice doubles at every level. juice never
+// finishes such a value.
+const maxVarSubstitutions = 256
+
 // substitute replaces every var() reference in v. An unresolvable reference
 // with no fallback is left in place, as juice leaves it.
-func (in *pass) substitute(n *html.Node, v []byte, depth int) []byte {
-	if depth > maxVarDepth {
+func (in *pass) substitute(n *html.Node, v []byte, depth int, budget *int) []byte {
+	if depth > maxVarDepth || *budget <= 0 {
 		return v
 	}
 	out := v
@@ -47,7 +53,7 @@ func (in *pass) substitute(n *html.Node, v []byte, depth int) []byte {
 	from := 0
 	for from < len(out) {
 		at, open := findVar(out, from)
-		if at < 0 {
+		if at < 0 || *budget <= 0 {
 			return out
 		}
 		end := parenEnd(out, open)
@@ -58,12 +64,13 @@ func (in *pass) substitute(n *html.Node, v []byte, depth int) []byte {
 		}
 		name, fallback := splitVarArgs(out[open+1 : end-1])
 
+		*budget--
 		var repl []byte
 		switch val, ok := in.lookupVar(n, string(bytes.TrimSpace(name))); {
 		case ok:
-			repl = in.substitute(n, val, depth+1)
+			repl = in.substitute(n, val, depth+1, budget)
 		case fallback != nil:
-			repl = in.substitute(n, bytes.TrimSpace(fallback), depth+1)
+			repl = in.substitute(n, bytes.TrimSpace(fallback), depth+1, budget)
 		default:
 			from = end
 			continue
