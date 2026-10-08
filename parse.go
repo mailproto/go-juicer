@@ -481,6 +481,11 @@ func render(buf *bytes.Buffer, n *html.Node) {
 		}
 		buf.WriteByte('>')
 		if voidElements[n.Data] {
+			// Only a materialized pseudo-element gives a void element
+			// children; dom-serializer writes them after the tag, unclosed.
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				render(buf, c)
+			}
 			return
 		}
 	}

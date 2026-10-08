@@ -57,6 +57,11 @@ const VALUES = {
   'line-height': ['1.5', '20px'],
   'mso-line-height-rule': ['exactly'],
   'Color': ['blue'],
+  // Read by ::before/::after with inlinePseudoElements.
+  'content': ['"x"', "'\\2192 '", 'none', 'url(a.png)', '"(" attr(class) ")"', 'counter(n) ". "',
+    'counter(n, upper-roman)', '"a" var(--c, "b")', '"<&>"'],
+  'counter-reset': ['n', 'n 3', 'n -1 m'],
+  'counter-increment': ['n', 'n 2', 'm'],
 };
 const PROPS = Object.keys(VALUES);
 
@@ -84,7 +89,8 @@ function compound() {
   return s || pick(TAGS);
 }
 function selector() {
-  return times(1, 2, () => times(1, 3, compound).join(pick([' ', ' ', ' > ', ' + ', ' ~ ', '>'])))
+  return times(1, 2, () => times(1, 3, compound).join(pick([' ', ' ', ' > ', ' + ', ' ~ ', '>']))
+    + (chance(0.08) ? pick(['::before', '::after', ':before']) : ''))
     .join(`,${sp()}`);
 }
 const rule = (depth = 0) => {
@@ -174,6 +180,7 @@ const OPTIONS = {
   applyHeightAttributes: false, applyAttributesTableElements: false, preserveMediaQueries: false,
   preserveFontFaces: false, preserveKeyFrames: false, preservePseudos: false, resolveCSSVariables: false,
   preserveContainerQueries: false, preserveLayers: false,
+  inlinePseudoElements: true,
 };
 
 for (let i = 0; i < count; i++) {

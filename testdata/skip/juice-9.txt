@@ -20,7 +20,6 @@ no-css-variables/at-rules/multiple  juice 9 closes a preserved at-rule's last de
 preserve-important/at-rules/multiple  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 preserve-important/cascade/important-beats-inline  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 preserve-important/cascade/inline-important-wins  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
-inline-pseudo-elements/cascade/pseudo-element-no-leak  inlinePseudoElements is not implemented yet
 default/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
 inline-pseudo-elements/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
 no-attributes/cascade/pseudo-ignored  juice 9 writes a preserved selector list one selector per line
@@ -39,8 +38,6 @@ preserve-important/important/strip-default  juice 9 keeps the author's `!importa
 */malformed/bad-css  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unresolvable-bare  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unterminated  juice 9's CSS parser (mensch) recovers from malformed CSS differently
-inline-pseudo-elements/pseudo-elements/dropped-by-default  inlinePseudoElements is not implemented yet
-inline-pseudo-elements/pseudo-elements/single-colon  inlinePseudoElements is not implemented yet
 preserve-important/real-world/cerberus-fluid  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 default/variables/ancestor  juice 9 does not resolve CSS custom properties
 inline-pseudo-elements/variables/ancestor  juice 9 does not resolve CSS custom properties
@@ -78,7 +75,6 @@ keep-style-tags/variables/nested  juice 9 does not resolve CSS custom properties
 no-attributes/variables/nested  juice 9 does not resolve CSS custom properties
 no-preserve/variables/nested  juice 9 does not resolve CSS custom properties
 preserve-important/variables/nested  juice 9 does not resolve CSS custom properties
-
 # juice's own test suite (testdata/in/juice-suite)
 */juice-suite/juice-content/container-queries-preserve  juice 9 has no preserveContainerQueries option and drops @container blocks
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
@@ -89,8 +85,6 @@ preserve-important/variables/nested  juice 9 does not resolve CSS custom propert
 */juice-suite/juice-content/nesting-atrule  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-pseudo  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
-*/juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-selector-preserve  juice 9 splits a preserved selector list into one rule per selector
 */juice-suite/juice-content/xml  xmlMode is not supported
 */juice-suite/inline-content/css-variables  juice 9 does not resolve CSS custom properties
@@ -110,11 +104,8 @@ no-attributes/comments/preserved  juice 9's CSS parser (mensch) drops comments f
 no-css-variables/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 preserve-important/comments/preserved  juice 9's CSS parser (mensch) drops comments from preserved blocks
 */malformed/unclosed-pseudo-arg  juice 9's CSS parser (mensch) recovers from malformed CSS differently
-
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: same divergence as juice 12 (HTML comment markers around a stylesheet)
-
-
 # Found by the generated differential against juice
 default/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
 default/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
@@ -133,7 +124,6 @@ preserve-important/cascade/preserved-declarations  juice 9's CSS parser (mensch)
 preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
 */l4-spec/is-type-argument  juice 9 does not match :is() or :where()
 */l4-spec/is-matches-twice  juice 9 does not match :is() or :where()
-
 # css-inline's test suite (testdata/in/css-inline-suite)
 */css-inline-suite/tests/invalid_rule-test_case_1_wrong_color_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_2_ttt_123_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
@@ -205,3 +195,4 @@ inline-pseudo-elements/nesting/media  juice 9 does not support CSS nesting: it t
 */nesting/self  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */nesting/semicolons  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */nesting/not-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+inline-pseudo-elements/serialization/style-in-string  juice 9's mensch parser drops a declaration whose string is never closed
