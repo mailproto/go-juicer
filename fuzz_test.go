@@ -50,7 +50,8 @@ var fuzzOptions = []func(bool) Option{
 	PreserveKeyFrames, PreservePseudos, PreserveImportant, ApplyWidthAttributes,
 	ApplyHeightAttributes, ApplyAttributesTableElements, ResolveCSSVariables,
 	InlinePseudoElements, RemoveIDs, RemoveClasses, RemoveComments,
-	ResetContentEditable,
+	ResetContentEditable, PreserveContainerQueries, PreserveLayers,
+	InsertPreservedExtraCSS, XMLMode,
 }
 
 // FuzzDocument fuzzes whole documents under every option combination, which
@@ -58,11 +59,11 @@ var fuzzOptions = []func(bool) Option{
 // never touches.
 func FuzzDocument(f *testing.F) {
 	for _, doc := range seedDocs(f) {
-		f.Add(doc, uint16(0))
-		f.Add(doc, uint16(0xFFFF))
+		f.Add(doc, uint32(0))
+		f.Add(doc, uint32(1<<len(fuzzOptions)-1))
 	}
 
-	f.Fuzz(func(t *testing.T, doc string, mask uint16) {
+	f.Fuzz(func(t *testing.T, doc string, mask uint32) {
 		if len(doc) > 16384 {
 			t.Skip()
 		}

@@ -9,7 +9,6 @@
 # in the README and should stay rare.
 */inline-seed/quotes  ALLOW: juice throws a CssSyntaxError on style="font-family:&quot;A B&quot;" because it feeds the undecoded attribute to postcss. Crashing on ordinary email is not worth matching.
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/juice-content/xml  xmlMode is not supported
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.
 # css-inline's test suite (testdata/in/css-inline-suite)

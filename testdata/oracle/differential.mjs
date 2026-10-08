@@ -180,7 +180,7 @@ const OPTIONS = {
   applyHeightAttributes: false, applyAttributesTableElements: false, preserveMediaQueries: false,
   preserveFontFaces: false, preserveKeyFrames: false, preservePseudos: false, resolveCSSVariables: false,
   preserveContainerQueries: false, preserveLayers: false,
-  inlinePseudoElements: true,
+  inlinePseudoElements: true, xmlMode: true,
 };
 
 for (let i = 0; i < count; i++) {
