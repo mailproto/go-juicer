@@ -91,6 +91,7 @@ premailer-suite/premailer/premailer_related_attributes  premailer turns its own 
 premailer-suite/premailer/preserving_ignored_link_elements  premailer honours its own data-premailer="ignore"; juice does not
 premailer-suite/premailer/rgb_color_without_commas_and_with_alpha_modifier  premailer drops a color's alpha channel when it writes bgcolor
 premailer-suite/premailer/rgb_color_without_commas_and_with_percentage_modifier  premailer drops a color's alpha channel when it writes bgcolor
+preserved-selectors/media-and-comments  premailer inlines rules inside @media print, which juice keeps in <style>
 roundtrip/close-br-p  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 roundtrip/p-not-closed  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 serialization/style-in-string  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>

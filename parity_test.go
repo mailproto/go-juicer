@@ -236,6 +236,8 @@ func mapOptions(t *testing.T, juiceOpts map[string]any) (opts []Option, unsuppor
 			}
 		case "xmlMode":
 			opts = append(opts, XMLMode(b))
+		case "preservedSelectors":
+			unsupported = append(unsupported, k)
 		default:
 			t.Fatalf("juice option %q is not mapped in parity_test.go", k)
 		}
