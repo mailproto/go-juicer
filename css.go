@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"slices"
+	"strings"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/css"
@@ -104,7 +105,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 
 	src = flattenNesting(src)
 	orig := src
-	src = blankStraySemicolons(src)
+	src = tokenizerInput(src)
 	p := css.NewParser(parse.NewInputBytes(src), false)
 	prev := 0
 	atKind := ""
@@ -137,7 +138,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 	pendingClose := false
 
 	for {
-		gt, _, data := p.Next()
+		gt, _, _ := p.Next()
 		start, end := prev, p.Offset()
 		prev = end
 		if pendingClose {
@@ -176,17 +177,19 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 
 		switch gt {
 		case css.BeginAtRuleGrammar:
+			prelude := preludeText(orig, start, end)
 			if len(stack) == 0 {
-				atKind = atRuleKind(data)
+				atKind = atRuleKind(prelude)
 			}
-			stack = append(stack, &cssBlock{prelude: preludeText(src, start, end)})
+			stack = append(stack, &cssBlock{prelude: prelude})
 
 		case css.AtRuleGrammar:
 			// A bodyless at-rule such as `@import url(x);` or `@layer a;`.
 			// The terminating semicolon is part of how it is re-emitted.
-			if len(stack) == 0 && preserveKind(atRuleKind(data), opts) {
-				text := append(append([]byte{}, trimCSS(src[start:end])...), ';')
-				keep = append(keep, preserved{atRuleKind(data), text})
+			_, text := leadingComments(orig[start:end])
+			if kind := atRuleKind(text); len(stack) == 0 && preserveKind(kind, opts) {
+				text = append(append([]byte{}, trimCSS(text)...), ';')
+				keep = append(keep, preserved{kind, text})
 			}
 
 		case css.EndAtRuleGrammar:
@@ -291,11 +294,19 @@ func ruleText(sel []byte, decls []decl) []byte {
 	return b.Bytes()
 }
 
-// blankStraySemicolons turns semicolons that start an empty statement into
-// spaces. postcss treats them as whitespace; tdewolff would read one as the
-// start of a selector and swallow a following at-rule into it.
-func blankStraySemicolons(src []byte) []byte {
+// tokenizerInput is the copy of src that tdewolff reads, with the same
+// offsets. Semicolons that start an empty statement become spaces: postcss
+// treats them as whitespace, and tdewolff would read one as the start of a
+// selector and swallow a following at-rule into it. At-rules holding rules
+// that tdewolff does not know become @media, so it parses their contents;
+// kinds and preludes are read from src.
+func tokenizerInput(src []byte) []byte {
 	out := src
+	clone := func() {
+		if &out[0] == &src[0] {
+			out = bytes.Clone(src)
+		}
+	}
 	empty := true
 	var quote byte
 	for i := 0; i < len(src); i++ {
@@ -315,10 +326,15 @@ func blankStraySemicolons(src []byte) []byte {
 				i = len(src)
 			}
 		case c == ';' && empty:
-			if &out[0] == &src[0] {
-				out = bytes.Clone(src)
-			}
+			clone()
 			out[i] = ' '
+		case c == '@' && empty:
+			empty = false
+			if e := identEnd(src, i+1); slices.Contains(ruleListAtRules, strings.ToLower(string(src[i+1:e]))) {
+				clone()
+				copy(out[i:e], "@media"+strings.Repeat(" ", e-i-6))
+				i = e - 1
+			}
 		case c == '{' || c == '}' || c == ';':
 			empty = true
 		default:
@@ -355,15 +371,19 @@ func preludeText(src []byte, start, end int) []byte {
 	return trimCSS(s)
 }
 
-func atRuleKind(data []byte) string {
-	k := string(bytes.TrimLeft(bytes.ToLower(data), "@"))
-	if i := bytes.IndexByte([]byte(k), ' '); i >= 0 {
-		k = k[:i]
-	}
-	// Vendor-prefixed keyframes still count as keyframes.
-	for _, p := range []string{"-webkit-", "-moz-", "-ms-", "-o-"} {
-		if len(k) > len(p) && k[:len(p)] == p {
-			k = k[len(p):]
+// ruleListAtRules hold rules but are unknown to tdewolff. None is shorter
+// than "@media".
+var ruleListAtRules = []string{"container", "scope", "starting-style"}
+
+// atRuleKind is the at-rule's name as written: juice compares names
+// case-sensitively, so "@MEDIA" is not preserved as a media query.
+func atRuleKind(prelude []byte) string {
+	p := bytes.TrimLeft(prelude, "@")
+	k := string(p[:identEnd(p, 0)])
+	// juice matches /^(-\w+-)?keyframes$/.
+	if strings.HasPrefix(k, "-") {
+		if i := strings.IndexByte(k[1:], '-'); i > 0 && k[i+2:] == "keyframes" {
+			k = "keyframes"
 		}
 	}
 	return k
@@ -377,6 +397,8 @@ func preserveKind(kind string, o *options) bool {
 		return o.preserveFontFaces
 	case "keyframes":
 		return o.preserveKeyFrames
+	case "container":
+		return o.preserveContainerQueries
 	}
 	return false
 }

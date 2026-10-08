@@ -27,6 +27,7 @@ type options struct {
 	preserveMediaQueries        bool
 	preserveFontFaces           bool
 	preserveKeyFrames           bool
+	preserveContainerQueries    bool
 	preservePseudos             bool
 	preserveImportant           bool
 	applyWidthAttributes        bool
@@ -56,6 +57,7 @@ func defaults() options {
 		preserveMediaQueries:        true,
 		preserveFontFaces:           true,
 		preserveKeyFrames:           true,
+		preserveContainerQueries:    true,
 		preservePseudos:             true,
 		applyWidthAttributes:        true,
 		applyHeightAttributes:       true,
@@ -87,6 +89,11 @@ func PreserveFontFaces(v bool) Option { return func(o *options) { o.preserveFont
 
 // PreserveKeyFrames keeps @keyframes blocks in a surviving <style> element.
 func PreserveKeyFrames(v bool) Option { return func(o *options) { o.preserveKeyFrames = v } }
+
+// PreserveContainerQueries keeps @container blocks in a surviving <style> element.
+func PreserveContainerQueries(v bool) Option {
+	return func(o *options) { o.preserveContainerQueries = v }
+}
 
 // PreservePseudos keeps rules using :hover and friends in a surviving <style>.
 func PreservePseudos(v bool) Option { return func(o *options) { o.preservePseudos = v } }
