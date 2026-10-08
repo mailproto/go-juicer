@@ -47,6 +47,10 @@ type options struct {
 	xmlMode                     bool
 	codeBlocks                  []CodeBlock
 
+	// keepAll preserves every top-level rule and at-rule; it formats what a
+	// juice ignore comment keeps.
+	keepAll bool
+
 	// Document cleanup, carried over from the Ruby premailer this package
 	// used to wrap. juice has no equivalent.
 	removeIDs            bool
@@ -265,13 +269,14 @@ func appendRules(dst, src []rule) []rule {
 func (in *pass) run(root *html.Node) error {
 	o := in.o
 
-	rules := in.collectCSS(root)
+	var st ignoreState
+	rules := in.collectCSS(root, &st)
 	var keep []preserved
 	if extra := strings.TrimSpace(o.extraCSS); extra != "" {
 		// juice never preserves pseudo-class rules from extraCss.
 		eo := *o
 		eo.preservePseudos = false
-		r, k, _ := parseStylesheet([]byte(extra), &eo, uint32(len(rules))<<8)
+		r, k, _ := parseWithDirectives([]byte(extra), &eo, uint32(len(rules))<<8, &st)
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
@@ -306,7 +311,7 @@ func (in *pass) run(root *html.Node) error {
 // collectCSS gathers CSS from <style> elements and disposes of them. Each tag
 // is handled on its own, because juice computes the text to preserve per tag
 // and replaces that tag's contents with it.
-func (in *pass) collectCSS(root *html.Node) []rule {
+func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 	o := in.o
 	var rules []rule
 	var ord uint32
@@ -334,7 +339,7 @@ func (in *pass) collectCSS(root *html.Node) []rule {
 		var r []rule
 		var k []preserved
 		if o.applyStyleTags {
-			r, k, ord = parseStylesheet([]byte(s.FirstChild.Data), o, ord)
+			r, k, ord = parseWithDirectives([]byte(s.FirstChild.Data), o, ord, st)
 			rules = appendRules(rules, r)
 		}
 

@@ -73,7 +73,7 @@ function decl(inline) {
   if (!inline && chance(0.05)) v = pick(['/* c */ ', '']) + v + pick([' /* t */', '']);
   return `${prop}${sp()}:${sp()}${v}`;
 }
-const decls = (inline) => times(inline ? 1 : 0, 4, () => decl(inline)).join(`;${sp()}`) + (chance(0.5) ? ';' : '');
+const decls = (inline) => times(inline ? 1 : 0, 4, () => (!inline && chance(0.03) ? '/* juice ignore next */' : '') + decl(inline)).join(`;${sp()}`) + (chance(0.5) ? ';' : '');
 
 function compound() {
   let s = '';
@@ -124,6 +124,9 @@ function atRule() {
 function stylesheet() {
   const parts = times(1, 7, () => (chance(0.15) ? atRule() : rule()));
   if (chance(0.1)) parts.splice(int(0, parts.length), 0, '/* comment */');
+  // juice's ignore comments, including unbalanced ones.
+  if (chance(0.06)) parts.splice(int(0, parts.length), 0, pick(['/* juice ignore next */', '/* juice start ignore */', '/* juice end ignore */']));
+  if (chance(0.02)) parts.unshift('/* juice ignore */');
   if (chance(0.1)) parts.unshift(`:root{--c:${pick(['#abc', 'teal'])}}`);
   return parts.join(pick(['', '\n', ' ']));
 }
