@@ -272,12 +272,19 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			// a:hover keeps its :hover arm in <style> while the plain arm is
 			// still inlined. It only looks at the first arm, though, so
 			// "td, a:hover" is not preserved at all.
-			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) {
+			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) || matchesPreserved(arms, opts.preservedSelectors) {
 				keep = append(keep, preserved{"pseudo", append(ruleText(sel, shared), ownSemicolon(orig[end:])...)})
 			}
 		}
 	}
 	return rules, keep, ord
+}
+
+// matchesPreserved is juice's matchesPreservedSelector over every arm.
+func matchesPreserved(arms [][]byte, patterns []string) bool {
+	return slices.ContainsFunc(arms, func(a []byte) bool {
+		return slices.ContainsFunc(patterns, func(p string) bool { return bytes.Contains(a, []byte(p)) })
+	})
 }
 
 // ruleText re-emits a rule that could not be inlined, formatted the way

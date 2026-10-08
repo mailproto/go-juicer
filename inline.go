@@ -35,6 +35,7 @@ type options struct {
 	preserveContainerQueries    bool
 	preserveLayers              bool
 	preservePseudos             bool
+	preservedSelectors          []string
 	preserveImportant           bool
 	applyWidthAttributes        bool
 	applyHeightAttributes       bool
@@ -122,6 +123,13 @@ func PreserveContainerQueries(v bool) Option {
 
 // PreservePseudos keeps rules using :hover and friends in a surviving <style>.
 func PreservePseudos(v bool) Option { return func(o *options) { o.preservePseudos = v } }
+
+// PreservedSelectors also keeps, in a surviving <style>, every rule with a
+// selector containing one of patterns. Matching is by substring, as in juice,
+// and the rule is still inlined.
+func PreservedSelectors(patterns ...string) Option {
+	return func(o *options) { o.preservedSelectors = slices.Clone(patterns) }
+}
 
 // PreserveImportant keeps the literal !important suffix on inlined values.
 func PreserveImportant(v bool) Option { return func(o *options) { o.preserveImportant = v } }
