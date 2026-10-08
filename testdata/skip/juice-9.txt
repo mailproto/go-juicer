@@ -80,7 +80,7 @@ no-preserve/variables/nested  juice 9 does not resolve CSS custom properties
 preserve-important/variables/nested  juice 9 does not resolve CSS custom properties
 
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/juice-content/container-queries-preserve  preserveContainerQueries is not supported
+*/juice-suite/juice-content/container-queries-preserve  juice 9 has no preserveContainerQueries option and drops @container blocks
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/keyframes-preserve  juice 9 writes a preserved selector list one selector per line
