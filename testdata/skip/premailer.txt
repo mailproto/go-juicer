@@ -21,6 +21,7 @@ css-inline-suite/tests/extra_css  premailer applies css_string before <style> ru
 css-inline-suite/tests/first_child_descendant_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 css-inline-suite/tests/remove_inlined_selectors_only_at_rules  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 duplicates/gradient-fallback  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+important/attr-pseudo  premailer does not turn ::before/::after content into elements
 important/spaced-bang  premailer's css_parser recognises only the exact !important spelling
 inline-seed/important-spellings  premailer's css_parser recognises only the exact !important spelling
 juice-suite/cli/code-block-cli  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
