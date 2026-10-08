@@ -20,3 +20,5 @@
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
 inline-pseudo-elements/serialization/style-in-string  ALLOW: juice joins every <style> block with newlines, so a string left open at the end of the last one ends in "\n" and so does the generated content; each block is its own stylesheet here (README divergence 5)
+*/pseudo-elements/empty-argument  an argument left empty once a pseudo-element is stripped is dropped here, where css-select rejects the whole selector
+*/pseudo-elements/trailing-combinator  a combinator left at the end once a pseudo-element is stripped makes the selector unparseable here; css-select reads it as followed by *
