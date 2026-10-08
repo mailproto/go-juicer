@@ -1,0 +1,6 @@
+{
+  "options": {
+    "removeStyleTags": false,
+    "removeInlinedSelectors": true
+  }
+}
