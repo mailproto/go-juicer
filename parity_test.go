@@ -238,6 +238,8 @@ func mapOptions(t *testing.T, juiceOpts map[string]any) (opts []Option, unsuppor
 			opts = append(opts, XMLMode(b))
 		case "inlineDuplicateProperties":
 			opts = append(opts, InlineDuplicateProperties(b))
+		case "removeInlinedSelectors":
+			unsupported = append(unsupported, k)
 		case "preservedSelectors":
 			var patterns []string
 			for _, p := range v.([]any) {
