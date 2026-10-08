@@ -200,7 +200,7 @@ func (in *Inliner) Inline(doc string) (string, error) {
 func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
 	src, blocks := encodeCodeBlocks(doc, in.opts.codeBlocks)
 	root := parseMarkup(src, in.opts.xmlMode)
-	if err := in.process(root); err != nil {
+	if err := in.process(root, src); err != nil {
 		return nil, err
 	}
 	if in.opts.xmlMode {
@@ -231,6 +231,8 @@ type pass struct {
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 
+	controlAttrs bool // the document mentions data-juice-* attributes
+
 	// InlinePseudoElements only.
 	pseudos     map[*html.Node]*pseudoMaps
 	pseudoOrder []*html.Node
@@ -238,8 +240,8 @@ type pass struct {
 }
 
 // process runs the inlining pipeline over an already-parsed tree.
-func (in *Inliner) process(root *html.Node) error {
-	p := &pass{o: &in.opts}
+func (in *Inliner) process(root *html.Node, src []byte) error {
+	p := &pass{o: &in.opts, controlAttrs: bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
 
@@ -268,6 +270,12 @@ func (in *pass) run(root *html.Node) error {
 	}
 
 	in.applyRules(root, rules)
+	if in.controlAttrs {
+		// juice's per-element control attributes never reach the output.
+		walk(root, func(n *html.Node) {
+			removeAttr(n, "data-juice-important")
+		})
+	}
 	imgs, err := in.materializePseudos(rules)
 	if err != nil {
 		return err
@@ -352,6 +360,16 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		var m *propMap
 		applied := int32(-1)
 		doc++
+		keep := -1 // whether n keeps !important; read on first match
+		keepImportant := func() bool {
+			if keep < 0 {
+				keep = 0
+				if v, ok := getAttr(n, "data-juice-important"); ok && v != "false" || !ok && o.preserveImportant {
+					keep = 1
+				}
+			}
+			return keep == 1
+		}
 		rs.forEach(n, &sc, func(i int, r *rule) {
 			// One selector applies once, however many of its :is()
 			// expansions match.
@@ -367,7 +385,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// element; without materialization they are dropped. The
 				// base element is not touched either way.
 				if o.inlinePseudoElements {
-					addDecls(in.pseudoMap(n, r.pseudo), r, i)
+					addDecls(in.pseudoMap(n, r.pseudo), r, i, keepImportant())
 				}
 				return
 			}
@@ -377,10 +395,10 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
-					m.seedInline([]byte(v), o)
+					m.seedInline([]byte(v), keepImportant())
 				}
 			}
-			addDecls(m, r, i)
+			addDecls(m, r, i, keepImportant())
 		})
 		if m == nil {
 			return
@@ -393,18 +411,22 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 	})
 }
 
-func addDecls(m *propMap, r *rule, i int) {
+func addDecls(m *propMap, r *rule, i int, keepImportant bool) {
 	for _, d := range r.decls {
 		if d.prop == "" {
 			continue
 		}
 		prio := 0
+		v := d.value
 		if d.important {
 			prio = 2
+			if keepImportant && d.bang != nil {
+				v = d.bang
+			}
 		}
 		m.add(property{
 			prop:  d.prop,
-			value: d.value,
+			value: v,
 			key:   packKey(prio, r.spec[0], r.spec[1], r.spec[2]),
 			ord:   d.ord,
 			rule:  int32(i),

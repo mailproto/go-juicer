@@ -171,13 +171,13 @@ func writeSingleQuoted(buf *bytes.Buffer, v []byte) {
 // seedInline parses an existing style attribute as a synthetic rule. juice
 // gives it specificity [1,0,0,1] -- the sentinel selector "<style>" is read as
 // a tag name -- which beats any real selector but loses to an !important one.
-func (m *propMap) seedInline(style []byte, o *options) {
+func (m *propMap) seedInline(style []byte, keepImportant bool) {
 	var ord uint32
 	for _, d := range splitDeclarations(style) {
 		prio := 1
 		if d.important {
 			prio += 2
-			if o.preserveImportant {
+			if keepImportant {
 				d.value = append(d.value[:len(d.value):len(d.value)], " !important"...)
 			}
 		}

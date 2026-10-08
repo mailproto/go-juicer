@@ -221,3 +221,10 @@ no-attributes/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors
 no-preserve/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
 no-css-variables/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
 inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+*/important/attr-dimensions  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-false  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-inline-style  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-preserve  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-pseudo  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-selector  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-untouched  juice 9 has no data-juice-important attribute, so keeps it and ignores it
