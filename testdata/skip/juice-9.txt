@@ -230,9 +230,10 @@ inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preserved
 */important/attr-untouched  juice 9 has no data-juice-important attribute, so keeps it and ignores it
 */pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
 */pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
-*/duplicates/attr-off  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/dimensions  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/important  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/option  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/same-rule  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/variables  inlineDuplicateProperties and data-juice-duplicates are not supported
+*/duplicates/attr-off  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/dimensions  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/important  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/option  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/same-rule  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/variables  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/attr-on  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute

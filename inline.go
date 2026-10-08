@@ -35,6 +35,7 @@ type options struct {
 	preserveContainerQueries    bool
 	preserveLayers              bool
 	preservePseudos             bool
+	inlineDuplicates            bool
 	preservedSelectors          []string
 	preserveImportant           bool
 	applyWidthAttributes        bool
@@ -130,6 +131,12 @@ func PreservePseudos(v bool) Option { return func(o *options) { o.preservePseudo
 func PreservedSelectors(patterns ...string) Option {
 	return func(o *options) { o.preservedSelectors = slices.Clone(patterns) }
 }
+
+// InlineDuplicateProperties keeps every declaration of a property from every
+// matching rule, ordered by specificity, rather than only the winner. A
+// data-juice-duplicates attribute overrides it per element ("false" to turn
+// it off) and is removed from the output.
+func InlineDuplicateProperties(v bool) Option { return func(o *options) { o.inlineDuplicates = v } }
 
 // PreserveImportant keeps the literal !important suffix on inlined values.
 func PreserveImportant(v bool) Option { return func(o *options) { o.preserveImportant = v } }
@@ -274,6 +281,7 @@ func (in *pass) run(root *html.Node) error {
 		// juice's per-element control attributes never reach the output.
 		walk(root, func(n *html.Node) {
 			removeAttr(n, "data-juice-important")
+			removeAttr(n, "data-juice-duplicates")
 		})
 	}
 	imgs, err := in.materializePseudos(rules)
@@ -361,6 +369,12 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		applied := int32(-1)
 		doc++
 		keep := -1 // whether n keeps !important; read on first match
+		dup := func() bool {
+			if v, ok := getAttr(n, "data-juice-duplicates"); ok {
+				return v != "false"
+			}
+			return o.inlineDuplicates
+		}
 		keepImportant := func() bool {
 			if keep < 0 {
 				keep = 0
@@ -385,12 +399,12 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// element; without materialization they are dropped. The
 				// base element is not touched either way.
 				if o.inlinePseudoElements {
-					addDecls(in.pseudoMap(n, r.pseudo), r, i, keepImportant())
+					addDecls(in.pseudoMap(n, r.pseudo, dup), r, i, keepImportant())
 				}
 				return
 			}
 			if m == nil {
-				m = &propMap{}
+				m = &propMap{dup: dup()}
 				// The existing style attribute seeds the map on first match.
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
