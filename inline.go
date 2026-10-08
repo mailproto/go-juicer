@@ -10,6 +10,7 @@ package juicer
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/andybalholm/cascadia"
@@ -41,6 +42,7 @@ type options struct {
 	resolveCSSVariables         bool
 	inlinePseudoElements        bool
 	styleAttributeName          string
+	xmlMode                     bool
 	codeBlocks                  []CodeBlock
 
 	// Document cleanup, carried over from the Ruby premailer this package
@@ -142,6 +144,12 @@ func ResolveCSSVariables(v bool) Option { return func(o *options) { o.resolveCSS
 // InlinePseudoElements materializes ::before and ::after as real elements.
 func InlinePseudoElements(v bool) Option { return func(o *options) { o.inlinePseudoElements = v } }
 
+// XMLMode parses and serializes the document as XML, as juice's xmlMode does:
+// tag and attribute names keep their case, any element can close itself with
+// "/>", none is void or raw text, and elements without children are written
+// self-closing.
+func XMLMode(v bool) Option { return func(o *options) { o.xmlMode = v } }
+
 // StyleAttributeName writes inlined declarations to an attribute other than style.
 func StyleAttributeName(name string) Option {
 	return func(o *options) { o.styleAttributeName = name }
@@ -183,9 +191,14 @@ func (in *Inliner) Inline(doc string) (string, error) {
 // InlineBytes is Inline over a byte slice.
 func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
 	src, blocks := encodeCodeBlocks(doc, in.opts.codeBlocks)
-	root := parseDocument(src)
+	root := parseMarkup(src, in.opts.xmlMode)
 	if err := in.process(root); err != nil {
 		return nil, err
+	}
+	if in.opts.xmlMode {
+		var buf bytes.Buffer
+		renderXML(&buf, root)
+		return decodeCodeBlocks(buf.Bytes(), blocks), nil
 	}
 	return decodeCodeBlocks(renderDocument(root), blocks), nil
 }
@@ -424,7 +437,7 @@ func (in *pass) emitPreserved(root *html.Node, keep []preserved) error {
 			return fmt.Errorf("InsertPreservedExtraCSSInto: %w", err)
 		}
 		if host := cascadia.Query(root, m); host != nil {
-			host.AppendChild(preservedStyle(keep))
+			in.appendPreserved(host, keep)
 		}
 		return nil
 	}
@@ -435,12 +448,22 @@ func (in *pass) emitPreserved(root *html.Node, keep []preserved) error {
 	if host == nil {
 		host = root
 	}
-	host.AppendChild(preservedStyle(keep))
+	in.appendPreserved(host, keep)
 	return nil
 }
 
-func preservedStyle(keep []preserved) *html.Node {
+// appendPreserved adds the <style> as juice does, by appending markup: in XML
+// mode a "<" in the rules is parsed as a tag.
+func (in *pass) appendPreserved(host *html.Node, keep []preserved) {
+	if in.o.xmlMode {
+		frag := parseMarkup(slices.Concat([]byte("<style>"), preservedText(keep), []byte("</style>")), true)
+		for c := frag.FirstChild; c != nil; c = frag.FirstChild {
+			frag.RemoveChild(c)
+			host.AppendChild(c)
+		}
+		return
+	}
 	s := &html.Node{Type: html.ElementNode, Data: "style"}
 	s.AppendChild(&html.Node{Type: html.TextNode, Data: string(preservedText(keep))})
-	return s
+	host.AppendChild(s)
 }
