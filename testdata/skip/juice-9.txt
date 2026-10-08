@@ -238,3 +238,17 @@ inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preserved
 */duplicates/variables  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
 */duplicates/attr-on  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
 */ignore/pseudo-and-semicolon  juice 9's mensch parser drops the semicolon after a preserved rule
+*/ignore/extra-css  juice 9 has no ignore comments
+*/ignore/next-across-blocks  juice 9 has no ignore comments
+*/ignore/next-declaration  juice 9 has no ignore comments
+*/ignore/next-rule  juice 9 has no ignore comments
+*/ignore/start-end  juice 9 has no ignore comments
+*/ignore/start-unterminated  juice 9 has no ignore comments
+*/ignore/whole-file  juice 9 has no ignore comments
+*/ignore/whole-file-first-block  juice 9 has no ignore comments
+default/ignore/whole-file-second-block  juice 9 has no ignore comments
+inline-pseudo-elements/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-attributes/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-css-variables/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-preserve/ignore/whole-file-second-block  juice 9 has no ignore comments
+preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comments
