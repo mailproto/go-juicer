@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>a:not(:hover) {
+color: red;
+}
+:is(a:focus) b {
+border: 0;
+}
+.x:has(a:visited) {
+color: blue;
+}
+</style>
+</head>
+<body>
+<a href="#"><b>1</b></a><a><b>2</b></a><area href="#">
+<p class="x"><a href="#"><i>3</i></a></p>
+<div><i>4</i></div>
+</body>
+</html>
