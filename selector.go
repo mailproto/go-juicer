@@ -249,10 +249,7 @@ func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool)
 	if altType == 0 || bytes.ContainsAny(alt, " \t\n>+~") {
 		return splice(cand[:at], alt), true
 	}
-	cs := at
-	for cs > 0 && !bytes.ContainsRune([]byte(" \t\n>+~("), rune(cand[cs-1])) {
-		cs--
-	}
+	cs := compoundStart(cand, at)
 	altT, rest := alt[:altType], alt[altType:]
 	pre := cand[:at]
 	switch pt := cand[cs : cs+typeSelectorLen(cand[cs:at])]; {
@@ -265,6 +262,27 @@ func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool)
 		return nil, false
 	}
 	return splice(pre, rest), true
+}
+
+// compoundStart finds where the compound containing cand[at] begins, looking
+// past brackets and parentheses, which can hold combinator characters.
+func compoundStart(cand []byte, at int) int {
+	cs := 0
+	for i := 0; i < at; i++ {
+		switch c := cand[i]; {
+		case c == '[':
+			i = attrEnd(cand, i) - 1
+		case c == '(':
+			if e := parenEnd(cand, i); e <= at {
+				i = e - 1
+			} else {
+				cs = i + 1
+			}
+		case bytes.IndexByte([]byte(" \t\n>+~"), c) >= 0:
+			cs = i + 1
+		}
+	}
+	return cs
 }
 
 // typeSelectorLen is the length of the type or universal selector leading s.
@@ -356,21 +374,48 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 					arg = arm[ne+1 : ae]
 				}
 			}
-			// juice looks for ignored pseudos inside arguments too, and its
-			// engine rejects a pseudo-element there.
-			if ignoredPseudos[name] || slices.ContainsFunc(splitSelector(arg), func(a []byte) bool {
-				_, _, p, ign := scanSelector(a)
-				return ign || p != pseudoNone
-			}) {
+			if ignoredPseudos[name] {
 				return "", spec, pseudoNone, true
+			}
+			// juice walks into arguments too: an ignored pseudo there skips
+			// the rule, and a pseudo-element makes it a rule for that
+			// pseudo-element, matched with every pseudo-element stripped.
+			call := arm[i:ae]
+			if arg != nil {
+				var parts [][]byte
+				inner := pseudoNone
+				for _, a := range splitSelector(arg) {
+					t, _, p, ign := scanSelector(a)
+					if ign {
+						return "", spec, pseudoNone, true
+					}
+					if inner == pseudoNone {
+						inner = p
+					}
+					if t == "" && p != pseudoNone {
+						// Nothing left once the pseudo-element is stripped:
+						// css-select rejects the empty argument.
+						return "", spec, pseudoNone, true
+					}
+					parts = append(parts, []byte(t))
+				}
+				if inner != pseudoNone {
+					if pseudo == pseudoNone {
+						pseudo = inner
+					}
+					call = slices.Concat(arm[i:ne], []byte("("), bytes.Join(parts, []byte(",")), []byte(")"))
+				}
 			}
 			switch {
 			case name == "before" || name == "after":
 				// Matched against the base selector; declarations are routed
 				// to a side map so they cannot leak onto the element.
-				if name == "before" {
+				// juice takes the first one in "a:after:before".
+				switch {
+				case pseudo != pseudoNone:
+				case name == "before":
 					pseudo = pseudoBefore
-				} else {
+				default:
 					pseudo = pseudoAfter
 				}
 				spec[2]++
@@ -384,7 +429,7 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 				spec[0] += s[0]
 				spec[1] += s[1]
 				spec[2] += s[2]
-				out = append(out, rewriteHas(arm[i:ae], name)...)
+				out = append(out, rewriteHas(call, name)...)
 			case name == "empty" && !dbl:
 				// css-select counts whitespace text as content; cascadia does not.
 				spec[2]++
@@ -413,7 +458,13 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			i++
 		}
 	}
-	return string(bytes.TrimSpace(out)), spec, pseudo, false
+	// Stripping a pseudo-element can leave "a + "; css-select reads a
+	// trailing combinator as if followed by *.
+	out = bytes.TrimSpace(out)
+	if len(out) > 0 && bytes.IndexByte([]byte("+>~"), out[len(out)-1]) >= 0 {
+		out = append(out, '*')
+	}
+	return string(out), spec, pseudo, false
 }
 
 // argSpecificity returns the highest specificity among a selector list, which

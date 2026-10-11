@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>.a + ::before {
+content: "+";
+}
+.b > ::after {
+content: ">";
+}
+.c ::before {
+content: " ";
+}
+.d ~ ::after {
+content: "~";
+}
+</style>
+</head>
+<body>
+<p class="a">1</p>
+<p>2</p>
+<div class="b"><p>3</p></div>
+<div class="c"><p>4</p></div>
+<p class="d">5</p>
+<p>6</p>
+</body>
+</html>
