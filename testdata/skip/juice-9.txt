@@ -86,7 +86,6 @@ preserve-important/variables/nested  juice 9 does not resolve CSS custom propert
 */juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-pseudo  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/pseudo-selector-preserve  juice 9 splits a preserved selector list into one rule per selector
-*/juice-suite/juice-content/xml  xmlMode is not supported
 */juice-suite/inline-content/css-variables  juice 9 does not resolve CSS custom properties
 default/variables/function-name  juice 9 does not resolve CSS custom properties
 inline-pseudo-elements/variables/function-name  juice 9 does not resolve CSS custom properties

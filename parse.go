@@ -89,7 +89,12 @@ func isForeign(tag string) bool { return tag == "svg" || tag == "math" }
 
 // parseDocument builds an htmlparser2-shaped tree. The returned root is a
 // synthetic container whose children are the document's top-level nodes.
-func parseDocument(src []byte) *html.Node {
+func parseDocument(src []byte) *html.Node { return parseMarkup(src, false) }
+
+// parseMarkup parses as htmlparser2 does, in its XML mode when xml is set:
+// names keep their case, any tag can close itself with "/>", and no element
+// is void, raw text, or closed by another's opening.
+func parseMarkup(src []byte, xml bool) *html.Node {
 	root := &html.Node{Type: html.DocumentNode}
 	cur := root
 	foreign := 0
@@ -114,11 +119,11 @@ func parseDocument(src []byte) *html.Node {
 			if isForeign(cur.Data) {
 				foreign--
 			}
-			if reparseRaw[cur.Data] {
+			if reparseRaw[cur.Data] && !xml {
 				reparseChildren(cur)
 			}
 			cur = cur.Parent
-		} else if name == "br" || name == "p" {
+		} else if !xml && (name == "br" || name == "p") {
 			// htmlparser2 turns an unmatched </br> into <br> and an
 			// unmatched </p> into an empty <p></p>.
 			cur.AppendChild(&html.Node{Type: html.ElementNode, Data: name})
@@ -147,6 +152,32 @@ func parseDocument(src []byte) *html.Node {
 
 		switch tt {
 		case html.TextToken:
+			// In XML mode a tag name can start with any character but
+			// whitespace, "/" and ">", where x/net/html wants a letter.
+			k := -1
+			if xml {
+				k = xmlTagStart(raw)
+			}
+			if k >= 0 {
+				if k > 0 {
+					cur.AppendChild(&html.Node{Type: html.TextNode, Data: string(raw[:k])})
+				}
+				s := start + k
+				e := tagEnd(src, s)
+				if e < 0 {
+					// htmlparser2 drops a tag left open at the end of input.
+					resume(len(src))
+					continue
+				}
+				name, attrs := scanStartTag(src[s:e], false)
+				n := &html.Node{Type: html.ElementNode, Data: name, Attr: attrs}
+				cur.AppendChild(n)
+				if !bytes.HasSuffix(src[s:e], []byte("/>")) {
+					cur = n
+				}
+				resume(e)
+				continue
+			}
 			cur.AppendChild(&html.Node{Type: html.TextNode, Data: string(raw)})
 
 		case html.CommentToken, html.DoctypeToken:
@@ -154,12 +185,15 @@ func parseDocument(src []byte) *html.Node {
 			var end int
 			if bytes.HasPrefix(raw, []byte("</")) {
 				var name string
-				n, name, end = closeTagLike(src, start)
+				n, name, end = closeTagLike(src, start, xml)
 				if name != "" {
+					if !xml {
+						name = lowerASCII([]byte(name))
+					}
 					closeTag(name)
 				}
 			} else {
-				n, end = markupDecl(src, start)
+				n, end = markupDecl(src, start, xml)
 			}
 			if n != nil {
 				cur.AppendChild(n)
@@ -167,8 +201,17 @@ func parseDocument(src []byte) *html.Node {
 			resume(end)
 
 		case html.StartTagToken, html.SelfClosingTagToken:
-			name, attrs := scanStartTag(raw)
+			name, attrs := scanStartTag(raw, !xml)
 			if name == "" {
+				continue
+			}
+			if xml {
+				n := &html.Node{Type: html.ElementNode, Data: name, Attr: attrs}
+				cur.AppendChild(n)
+				if tt == html.StartTagToken {
+					cur = n
+					z.NextIsNotRawText()
+				}
 				continue
 			}
 			if set := openImpliesClose[name]; set != nil {
@@ -195,7 +238,7 @@ func parseDocument(src []byte) *html.Node {
 			}
 
 		case html.EndTagToken:
-			if name := scanEndTag(raw); name != "" {
+			if name := scanEndTag(raw, !xml); name != "" {
 				closeTag(name)
 			}
 		}
@@ -216,7 +259,7 @@ func parseDocument(src []byte) *html.Node {
 //     or "<!-" is never that ">".
 //   - Unterminated at end of input, a comment or CDATA is closed, and
 //     anything else becomes text minus its "<!" or "<?".
-func markupDecl(src []byte, p int) (*html.Node, int) {
+func markupDecl(src []byte, p int, xml bool) (*html.Node, int) {
 	n := len(src)
 	tail := func() (*html.Node, int) {
 		if p+2 >= n {
@@ -250,6 +293,9 @@ func markupDecl(src []byte, p int) (*html.Node, int) {
 			j++
 		}
 		if j-i-1 == len(seq) {
+			if xml {
+				return commentLike(src, j, "]]>", 0, "<![CDATA[", "]]>")
+			}
 			return commentLike(src, j, "]]>", 0, "<!--[CDATA[", "]]-->")
 		}
 		if j >= n {
@@ -274,7 +320,7 @@ func markupDecl(src []byte, p int) (*html.Node, int) {
 // letter: whitespace after the slash is skipped, "</>" stays as text, a
 // letter starts an end tag running to the next ">", and anything else is a
 // comment up to it. It returns a node or an end tag name, and where the construct ends.
-func closeTagLike(src []byte, p int) (n *html.Node, name string, end int) {
+func closeTagLike(src []byte, p int, xml bool) (n *html.Node, name string, end int) {
 	i := p + 2
 	for i < len(src) && isSpace(src[i]) {
 		i++
@@ -287,7 +333,7 @@ func closeTagLike(src []byte, p int) (n *html.Node, name string, end int) {
 	case c == '>':
 		// Back to text without moving the text start, so it is kept verbatim.
 		return &html.Node{Type: html.TextNode, Data: string(src[p : i+1])}, "", i + 1
-	case 'a' <= c|0x20 && c|0x20 <= 'z':
+	case 'a' <= c|0x20 && c|0x20 <= 'z' || xml:
 		if k < 0 {
 			return nil, "", len(src)
 		}
@@ -295,7 +341,7 @@ func closeTagLike(src []byte, p int) (n *html.Node, name string, end int) {
 		for j < i+k && !isSpace(src[j]) {
 			j++
 		}
-		return nil, lowerASCII(src[i:j]), i + k + 1
+		return nil, string(src[i:j]), i + k + 1
 	case k < 0:
 		return &html.Node{Type: html.TextNode, Data: string(src[i:])}, "", len(src)
 	default:
@@ -367,13 +413,13 @@ func lowerASCII(b []byte) string {
 // scanStartTag reads a tag name and attributes from raw start-tag bytes,
 // keeping values exactly as written. x/net/html's TagAttr decodes entities,
 // which loses the difference between "&amp;" and a literal "&".
-func scanStartTag(b []byte) (string, []html.Attribute) {
+func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
 	i := 1 // skip '<'
 	start := i
 	for i < len(b) && !isSpace(b[i]) && b[i] != '>' && b[i] != '/' {
 		i++
 	}
-	name := lowerASCII(b[start:i])
+	name := foldName(b[start:i], lower)
 	if name == "" {
 		return "", nil
 	}
@@ -392,7 +438,7 @@ func scanStartTag(b []byte) (string, []html.Attribute) {
 		for i < len(b) && !isSpace(b[i]) && b[i] != '=' && b[i] != '>' && b[i] != '/' {
 			i++
 		}
-		an := lowerASCII(b[ns:i])
+		an := foldName(b[ns:i], lower)
 		for i < len(b) && isSpace(b[i]) {
 			i++
 		}
@@ -439,7 +485,7 @@ func scanStartTag(b []byte) (string, []html.Attribute) {
 	return name, attrs
 }
 
-func scanEndTag(b []byte) string {
+func scanEndTag(b []byte, lower bool) string {
 	if len(b) < 3 {
 		return ""
 	}
@@ -448,7 +494,50 @@ func scanEndTag(b []byte) string {
 	for i < len(b) && !isSpace(b[i]) && b[i] != '>' {
 		i++
 	}
-	return lowerASCII(b[start:i])
+	return foldName(b[start:i], lower)
+}
+
+// xmlTagStart finds a "<" in text that htmlparser2's XML mode reads as the
+// start of a tag, or -1.
+func xmlTagStart(text []byte) int {
+	for i := 0; i+1 < len(text); i++ {
+		if c := text[i+1]; text[i] == '<' && !isSpace(c) && c != '/' && c != '>' {
+			return i
+		}
+	}
+	return -1
+}
+
+// tagEnd finds the end of the start tag at src[s], past its ">", skipping
+// quoted attribute values, or -1 at the end of input.
+func tagEnd(src []byte, s int) int {
+	for i := s + 1; i < len(src); i++ {
+		switch src[i] {
+		case '>':
+			return i + 1
+		case '=':
+			j := i + 1
+			for j < len(src) && isSpace(src[j]) {
+				j++
+			}
+			if j < len(src) && (src[j] == '"' || src[j] == '\'') {
+				k := bytes.IndexByte(src[j+1:], src[j])
+				if k < 0 {
+					return -1
+				}
+				i = j + 1 + k
+			}
+		}
+	}
+	return -1
+}
+
+// foldName lowercases a name outside XML mode.
+func foldName(b []byte, lower bool) string {
+	if lower {
+		return lowerASCII(b)
+	}
+	return string(b)
 }
 
 // render serializes the tree the way dom-serializer does with
@@ -518,6 +607,41 @@ func renderDocument(n *html.Node) []byte {
 	var buf bytes.Buffer
 	render(&buf, n)
 	return buf.Bytes()
+}
+
+// renderXML serializes as dom-serializer does in XML mode: an element without
+// children closes itself, and an empty attribute keeps its ="".
+func renderXML(buf *bytes.Buffer, n *html.Node) {
+	if n.Type != html.ElementNode {
+		if n.Type == html.DocumentNode {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				renderXML(buf, c)
+			}
+			return
+		}
+		render(buf, n)
+		return
+	}
+	buf.WriteByte('<')
+	buf.WriteString(n.Data)
+	for _, a := range jsKeyOrder(n.Attr) {
+		buf.WriteByte(' ')
+		buf.WriteString(a.Key)
+		buf.WriteString(`="`)
+		writeAttrValue(buf, a.Val)
+		buf.WriteByte('"')
+	}
+	if n.FirstChild == nil {
+		buf.WriteString("/>")
+		return
+	}
+	buf.WriteByte('>')
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		renderXML(buf, c)
+	}
+	buf.WriteString("</")
+	buf.WriteString(n.Data)
+	buf.WriteByte('>')
 }
 
 // jsKeyOrder orders attributes the way juice emits them from a JavaScript
