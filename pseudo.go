@@ -17,7 +17,7 @@ import (
 // pseudoMaps holds one element's ::before and ::after declarations.
 type pseudoMaps [2]*propMap
 
-func (in *pass) pseudoMap(n *html.Node, kind uint8) *propMap {
+func (in *pass) pseudoMap(n *html.Node, kind uint8, dup func() bool) *propMap {
 	if in.pseudos == nil {
 		in.pseudos = map[*html.Node]*pseudoMaps{}
 		in.pseudoOrder = nil
@@ -30,7 +30,7 @@ func (in *pass) pseudoMap(n *html.Node, kind uint8) *propMap {
 	}
 	i := kind - pseudoBefore
 	if pm[i] == nil {
-		pm[i] = &propMap{}
+		pm[i] = &propMap{dup: dup()}
 	}
 	return pm[i]
 }

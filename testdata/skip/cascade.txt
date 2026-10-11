@@ -7,6 +7,7 @@
 cascade/nonvisual  limit: the rule matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 cascade/selector-list-ties  limit: :only-child matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 css-inline-suite/benchmarks/big_email_1  juice bug: a <style media="..."> element's media attribute is ignored, so mobile-only rules are inlined for everyone
+duplicates/variables  juice bug: with inlineDuplicateProperties, var() reads the first rule's custom property rather than the one that wins the cascade
 important/attr-pseudo  limit: inlinePseudoElements turns ::after into a real <span>, an element the original never had
 juice-suite/inline-content/ignore-pseudos  juice bug: pseudo-class rules in extraCss are dropped rather than preserved, so a:link styles are lost
 juice-suite/inline-content/pseudo-specificity  juice bug: pseudo-classes are scored like type selectors; CSS and browsers score them like classes

@@ -139,6 +139,7 @@ function attrs(tag) {
   if (chance(0.05)) add('bgcolor', '#eee');
   if (chance(0.05)) add('data-x', 'y');
   if (chance(0.04)) out.push(pick(['data-juice-important', 'data-juice-important="false"', 'data-juice-important="true"']));
+  if (chance(0.03)) out.push(pick(['data-juice-duplicates', 'data-juice-duplicates="false"']));
   if (tag === 'a') add('href', pick(['https://example.com/?a=1&b=2', '#i1', 'mailto:x@example.com']));
   if (tag === 'img') add('src', 'https://example.com/x.png');
   if (chance(0.03)) out.push('hidden');
@@ -181,7 +182,7 @@ const OPTIONS = {
   applyHeightAttributes: false, applyAttributesTableElements: false, preserveMediaQueries: false,
   preserveFontFaces: false, preserveKeyFrames: false, preservePseudos: false, resolveCSSVariables: false,
   preserveContainerQueries: false, preserveLayers: false,
-  inlinePseudoElements: true, xmlMode: true,
+  inlinePseudoElements: true, xmlMode: true, inlineDuplicateProperties: true,
 };
 
 for (let i = 0; i < count; i++) {

@@ -24,10 +24,12 @@ type property struct {
 	rule  int32  // source rule index; -1 is the synthetic style="" rule
 	next  int32  // same-selector duplicate, kept for progressive enhancement
 	dead  bool   // superseded, or reachable only through a chain
+	extra bool   // a kept duplicate behind the property's head (dup maps only)
 }
 
 type propMap struct {
 	slots []property
+	dup   bool // inlineDuplicateProperties: every declaration is kept
 }
 
 // packKey lays the specificity vector out in one word so comparison is a
@@ -51,7 +53,7 @@ func sat(v int) uint16 {
 // declarations dominate.
 func (m *propMap) find(name string) int32 {
 	for i := len(m.slots) - 1; i >= 0; i-- {
-		if !m.slots[i].dead && m.slots[i].prop == name {
+		if !m.slots[i].dead && !m.slots[i].extra && m.slots[i].prop == name {
 			return int32(i)
 		}
 	}
@@ -61,6 +63,20 @@ func (m *propMap) find(name string) int32 {
 // add applies one declaration, following juice's addProps.
 func (m *propMap) add(p property) {
 	p.next = -1
+	if m.dup {
+		// Nothing is dropped. The head, which width/height promotion and
+		// var() read, is the newest declaration from the head's own
+		// selector; one from another selector joins the end of its chain.
+		if cur := m.find(p.prop); cur >= 0 {
+			if m.slots[cur].rule == p.rule {
+				m.slots[cur].extra = true
+			} else {
+				p.extra = true
+			}
+		}
+		m.slots = append(m.slots, p)
+		return
+	}
 	if cur := m.find(p.prop); cur >= 0 {
 		e := &m.slots[cur]
 		// The incumbent keeps the property only if it strictly outranks the
@@ -89,9 +105,15 @@ func (m *propMap) order() []int32 {
 		}
 		return i
 	}
+	if m.dup {
+		// Nothing is deleted, so a property keeps its first position.
+		pos = func(i int32) int32 {
+			return int32(slices.IndexFunc(m.slots, func(p property) bool { return p.prop == m.slots[i].prop }))
+		}
+	}
 	var heads []int32
 	for i := range m.slots {
-		if !m.slots[i].dead {
+		if !m.slots[i].dead && !m.slots[i].extra {
 			heads = append(heads, int32(i))
 		}
 	}

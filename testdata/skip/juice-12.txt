@@ -20,10 +20,3 @@
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
 inline-pseudo-elements/serialization/style-in-string  ALLOW: juice joins every <style> block with newlines, so a string left open at the end of the last one ends in "\n" and so does the generated content; each block is its own stylesheet here (README divergence 5)
-*/duplicates/attr-off  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/attr-on  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/dimensions  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/important  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/option  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/same-rule  inlineDuplicateProperties and data-juice-duplicates are not supported
-*/duplicates/variables  inlineDuplicateProperties and data-juice-duplicates are not supported
