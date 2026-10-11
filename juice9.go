@@ -127,6 +127,57 @@ func menschPseudo(sel string) bool {
 	return false
 }
 
+// juice9Arguments rewrites the pseudo-classes inside arguments that juice 9
+// leaves to css-select, since it skips only those outside them: :hover,
+// :active and :visited match nothing, :link is a link with an href, and
+// css-select rejects :focus, so the rule is dropped.
+func juice9Arguments(arm []byte) ([]byte, bool) {
+	var out []byte
+	depth := 0
+	for i := 0; i < len(arm); {
+		c := arm[i]
+		switch {
+		case c == '[':
+			j := attrEnd(arm, i)
+			out = append(out, arm[i:j]...)
+			i = j
+			continue
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+		case c == ':' && depth > 0 && i+1 < len(arm) && arm[i+1] != ':':
+			ne := identEnd(arm, i+1)
+			switch strings.ToLower(string(arm[i+1 : ne])) {
+			case "hover", "active", "visited":
+				out = append(out, ":not(*)"...)
+				i = ne
+				continue
+			case "link":
+				out = append(out, ":is(a,area,link)[href]"...)
+				i = ne
+				continue
+			case "focus":
+				return nil, false
+			}
+		}
+		out = append(out, c)
+		i++
+	}
+	return out, true
+}
+
+// juice9Tail is a selector as juice 9 matches it once its trailing
+// pseudo-element is stripped: what precedes it is kept as a combinator, so
+// ".c ::before" is ".c *" and "::after" alone is "*".
+func juice9Tail(variant []byte, text string) string {
+	tail := rightmostCompound(string(trimCSS(variant)))
+	if t, _, p, _ := scanSelector([]byte(tail)); p == pseudoNone || t != "" || strings.HasSuffix(text, "*") {
+		return text
+	}
+	return strings.TrimSpace(text + " *")
+}
+
 // juice9Specificity is juice 9's slick-based score: every pseudo-class and
 // pseudo-element counts as a type selector, :is() and :where() included,
 // except :not(), which scores as the first selector in its argument.

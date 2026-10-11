@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 3962 | 3898 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0, with `Juice9()` | 3962 | 3913 | 49: the same, plus juice 9 behaviour not yet matched |
+| juice 12.1.3 | 3969 | 3905 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0, with `Juice9()` | 3969 | 3941 | 28: the same divergences as juice 12, where juice 9 shares them |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,

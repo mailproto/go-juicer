@@ -121,17 +121,24 @@ const maxExpansion = 32
 // It returns ignored=true for an arm juice preserves rather than inlines, and
 // no rules at all for one neither engine can match.
 func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored bool) {
-	_, spec, pseudo, ign := scanSelector(arm)
-	if ign {
-		return nil, true
-	}
+	sel := string(arm)
 	if juice9 {
 		if !balanced(arm) {
 			// Half of a list mensch split inside parentheses: cheerio
 			// throws on it and juice 9 skips the rule.
 			return nil, false
 		}
-		spec = juice9Specificity(arm)
+		var ok bool
+		if arm, ok = juice9Arguments(arm); !ok {
+			return nil, false
+		}
+	}
+	_, spec, pseudo, ign := scanSelector(arm)
+	if ign {
+		return nil, true
+	}
+	if juice9 {
+		spec = juice9Specificity([]byte(sel))
 	}
 
 	for _, variant := range expandFunctional(arm) {
@@ -139,12 +146,15 @@ func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored b
 		if vIgn {
 			continue
 		}
+		if juice9 {
+			text = juice9Tail(variant, text)
+		}
 		m, err := cascadia.Parse(text)
 		if err != nil {
 			// juice swallows selectors its engine cannot parse.
 			continue
 		}
-		r := rule{sel: string(arm), decls: decls, spec: spec, pseudo: pseudo, match: m}
+		r := rule{sel: sel, decls: decls, spec: spec, pseudo: pseudo, match: m}
 		r.key, r.keyName = rightmostKey(text)
 		rules = append(rules, r)
 	}
