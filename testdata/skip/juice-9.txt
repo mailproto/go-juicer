@@ -252,3 +252,12 @@ no-attributes/ignore/whole-file-second-block  juice 9 has no ignore comments
 no-css-variables/ignore/whole-file-second-block  juice 9 has no ignore comments
 no-preserve/ignore/whole-file-second-block  juice 9 has no ignore comments
 preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comments
+*/remove-inlined/all-inlined  removeInlinedSelectors is not supported
+*/remove-inlined/basic  removeInlinedSelectors is not supported
+*/remove-inlined/data-embed  removeInlinedSelectors is not supported
+*/remove-inlined/extra-css  removeInlinedSelectors is not supported
+*/remove-inlined/nesting-and-empty  removeInlinedSelectors is not supported
+*/remove-inlined/preserved-selectors  removeInlinedSelectors is not supported
+*/remove-inlined/pseudo-element-and-head  removeInlinedSelectors is not supported
+*/remove-inlined/remove-style-tags  removeInlinedSelectors is not supported
+*/remove-inlined/selector-list  removeInlinedSelectors is not supported

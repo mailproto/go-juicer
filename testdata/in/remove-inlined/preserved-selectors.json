@@ -1,0 +1,9 @@
+{
+  "options": {
+    "removeStyleTags": false,
+    "removeInlinedSelectors": true,
+    "preservedSelectors": [
+      ".keep"
+    ]
+  }
+}
