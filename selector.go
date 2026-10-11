@@ -392,6 +392,11 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 					if inner == pseudoNone {
 						inner = p
 					}
+					if t == "" && p != pseudoNone {
+						// Nothing left once the pseudo-element is stripped:
+						// css-select rejects the empty argument.
+						return "", spec, pseudoNone, true
+					}
 					parts = append(parts, []byte(t))
 				}
 				if inner != pseudoNone {
@@ -453,7 +458,13 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			i++
 		}
 	}
-	return string(bytes.TrimSpace(out)), spec, pseudo, false
+	// Stripping a pseudo-element can leave "a + "; css-select reads a
+	// trailing combinator as if followed by *.
+	out = bytes.TrimSpace(out)
+	if len(out) > 0 && bytes.IndexByte([]byte("+>~"), out[len(out)-1]) >= 0 {
+		out = append(out, '*')
+	}
+	return string(out), spec, pseudo, false
 }
 
 // argSpecificity returns the highest specificity among a selector list, which
