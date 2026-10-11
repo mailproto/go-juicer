@@ -249,10 +249,7 @@ func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool)
 	if altType == 0 || bytes.ContainsAny(alt, " \t\n>+~") {
 		return splice(cand[:at], alt), true
 	}
-	cs := at
-	for cs > 0 && !bytes.ContainsRune([]byte(" \t\n>+~("), rune(cand[cs-1])) {
-		cs--
-	}
+	cs := compoundStart(cand, at)
 	altT, rest := alt[:altType], alt[altType:]
 	pre := cand[:at]
 	switch pt := cand[cs : cs+typeSelectorLen(cand[cs:at])]; {
@@ -265,6 +262,27 @@ func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool)
 		return nil, false
 	}
 	return splice(pre, rest), true
+}
+
+// compoundStart finds where the compound containing cand[at] begins, looking
+// past brackets and parentheses, which can hold combinator characters.
+func compoundStart(cand []byte, at int) int {
+	cs := 0
+	for i := 0; i < at; i++ {
+		switch c := cand[i]; {
+		case c == '[':
+			i = attrEnd(cand, i) - 1
+		case c == '(':
+			if e := parenEnd(cand, i); e <= at {
+				i = e - 1
+			} else {
+				cs = i + 1
+			}
+		case bytes.IndexByte([]byte(" \t\n>+~"), c) >= 0:
+			cs = i + 1
+		}
+	}
+	return cs
 }
 
 // typeSelectorLen is the length of the type or universal selector leading s.

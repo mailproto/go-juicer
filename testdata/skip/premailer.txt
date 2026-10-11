@@ -42,6 +42,7 @@ l4-spec/is-nested  premailer's selector engine (Nokogiri) does not support :is()
 l4-spec/is-specificity  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-type-argument  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/universal-type  premailer does not match "*a"
+l4-spec/where-attribute-combinator  premailer does not support :is() or :where()
 malformed/atrule-bare-declarations  malformed CSS is recovered differently by css_parser and postcss
 malformed/semicolon-after-rule  premailer inlines rules inside @media print, which juice keeps in <style>
 malformed/unclosed-pseudo-arg  malformed CSS is recovered differently by css_parser and postcss
