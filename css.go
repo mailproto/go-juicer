@@ -50,6 +50,7 @@ type preserved struct {
 type cssBlock struct {
 	prelude []byte
 	items   []blockItem // declarations, comments and nested blocks, in source order
+	semi    []byte      // a semicolon written after a rule's closing brace
 }
 
 type blockItem struct {
@@ -85,6 +86,7 @@ func (b *cssBlock) text(indent int) []byte {
 	out.WriteByte('\n')
 	out.Write(pad)
 	out.WriteByte('}')
+	out.Write(b.semi)
 	return out.Bytes()
 }
 
@@ -100,6 +102,9 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 	var rules []rule
 	var keep []preserved
 
+	src = flattenNesting(src)
+	orig := src
+	src = blankStraySemicolons(src)
 	p := css.NewParser(parse.NewInputBytes(src), false)
 	prev := 0
 	atKind := ""
@@ -239,6 +244,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				// A ruleset nested in an at-rule is preserved, never inlined.
 				if len(stack) > 1 {
 					done := stack[len(stack)-1]
+					done.semi = ownSemicolon(orig[end:])
 					stack = stack[:len(stack)-1]
 					stack[len(stack)-1].items = append(stack[len(stack)-1].items, blockItem{block: done})
 				}
@@ -264,7 +270,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			// still inlined. It only looks at the first arm, though, so
 			// "td, a:hover" is not preserved at all.
 			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) {
-				keep = append(keep, preserved{"pseudo", ruleText(sel, shared)})
+				keep = append(keep, preserved{"pseudo", append(ruleText(sel, shared), ownSemicolon(orig[end:])...)})
 			}
 		}
 	}
@@ -283,6 +289,61 @@ func ruleText(sel []byte, decls []decl) []byte {
 	}
 	b.WriteString("\n}")
 	return b.Bytes()
+}
+
+// blankStraySemicolons turns semicolons that start an empty statement into
+// spaces. postcss treats them as whitespace; tdewolff would read one as the
+// start of a selector and swallow a following at-rule into it.
+func blankStraySemicolons(src []byte) []byte {
+	out := src
+	empty := true
+	var quote byte
+	for i := 0; i < len(src); i++ {
+		c := src[i]
+		switch {
+		case quote != 0:
+			if c == '\\' {
+				i++
+			} else if c == quote {
+				quote = 0
+			}
+		case isCSSSpace(c):
+		case c == '/' && i+1 < len(src) && src[i+1] == '*':
+			if k := bytes.Index(src[i+2:], []byte("*/")); k >= 0 {
+				i += k + 3
+			} else {
+				i = len(src)
+			}
+		case c == ';' && empty:
+			if &out[0] == &src[0] {
+				out = bytes.Clone(src)
+			}
+			out[i] = ' '
+		case c == '{' || c == '}' || c == ';':
+			empty = true
+		default:
+			empty = false
+			if c == '"' || c == '\'' {
+				quote = c
+			} else if c == '\\' {
+				i++
+			}
+		}
+	}
+	return out
+}
+
+// ownSemicolon is a semicolon following a rule, which postcss keeps with the
+// rule and re-emits after its closing brace, along with the space before it.
+func ownSemicolon(rest []byte) []byte {
+	i := 0
+	for i < len(rest) && isCSSSpace(rest[i]) {
+		i++
+	}
+	if i < len(rest) && rest[i] == ';' {
+		return rest[:i+1]
+	}
+	return nil
 }
 
 // preludeText recovers an at-rule prelude, which runs up to the opening brace.

@@ -86,9 +86,9 @@ preserve-important/variables/nested  juice 9 does not resolve CSS custom propert
 */juice-suite/juice-content/keyframes-preserve  juice 9 writes a preserved selector list one selector per line
 */juice-suite/juice-content/layers-preserve  preserveLayers is not supported
 */juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
-*/juice-suite/juice-content/nesting-atrule  CSS nesting is not flattened
-*/juice-suite/juice-content/nesting-basic  CSS nesting is not flattened
-*/juice-suite/juice-content/nesting-pseudo  CSS nesting is not flattened, and a nested `&:hover` is preserved verbatim, twice
+*/juice-suite/juice-content/nesting-atrule  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/juice-suite/juice-content/nesting-pseudo  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-selector-preserve  juice 9 splits a preserved selector list into one rule per selector
@@ -172,24 +172,36 @@ keep-style-tags/juice-suite/inline-content/media  juice 9's CSS parser (mensch) 
 no-attributes/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 no-css-variables/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 preserve-important/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
-*/l4-spec/empty-whitespace  :empty treats whitespace-only text as empty
-*/l4-spec/ignored-pseudo-argument  ignored pseudo-classes inside arguments are not detected, so the rule is inlined
-*/l4-spec/is-complex-inside  an :is() alternative with combinators is spliced in as text, changing which element it constrains
-*/l4-spec/is-in-not  :is() inside :not() is not expanded, so the rule is dropped
-*/l4-spec/not-never-matching  :not() of a selector that never matches drops the rule
-*/l4-spec/pseudo-element-argument  a pseudo-element inside :is() is matched rather than rejecting the rule
-*/l4-spec/universal-type  "*a" is rejected rather than read as "a"
-*/malformed/semicolon-after-rule  a semicolon after a preserved rule's closing brace is dropped
-*/malformed/stray-semicolon-at-rule  a stray semicolon before an at-rule swallows the at-rule into a selector
-*/nesting/comments  CSS nesting is not flattened
-*/nesting/complex-parent  CSS nesting is not flattened
-*/nesting/compound  CSS nesting is not flattened
-*/nesting/custom-property  CSS nesting is not flattened
-*/nesting/declarations-after  CSS nesting is not flattened
-*/nesting/deep  CSS nesting is not flattened
-*/nesting/descendant  CSS nesting is not flattened
-*/nesting/list-parent  CSS nesting is not flattened
-*/nesting/media  CSS nesting is not flattened
-*/nesting/pseudo  CSS nesting is not flattened
-*/nesting/self  CSS nesting is not flattened
-*/nesting/semicolons  CSS nesting is not flattened
+*/l4-spec/ignored-pseudo-argument  juice 9 does not match :is(), and only skips ignored pseudo-classes outside arguments
+*/l4-spec/is-in-not  juice 9 does not match :is()
+default/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+preserve-important/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+no-attributes/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+no-css-variables/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+inline-pseudo-elements/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+default/malformed/stray-semicolon-at-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+preserve-important/malformed/stray-semicolon-at-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+no-attributes/malformed/stray-semicolon-at-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+no-css-variables/malformed/stray-semicolon-at-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+inline-pseudo-elements/malformed/stray-semicolon-at-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
+default/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+preserve-important/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+no-attributes/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+no-css-variables/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+inline-pseudo-elements/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/complex-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/compound  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/custom-property  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/declarations-after  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/deep  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/descendant  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/list-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+default/nesting/media  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+preserve-important/nesting/media  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+no-attributes/nesting/media  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+no-css-variables/nesting/media  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+inline-pseudo-elements/nesting/media  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/pseudo  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/self  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/semicolons  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
+*/nesting/not-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does

@@ -87,7 +87,20 @@ function selector() {
   return times(1, 2, () => times(1, 3, compound).join(pick([' ', ' ', ' > ', ' + ', ' ~ ', '>'])))
     .join(`,${sp()}`);
 }
-const rule = () => `${selector()}${sp()}{${sp()}${decls(false)}${sp()}}`;
+const rule = (depth = 0) => {
+  let body = decls(false);
+  // CSS nesting, which juice flattens through postcss-nesting.
+  if (depth < 2 && chance(0.12)) {
+    body += ';' + times(1, 2, () => nested(depth + 1)).join(sp());
+    if (chance(0.3)) body += sp() + decls(false);
+  }
+  return `${selector()}${sp()}{${sp()}${body}${sp()}}`;
+};
+function nested(depth) {
+  if (chance(0.2)) return `@media ${pick(['print', '(max-width:600px)'])}{${decls(false)}${chance(0.3) ? ';' + rule(depth) : ''}}`;
+  const sel = pick(['& ', '&', '', '> ', '& > ', '&:hover', '&.' + pick(CLASSES), pick(TAGS) + '&', '&:first-child', ':not(&) ']);
+  return rule(depth).replace(/^[^{]*/, (s) => sel + (sel.endsWith('&') || sel.endsWith(':hover') || sel.endsWith('-child') ? '' : compound()) + sp());
+}
 
 function atRule() {
   return pick([

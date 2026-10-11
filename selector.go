@@ -145,6 +145,10 @@ func compileRule(arm []byte, decls []decl) (rules []rule, ignored bool) {
 // expandFunctional rewrites :is()/:where() selector lists into the equivalent
 // set of plain selectors. cascadia cannot parse either, and expanding is
 // exact here because the specificity comes from the original arm.
+//
+// An alternative with combinators can only be spliced in where the list
+// starts the selector: "div > :is(.a .b)" is not "div > .a .b". Elsewhere it
+// becomes ":not(:not(.a .b))", which cascadia can parse.
 func expandFunctional(arm []byte) [][]byte {
 	out := [][]byte{arm}
 	for {
@@ -166,23 +170,74 @@ func expandFunctional(arm []byte) [][]byte {
 				if len(next) >= maxExpansion {
 					break
 				}
-				if v, ok := spliceAlternative(cand, at, end, alt); ok {
+				if at > 0 && bytes.ContainsAny(alt, " \t\n>+~") {
+					next = append(next, slices.Concat(cand[:at], []byte(":not(:not("), alt, []byte("))"), cand[end:]))
+				} else if v, ok := spliceAlternative(cand, at, end, alt); ok {
 					next = append(next, v)
 				}
 			}
 		}
 		out = next
 		if !grew || len(out) >= maxExpansion {
+			for i, v := range out {
+				out[i] = expandArguments(v)
+			}
 			return out
 		}
 	}
+}
+
+// expandArguments expands :is()-style lists inside the arguments of other
+// functional pseudo-classes, so :not(:is(.a, .b)) becomes :not(.a,.b).
+func expandArguments(sel []byte) []byte {
+	var out []byte
+	last := 0
+	for i := 0; i < len(sel); i++ {
+		switch sel[i] {
+		case '[':
+			i = attrEnd(sel, i) - 1
+		case ':':
+			ne := identEnd(sel, i+1)
+			if ne >= len(sel) || sel[ne] != '(' {
+				i = ne - 1
+				continue
+			}
+			e := parenEnd(sel, ne)
+			args := sel[ne+1 : max(e-1, ne+1)]
+			if l := bytes.ToLower(args); bytes.Contains(l, []byte(":is(")) || bytes.Contains(l, []byte(":where(")) || bytes.Contains(l, []byte(":matches(")) {
+				var alts [][]byte
+				for _, a := range splitSelector(args) {
+					alts = append(alts, expandFunctional(a)...)
+				}
+				switch {
+				case len(alts) > 0:
+					out = append(append(append(out, sel[last:ne+1]...), bytes.Join(alts, []byte(","))...), ')')
+				case strings.EqualFold(string(sel[i:ne]), ":not"):
+					// Nothing to exclude: matches any element.
+					out = append(out, sel[last:i]...)
+					if i == 0 || bytes.ContainsRune([]byte(" \t\n>+~("), rune(sel[i-1])) {
+						out = append(out, '*')
+					}
+				default:
+					out = append(out, sel[last:e]...)
+				}
+				last = e
+			}
+			i = e - 1
+		}
+	}
+	if out == nil {
+		return sel
+	}
+	return append(out, sel[last:]...)
 }
 
 // spliceAlternative replaces cand[at:end], an :is()-style call, with one of
 // its alternatives. A type selector in the alternative has to lead its
 // compound, so "p.c:where(p)" becomes "p.c" rather than "p.cp", and one that
 // conflicts with the compound's own type can never match (ok is false).
-// Alternatives with combinators are spliced as they are.
+// Alternatives with combinators are spliced as they are, which expandFunctional
+// only does where that is exact.
 func spliceAlternative(cand []byte, at, end int, alt []byte) (v []byte, ok bool) {
 	splice := func(pre, mid []byte) []byte {
 		v := make([]byte, 0, len(cand)+len(alt))
@@ -301,9 +356,15 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 					arg = arm[ne+1 : ae]
 				}
 			}
-			switch {
-			case ignoredPseudos[name]:
+			// juice looks for ignored pseudos inside arguments too, and its
+			// engine rejects a pseudo-element there.
+			if ignoredPseudos[name] || slices.ContainsFunc(splitSelector(arg), func(a []byte) bool {
+				_, _, p, ign := scanSelector(a)
+				return ign || p != pseudoNone
+			}) {
 				return "", spec, pseudoNone, true
+			}
+			switch {
 			case name == "before" || name == "after":
 				// Matched against the base selector; declarations are routed
 				// to a side map so they cannot leak onto the element.
@@ -324,6 +385,10 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 				spec[1] += s[1]
 				spec[2] += s[2]
 				out = append(out, rewriteHas(arm[i:ae], name)...)
+			case name == "empty" && !dbl:
+				// css-select counts whitespace text as content; cascadia does not.
+				spec[2]++
+				out = append(out, `:empty:not(:matchesOwn([\s\S]))`...)
 			default:
 				spec[2]++
 				out = append(out, arm[i:ae]...)
@@ -331,7 +396,10 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			i = ae
 
 		case c == '*':
-			out = append(out, c)
+			// "*a", which flattened nesting can produce, is just "a".
+			if i+1 >= len(arm) || !isSelectorNameStart(arm[i+1]) {
+				out = append(out, c)
+			}
 			i++
 
 		case isSelectorNameStart(c):

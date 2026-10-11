@@ -18,9 +18,6 @@ inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is no
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/layers-preserve  preserveLayers is not supported
 */juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
-*/juice-suite/juice-content/nesting-atrule  CSS nesting is not flattened
-*/juice-suite/juice-content/nesting-basic  CSS nesting is not flattened
-*/juice-suite/juice-content/nesting-pseudo  CSS nesting is not flattened, and a nested `&:hover` is preserved verbatim, twice
 */juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/xml  xmlMode is not supported
@@ -37,24 +34,3 @@ inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is no
 */css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
-*/l4-spec/empty-whitespace  :empty treats whitespace-only text as empty
-*/l4-spec/ignored-pseudo-argument  ignored pseudo-classes inside arguments are not detected, so the rule is inlined
-*/l4-spec/is-complex-inside  an :is() alternative with combinators is spliced in as text, changing which element it constrains
-*/l4-spec/is-in-not  :is() inside :not() is not expanded, so the rule is dropped
-*/l4-spec/not-never-matching  :not() of a selector that never matches drops the rule
-*/l4-spec/pseudo-element-argument  a pseudo-element inside :is() is matched rather than rejecting the rule
-*/l4-spec/universal-type  "*a" is rejected rather than read as "a"
-*/malformed/semicolon-after-rule  a semicolon after a preserved rule's closing brace is dropped
-*/malformed/stray-semicolon-at-rule  a stray semicolon before an at-rule swallows the at-rule into a selector
-*/nesting/comments  CSS nesting is not flattened
-*/nesting/complex-parent  CSS nesting is not flattened
-*/nesting/compound  CSS nesting is not flattened
-*/nesting/custom-property  CSS nesting is not flattened
-*/nesting/declarations-after  CSS nesting is not flattened
-*/nesting/descendant  CSS nesting is not flattened
-*/nesting/list-parent  CSS nesting is not flattened
-*/nesting/media  CSS nesting is not flattened
-*/nesting/not-parent  CSS nesting is not flattened
-*/nesting/pseudo  CSS nesting is not flattened
-*/nesting/self  CSS nesting is not flattened
-*/nesting/semicolons  CSS nesting is not flattened

@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 3451 | 3314 | 137, each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 3451 | 3051 | 400: the same, plus behaviour juice 12 changed |
+| juice 12.1.3 | 3612 | 3496 | 116, each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 3612 | 3101 | 511: the same, plus behaviour juice 12 changed |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -66,19 +66,19 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 420 of 491 documents agree; the rest are
+splits, quotes and color spellings. 421 of 501 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 470 of 488 render identically. The rest are
+every element's computed style. 491 of 511 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
 this package copies for parity: `<style media>` ignored, pseudo-class
 specificity, `:first-child` seeing a tree without `<style>` elements,
-`[width=600]`, `content` on `<img>`, and pseudo-class rules dropped from
-`extraCss`. Each is a candidate for a deliberate divergence.
+`[width=600]`, `content` on `<img>`, pseudo-class rules dropped from
+`extraCss`, and `@supports` blocks dropped. Each is a candidate for a deliberate divergence.
 
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
@@ -160,8 +160,9 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 ## Status
 
 The cascade, at-rule preservation, attribute promotion, CSS variables,
-Selectors L4 specificity and `:is()`/`:where()` are implemented. Not yet:
-CSS nesting flattening, `::before`/`::after` materialization (off by default
+Selectors L4 specificity, `:is()`/`:where()` and CSS nesting (flattened as
+juice does, through postcss-nesting's rules) are implemented. Not yet:
+`::before`/`::after` materialization (off by default
 in juice too), and `/* juice ignore */` directives.
 
 External resources are out of scope. This package does no network I/O; resolve
