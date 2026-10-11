@@ -23,5 +23,7 @@ premailer-suite/misc/style_with_data_in_content  juice bug: the content property
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/unmergable_media_queries  limit: an inlined declaration outranks a later rule kept in a preserved @media block
 premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  juice bug: an invalid color is copied into bgcolor, where legacy attribute parsing turns it into a real color
+pseudo-elements/empty-argument  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
+pseudo-elements/trailing-combinator  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 roundtrip/p-not-closed  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
 variables/function-name  juice bug: var (--x), with a space, is resolved, but CSS treats it as invalid
