@@ -292,8 +292,11 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			empty := !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" && len(d.value) > 0 })
 			shared := append([]decl(nil), decls...)
 			arms := splitSelector(sel)
+			if opts.juice9 {
+				arms = menschArms(sel)
+			}
 			for _, arm := range arms {
-				armRules, ignored := compileRule(arm, shared)
+				armRules, ignored := compileRule(arm, shared, opts.juice9)
 				if !ignored && !empty {
 					for k := range armRules {
 						armRules[k].group = int32(len(rules))

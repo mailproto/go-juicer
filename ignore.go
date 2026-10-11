@@ -22,7 +22,7 @@ func (st *ignoreState) idle() bool { return !st.off && !st.ignoring && !st.skipN
 
 // parseWithDirectives is parseStylesheet honouring juice's ignore comments.
 func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState) ([]rule, []preserved, uint32) {
-	if st.idle() && !bytes.Contains(src, []byte("juice")) {
+	if opts.juice9 || st.idle() && !bytes.Contains(src, []byte("juice")) {
 		if !st.started && len(trimCSS(src)) > 0 {
 			st.started = true
 		}

@@ -51,7 +51,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3 | 3948 | 3884 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 3948 | 3160 | 788: the same, plus behaviour juice 12 changed or added |
+| juice 9.1.0, with `Juice9()` | 3948 | 3520 | 428: the same, plus juice 9 behaviour not yet matched |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -81,8 +81,11 @@ specificity, `:first-child` seeing a tree without `<style>` elements,
 `<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
 dropped, and a few more. Each is a candidate for a deliberate divergence.
 
-juice 12 is what this package implements. juice 9 is tracked because it is
-still widely deployed, and its list shows exactly where the two disagree.
+juice 12 is what this package implements by default. juice 9 is still widely
+deployed, so the `Juice9()` option switches to its behaviour where the two
+differ: no CSS variable resolution, juice 9's selector splitting and
+specificity, and none of juice 12's newer options and control comments. The
+juice 9 suite runs with it set, and its skip list shows what is left.
 juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;
 its `^1.0.0-rc.12` range now resolves to cheerio 1.x, whose serializer differs.
 

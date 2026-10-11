@@ -53,6 +53,8 @@ type options struct {
 	// juice ignore comment keeps.
 	keepAll bool
 
+	juice9 bool // see Juice9
+
 	// Document cleanup, carried over from the Ruby premailer this package
 	// used to wrap. juice has no equivalent.
 	removeIDs            bool
@@ -206,8 +208,22 @@ func New(opts ...Option) *Inliner {
 	for _, fn := range opts {
 		fn(&o)
 	}
+	if o.juice9 {
+		// juice 9 has none of these; it ignores the options.
+		o.resolveCSSVariables = false
+		o.preserveContainerQueries, o.preserveLayers = false, false
+		o.preservedSelectors = nil
+		o.removeInlined, o.inlineDuplicates = false, false
+	}
 	return &Inliner{opts: o}
 }
+
+// Juice9 matches juice 9.1.0 rather than juice 12, for output that has to
+// stay identical to an existing juice 9 deployment. juice 9 resolves no CSS
+// variables, matches no :is() or :where(), and has none of juice 12's newer
+// options or control comments and attributes; with this set, those options
+// are ignored as juice 9 ignores them.
+func Juice9() Option { return func(o *options) { o.juice9 = true } }
 
 // Inline inlines the document's CSS into style attributes.
 func (in *Inliner) Inline(doc string) (string, error) {
@@ -264,7 +280,7 @@ type pass struct {
 
 // process runs the inlining pipeline over an already-parsed tree.
 func (in *Inliner) process(root *html.Node, src []byte) error {
-	p := &pass{o: &in.opts, controlAttrs: bytes.Contains(src, []byte("data-juice-"))}
+	p := &pass{o: &in.opts, controlAttrs: !in.opts.juice9 && bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
 
@@ -397,6 +413,9 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		doc++
 		keep := -1 // whether n keeps !important; read on first match
 		dup := func() bool {
+			if o.juice9 {
+				return false
+			}
 			if v, ok := getAttr(n, "data-juice-duplicates"); ok {
 				return v != "false"
 			}
@@ -405,7 +424,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		keepImportant := func() bool {
 			if keep < 0 {
 				keep = 0
-				if v, ok := getAttr(n, "data-juice-important"); ok && v != "false" || !ok && o.preserveImportant {
+				if v, ok := getAttr(n, "data-juice-important"); ok && !o.juice9 && v != "false" || (!ok || o.juice9) && o.preserveImportant {
 					keep = 1
 				}
 			}

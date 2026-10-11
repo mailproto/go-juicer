@@ -31,68 +31,19 @@ preserve-important/important/beats-id  juice 9 keeps the author's `!important` t
 preserve-important/important/strip-default  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 */inline-seed/important-spellings  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
 */inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
-*/l4-spec/is  juice 9 does not match :is() or :where()
-*/l4-spec/is-nested  juice 9 does not match :is() or :where()
-*/l4-spec/where  juice 9 does not match :is() or :where()
-*/l4-spec/where-zero  juice 9 does not match :is() or :where()
 */malformed/bad-css  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unresolvable-bare  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unterminated  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 preserve-important/real-world/cerberus-fluid  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
-default/variables/ancestor  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/ancestor  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/ancestor  juice 9 does not resolve CSS custom properties
-no-attributes/variables/ancestor  juice 9 does not resolve CSS custom properties
-no-preserve/variables/ancestor  juice 9 does not resolve CSS custom properties
-preserve-important/variables/ancestor  juice 9 does not resolve CSS custom properties
-default/variables/basic  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/basic  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/basic  juice 9 does not resolve CSS custom properties
-no-attributes/variables/basic  juice 9 does not resolve CSS custom properties
-no-preserve/variables/basic  juice 9 does not resolve CSS custom properties
-preserve-important/variables/basic  juice 9 does not resolve CSS custom properties
-default/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-no-attributes/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-no-preserve/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-preserve-important/variables/custom-prop-filtered  juice 9 does not resolve CSS custom properties
-default/variables/fallback  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/fallback  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/fallback  juice 9 does not resolve CSS custom properties
-no-attributes/variables/fallback  juice 9 does not resolve CSS custom properties
-no-preserve/variables/fallback  juice 9 does not resolve CSS custom properties
-preserve-important/variables/fallback  juice 9 does not resolve CSS custom properties
-default/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-no-attributes/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-no-preserve/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-preserve-important/variables/in-shorthand  juice 9 does not resolve CSS custom properties
-default/variables/nested  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/nested  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/nested  juice 9 does not resolve CSS custom properties
-no-attributes/variables/nested  juice 9 does not resolve CSS custom properties
-no-preserve/variables/nested  juice 9 does not resolve CSS custom properties
-preserve-important/variables/nested  juice 9 does not resolve CSS custom properties
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/juice-content/container-queries-preserve  juice 9 has no preserveContainerQueries option and drops @container blocks
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  juice 9's mensch stringifier closes a preserved @font-face on the last declaration's line
 */juice-suite/juice-content/keyframes-preserve  juice 9 writes a preserved selector list one selector per line
-*/juice-suite/juice-content/layers-preserve  juice 9 has no preserveLayers option and drops @layer
 */juice-suite/juice-content/media-preserve  juice 9's mensch stringifier puts a blank line before an at-rule nested in @media
 */juice-suite/juice-content/nesting-atrule  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-pseudo  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/pseudo-selector-preserve  juice 9 splits a preserved selector list into one rule per selector
-*/juice-suite/inline-content/css-variables  juice 9 does not resolve CSS custom properties
-default/variables/function-name  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/variables/function-name  juice 9 does not resolve CSS custom properties
-keep-style-tags/variables/function-name  juice 9 does not resolve CSS custom properties
-no-attributes/variables/function-name  juice 9 does not resolve CSS custom properties
-no-preserve/variables/function-name  juice 9 does not resolve CSS custom properties
-preserve-important/variables/function-name  juice 9 does not resolve CSS custom properties
 preserve-important/attrs/important-values  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 preserve-important/juice-suite/inline-content/integration  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 */comments/between-declarations  juice 9's CSS parser (mensch) strips every comment and trims what is left
@@ -121,8 +72,6 @@ no-css-variables/cascade/pseudo-first-selector  juice 9 writes a preserved selec
 preserve-important/cascade/empty-pseudo-rules  juice 9 writes an empty preserved block on one line (`a:hover {}`)
 preserve-important/cascade/preserved-declarations  juice 9's CSS parser (mensch) drops comments and trims values in preserved blocks
 preserve-important/cascade/pseudo-first-selector  juice 9 writes a preserved selector list one selector per line
-*/l4-spec/is-type-argument  juice 9 does not match :is() or :where()
-*/l4-spec/is-matches-twice  juice 9 does not match :is() or :where()
 # css-inline's test suite (testdata/in/css-inline-suite)
 */css-inline-suite/tests/invalid_rule-test_case_1_wrong_color_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_2_ttt_123_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
@@ -141,18 +90,6 @@ no-css-variables/css-inline-suite/benchmarks/big_email_1  juice 9 writes a prese
 no-css-variables/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
 preserve-important/css-inline-suite/benchmarks/big_email_1  juice 9 writes a preserved selector list one selector per line
 preserve-important/css-inline-suite/benchmarks/big_email_2  juice 9 writes a preserved selector list one selector per line
-default/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-default/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-inline-pseudo-elements/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-keep-style-tags/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-keep-style-tags/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-no-attributes/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-no-attributes/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-no-preserve/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-no-preserve/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
-preserve-important/css-inline-suite/benchmarks/double_quotes  juice 9 does not resolve CSS custom properties
-preserve-important/css-inline-suite/tests/other_property_quoted  juice 9 does not resolve CSS custom properties
 */css-inline-suite/tests/do_not_process_and_remove_style_tag  juice 9's CSS parser (mensch) gives up on a stylesheet with a declaration directly inside @media and inlines nothing
 */malformed/atrule-bare-declarations  juice 9's CSS parser (mensch) misreads a declaration directly inside an at-rule as part of the next selector
 default/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
@@ -161,8 +98,6 @@ keep-style-tags/juice-suite/inline-content/media  juice 9's CSS parser (mensch) 
 no-attributes/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 no-css-variables/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
 preserve-important/juice-suite/inline-content/media  juice 9's CSS parser (mensch) drops declarations directly inside @media
-*/l4-spec/ignored-pseudo-argument  juice 9 does not match :is(), and only skips ignored pseudo-classes outside arguments
-*/l4-spec/is-in-not  juice 9 does not match :is()
 default/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
 preserve-important/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
 no-attributes/malformed/semicolon-after-rule  juice 9's mensch parser moves a stray semicolon into the next selector or at-rule prelude
@@ -195,72 +130,9 @@ inline-pseudo-elements/nesting/media  juice 9 does not support CSS nesting: it t
 */nesting/semicolons  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */nesting/not-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 inline-pseudo-elements/serialization/style-in-string  juice 9's mensch parser drops a declaration whose string is never closed
-default/preserved-selectors/basic  juice 9 has no preservedSelectors option
-preserve-important/preserved-selectors/basic  juice 9 has no preservedSelectors option
-no-attributes/preserved-selectors/basic  juice 9 has no preservedSelectors option
-no-preserve/preserved-selectors/basic  juice 9 has no preservedSelectors option
-no-css-variables/preserved-selectors/basic  juice 9 has no preservedSelectors option
-inline-pseudo-elements/preserved-selectors/basic  juice 9 has no preservedSelectors option
-*/preserved-selectors/extra-css  juice 9 has no preservedSelectors option
-*/preserved-selectors/media-and-comments  juice 9 has no preservedSelectors option
-default/preserved-selectors/several  juice 9 has no preservedSelectors option
-preserve-important/preserved-selectors/several  juice 9 has no preservedSelectors option
-no-attributes/preserved-selectors/several  juice 9 has no preservedSelectors option
-no-preserve/preserved-selectors/several  juice 9 has no preservedSelectors option
-no-css-variables/preserved-selectors/several  juice 9 has no preservedSelectors option
-inline-pseudo-elements/preserved-selectors/several  juice 9 has no preservedSelectors option
-default/preserved-selectors/substring  juice 9 has no preservedSelectors option
-preserve-important/preserved-selectors/substring  juice 9 has no preservedSelectors option
-no-attributes/preserved-selectors/substring  juice 9 has no preservedSelectors option
-no-preserve/preserved-selectors/substring  juice 9 has no preservedSelectors option
-no-css-variables/preserved-selectors/substring  juice 9 has no preservedSelectors option
-inline-pseudo-elements/preserved-selectors/substring  juice 9 has no preservedSelectors option
-default/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-preserve-important/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-no-attributes/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-no-preserve/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-no-css-variables/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
-*/important/attr-dimensions  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-false  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-inline-style  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-preserve  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-pseudo  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-selector  juice 9 has no data-juice-important attribute, so keeps it and ignores it
-*/important/attr-untouched  juice 9 has no data-juice-important attribute, so keeps it and ignores it
 */pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
 */pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
-*/duplicates/attr-off  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/dimensions  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/important  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/option  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/same-rule  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/variables  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
-*/duplicates/attr-on  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
 */ignore/pseudo-and-semicolon  juice 9's mensch parser drops the semicolon after a preserved rule
-*/ignore/extra-css  juice 9 has no ignore comments
-*/ignore/next-across-blocks  juice 9 has no ignore comments
-*/ignore/next-declaration  juice 9 has no ignore comments
-*/ignore/next-rule  juice 9 has no ignore comments
-*/ignore/start-end  juice 9 has no ignore comments
-*/ignore/start-unterminated  juice 9 has no ignore comments
-*/ignore/whole-file  juice 9 has no ignore comments
-*/ignore/whole-file-first-block  juice 9 has no ignore comments
-default/ignore/whole-file-second-block  juice 9 has no ignore comments
-inline-pseudo-elements/ignore/whole-file-second-block  juice 9 has no ignore comments
-no-attributes/ignore/whole-file-second-block  juice 9 has no ignore comments
-no-css-variables/ignore/whole-file-second-block  juice 9 has no ignore comments
-no-preserve/ignore/whole-file-second-block  juice 9 has no ignore comments
-preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comments
-*/remove-inlined/all-inlined  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/basic  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/data-embed  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/extra-css  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/nesting-and-empty  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/preserved-selectors  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/pseudo-element-and-head  juice 9 has no removeInlinedSelectors option
-keep-style-tags/remove-inlined/remove-style-tags  juice 9 has no removeInlinedSelectors option
-*/remove-inlined/selector-list  juice 9 has no removeInlinedSelectors option
 default/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
 inline-pseudo-elements/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
 no-attributes/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
@@ -273,3 +145,11 @@ no-attributes/malformed/empty-value  juice 9's mensch parser keeps a word with n
 no-css-variables/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
 preserve-important/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
 */malformed/leading-colon  juice 9's mensch parser reads malformed declarations differently and drops the rules after them
+*/l4-spec/ignored-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments, so it inlines :not(a:visited) .x
+*/preserved-selectors/media-and-comments  juice 9's CSS parser (mensch) strips comments from values
+default/preserved-selectors/with-pseudo  juice 9 writes a preserved selector list one selector per line
+inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 writes a preserved selector list one selector per line
+no-attributes/preserved-selectors/with-pseudo  juice 9 writes a preserved selector list one selector per line
+no-css-variables/preserved-selectors/with-pseudo  juice 9 writes a preserved selector list one selector per line
+preserve-important/preserved-selectors/with-pseudo  juice 9 writes a preserved selector list one selector per line
+*/remove-inlined/nesting-and-empty  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
