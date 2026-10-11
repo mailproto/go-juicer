@@ -57,6 +57,8 @@ l4-spec/is-type-argument  premailer's selector engine (Nokogiri) does not suppor
 l4-spec/universal-type  premailer does not match "*a"
 l4-spec/where-attribute-combinator  premailer does not support :is() or :where()
 malformed/atrule-bare-declarations  malformed CSS is recovered differently by css_parser and postcss
+malformed/colonless-nightly  premailer does not apply a rule that follows a declaration with no colon
+malformed/leading-colon  premailer does not read past leading colons in a declaration, as postcss does
 malformed/semicolon-after-rule  premailer inlines rules inside @media print, which juice keeps in <style>
 malformed/unclosed-pseudo-arg  malformed CSS is recovered differently by css_parser and postcss
 malformed/var-unterminated  malformed CSS is recovered differently by css_parser and postcss
