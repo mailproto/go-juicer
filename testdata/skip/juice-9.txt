@@ -1,13 +1,5 @@
-# Cases not yet passing against juice 9.1.0, with the reason.
+# Cases not yet passing against juice 9.1.0 with Juice9(), with the reason.
 # Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
 #
-# The Go package targets juice 12, so every entry here is a juice 9 behaviour
-# it does not reproduce. Ratcheting works as in juice-12.txt.
-*/inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
-*/malformed/stray-closing-bracket  juice 9's CSS parser (mensch) recovers from malformed CSS differently
-# juice's own test suite (testdata/in/juice-suite)
-# premailer's test suite (testdata/in/premailer-suite)
-# Found by the generated differential against juice
-# css-inline's test suite (testdata/in/css-inline-suite)
-*/css-inline-suite/tests/invalid_rule-test_case_3_wrong_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
-*/css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
+# Juice9() matches juice 9 exactly, divergences included, so this is empty.
+# Ratcheting works as in juice-12.txt.
