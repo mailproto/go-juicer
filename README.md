@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 3612 | 3496 | 116, each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0 | 3612 | 3101 | 511: the same, plus behaviour juice 12 changed |
+| juice 12.1.3 | 3948 | 3884 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0 | 3948 | 3160 | 788: the same, plus behaviour juice 12 changed or added |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -66,19 +66,20 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 421 of 501 documents agree; the rest are
+splits, quotes and color spellings. 451 of 562 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 491 of 511 render identically. The rest are
+every element's computed style. 535 of 564 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
 this package copies for parity: `<style media>` ignored, pseudo-class
 specificity, `:first-child` seeing a tree without `<style>` elements,
-`[width=600]`, `content` on `<img>`, pseudo-class rules dropped from
-`extraCss`, and `@supports` blocks dropped. Each is a candidate for a deliberate divergence.
+`[width=600]` and `*a` applied though browsers drop them, `content` on
+`<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
+dropped, and a few more. Each is a candidate for a deliberate divergence.
 
 juice 12 is what this package implements. juice 9 is tracked because it is
 still widely deployed, and its list shows exactly where the two disagree.
@@ -107,7 +108,8 @@ and 5 minutes nightly.
 options, and requires byte-identical output from this package. A mismatch is
 minimized against a live juice process before it is reported, so it arrives
 as a few bytes of HTML ready to become a fixture. CI runs 2,000 documents on
-every change and 50,000 with a fresh seed nightly; the generator avoids the
+every change and 50,000 with a fresh seed nightly. The generator exercises
+every supported option, nesting and juice's ignore comments, and avoids the
 deliberate divergences below, so any mismatch is a bug.
 
 ### Why the HTML parser is not `html.Parse`

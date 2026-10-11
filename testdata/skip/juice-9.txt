@@ -261,3 +261,15 @@ preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comment
 */remove-inlined/pseudo-element-and-head  juice 9 has no removeInlinedSelectors option
 keep-style-tags/remove-inlined/remove-style-tags  juice 9 has no removeInlinedSelectors option
 */remove-inlined/selector-list  juice 9 has no removeInlinedSelectors option
+default/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+inline-pseudo-elements/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+no-attributes/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+no-css-variables/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+preserve-important/malformed/colonless-declaration  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+*/malformed/colonless-nightly  juice 9's mensch parser reads malformed declarations differently and drops the rules after them
+default/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+inline-pseudo-elements/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+no-attributes/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+no-css-variables/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+preserve-important/malformed/empty-value  juice 9's mensch parser keeps a word with no colon and drops empty values in preserved rules
+*/malformed/leading-colon  juice 9's mensch parser reads malformed declarations differently and drops the rules after them

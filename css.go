@@ -137,6 +137,32 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 	// (@font-face) but not others (@media), so the close waits for the next
 	// event to tell which.
 	pendingClose := false
+	inRuleset := false
+
+	declaration := func(span []byte) {
+		d := declParts(span, false)
+		v := d.value
+		if len(stack) > 0 {
+			b := stack[len(stack)-1]
+			b.add(appendComments(nil, d.before)...)
+			b.add(decl{prop: d.name, value: v, text: d.text})
+			b.add(appendComments(nil, d.after)...)
+			return
+		}
+		decls = appendComments(decls, d.before)
+		// juice inlines no empty value, but a preserved rule keeps it.
+		var bang []byte
+		if d.important && len(v) > 0 {
+			// Scored as important either way; whether the text keeps it
+			// is decided per element.
+			bang = append(append([]byte{}, v...), " !important"...)
+		}
+		decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, bang: bang, ord: ord})
+		if len(v) > 0 {
+			ord++
+		}
+		decls = appendComments(decls, d.after)
+	}
 
 	for {
 		gt, _, _ := p.Next()
@@ -150,7 +176,32 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			}
 		}
 		if gt == css.ErrorGrammar {
-			if p.Err() == io.EOF || len(stack) == 0 {
+			if p.Err() == io.EOF {
+				break
+			}
+			// A malformed declaration: tdewolff skips it and carries on.
+			// postcss drops a word with no colon too, but reads past
+			// leading colons, so ":t:u" declares t.
+			if inRuleset {
+				comments, rest := leadingComments(src[start:end])
+				if colons := bytes.TrimLeft(rest, ":"); len(colons) < len(rest) {
+					rest = trimCSSLeft(colons)
+					if len(stack) == 0 {
+						decls = appendComments(decls, comments)
+					} else {
+						stack[len(stack)-1].add(appendComments(nil, comments)...)
+					}
+					if bytes.IndexByte(rest, ':') < 0 {
+						// ": t" is t with an empty value, kept only in a
+						// preserved rule.
+						name := trimCSS(bytes.TrimRight(trimCSS(rest), ";}"))
+						rest = append(append([]byte{}, name...), ':')
+					}
+					declaration(rest)
+				}
+				continue
+			}
+			if len(stack) == 0 {
 				break
 			}
 			// tdewolff has no grammar for a declaration directly inside an
@@ -197,6 +248,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			closeAtRule()
 
 		case css.BeginRulesetGrammar:
+			inRuleset = true
 			sel = selectorText(src, start, end)
 			decls = decls[:0]
 			if len(stack) > 0 {
@@ -204,30 +256,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			}
 
 		case css.DeclarationGrammar:
-			d := declParts(src[start:end], false)
-			v := d.value
-			if len(stack) > 0 {
-				b := stack[len(stack)-1]
-				b.add(appendComments(nil, d.before)...)
-				if len(v) > 0 {
-					b.add(decl{prop: d.name, value: v, text: d.text})
-				}
-				b.add(appendComments(nil, d.after)...)
-				continue
-			}
-			decls = appendComments(decls, d.before)
-			// juice drops empty values, preserving mensch behaviour.
-			if len(v) > 0 {
-				// Scored as important either way; whether the text keeps it
-				// is decided per element.
-				var bang []byte
-				if d.important {
-					bang = append(append([]byte{}, v...), " !important"...)
-				}
-				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, bang: bang, ord: ord})
-				ord++
-			}
-			decls = appendComments(decls, d.after)
+			declaration(src[start:end])
 
 		case css.CustomPropertyGrammar:
 			d := declParts(src[start:end], true)
@@ -242,6 +271,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			ord++
 
 		case css.EndRulesetGrammar:
+			inRuleset = false
 			// Comments after the last declaration arrive with the closing brace.
 			comments, _ := leadingComments(src[start:end])
 			if len(stack) > 0 {
@@ -259,7 +289,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			decls = appendComments(decls, comments)
 			// An empty rule inlines nothing, but juice still preserves it when
 			// it has a pseudo-class arm.
-			empty := !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" })
+			empty := !slices.ContainsFunc(decls, func(d decl) bool { return d.prop != "" && len(d.value) > 0 })
 			shared := append([]decl(nil), decls...)
 			arms := splitSelector(sel)
 			for _, arm := range arms {
