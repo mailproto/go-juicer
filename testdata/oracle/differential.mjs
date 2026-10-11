@@ -180,6 +180,10 @@ for (let i = 0; i < count; i++) {
   const html = document();
   const options = {};
   for (const [k, v] of Object.entries(OPTIONS)) if (chance(0.1)) options[k] = v;
+  if (chance(0.15)) {
+    options.extraCss = stylesheet();
+    if (chance(0.3)) options.insertPreservedExtraCss = pick([false, 'td', 'p', 'body']);
+  }
   const row = { seed, i, html, options };
   try {
     row.out = juice(html, options);

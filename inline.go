@@ -9,8 +9,10 @@ package juicer
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
+	"github.com/andybalholm/cascadia"
 	"golang.org/x/net/html"
 )
 
@@ -22,6 +24,8 @@ type Inliner struct {
 
 type options struct {
 	extraCSS                    string
+	insertExtraCSS              bool
+	insertExtraCSSInto          string
 	applyStyleTags              bool
 	removeStyleTags             bool
 	preserveMediaQueries        bool
@@ -53,6 +57,7 @@ type options struct {
 // cascade.
 func defaults() options {
 	return options{
+		insertExtraCSS:              true,
 		applyStyleTags:              true,
 		removeStyleTags:             true,
 		preserveMediaQueries:        true,
@@ -75,6 +80,19 @@ type Option func(*options)
 
 // ExtraCSS is appended to the CSS collected from the document.
 func ExtraCSS(css string) Option { return func(o *options) { o.extraCSS = css } }
+
+// InsertPreservedExtraCSS controls whether rules from ExtraCSS that cannot be
+// inlined, such as @media blocks, are added to the document in a new <style>
+// element, appended to <head>, else <body>, else the document. On by default.
+func InsertPreservedExtraCSS(v bool) Option {
+	return func(o *options) { o.insertExtraCSS, o.insertExtraCSSInto = v, "" }
+}
+
+// InsertPreservedExtraCSSInto appends that <style> element to the first
+// element matching selector instead. If nothing matches, it is dropped.
+func InsertPreservedExtraCSSInto(selector string) Option {
+	return func(o *options) { o.insertExtraCSS, o.insertExtraCSSInto = true, selector }
+}
 
 // ApplyStyleTags controls whether CSS is collected from <style> elements.
 func ApplyStyleTags(v bool) Option { return func(o *options) { o.applyStyleTags = v } }
@@ -212,7 +230,8 @@ func appendRules(dst, src []rule) []rule {
 func (in *pass) run(root *html.Node) error {
 	o := in.o
 
-	rules, keep := in.collectCSS(root)
+	rules := in.collectCSS(root)
+	var keep []preserved
 	if extra := strings.TrimSpace(o.extraCSS); extra != "" {
 		// juice never preserves pseudo-class rules from extraCss.
 		eo := *o
@@ -228,7 +247,9 @@ func (in *pass) run(root *html.Node) error {
 	}
 	in.writeStyles()
 	in.promoteAttributes(root)
-	in.emitPreserved(root, keep)
+	if err := in.emitPreserved(root, keep); err != nil {
+		return err
+	}
 	in.cleanup(root)
 	return nil
 }
@@ -236,10 +257,9 @@ func (in *pass) run(root *html.Node) error {
 // collectCSS gathers CSS from <style> elements and disposes of them. Each tag
 // is handled on its own, because juice computes the text to preserve per tag
 // and replaces that tag's contents with it.
-func (in *pass) collectCSS(root *html.Node) ([]rule, []preserved) {
+func (in *pass) collectCSS(root *html.Node) []rule {
 	o := in.o
 	var rules []rule
-	var keep []preserved
 	var ord uint32
 
 	var styles []*html.Node
@@ -279,7 +299,7 @@ func (in *pass) collectCSS(root *html.Node) ([]rule, []preserved) {
 		// Rules that could not be inlined stay behind in this tag.
 		s.FirstChild.Data = string(preservedText(k))
 	}
-	return rules, keep
+	return rules
 }
 
 // applyRules walks the document once in order, applying every matching rule to
@@ -369,9 +389,19 @@ func preservedText(keep []preserved) []byte {
 
 // emitPreserved appends a <style> holding rules that could not be inlined,
 // when no surviving <style> already carries them.
-func (in *pass) emitPreserved(root *html.Node, keep []preserved) {
-	if len(keep) == 0 {
-		return
+func (in *pass) emitPreserved(root *html.Node, keep []preserved) error {
+	if len(keep) == 0 || !in.o.insertExtraCSS {
+		return nil
+	}
+	if sel := in.o.insertExtraCSSInto; sel != "" {
+		m, err := cascadia.Compile(sel)
+		if err != nil {
+			return fmt.Errorf("InsertPreservedExtraCSSInto: %w", err)
+		}
+		if host := cascadia.Query(root, m); host != nil {
+			host.AppendChild(preservedStyle(keep))
+		}
+		return nil
 	}
 	host := findFirst(root, "head")
 	if host == nil {
@@ -380,7 +410,12 @@ func (in *pass) emitPreserved(root *html.Node, keep []preserved) {
 	if host == nil {
 		host = root
 	}
+	host.AppendChild(preservedStyle(keep))
+	return nil
+}
+
+func preservedStyle(keep []preserved) *html.Node {
 	s := &html.Node{Type: html.ElementNode, Data: "style"}
 	s.AppendChild(&html.Node{Type: html.TextNode, Data: string(preservedText(keep))})
-	host.AppendChild(s)
+	return s
 }
