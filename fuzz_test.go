@@ -26,19 +26,21 @@ func FuzzCSS(f *testing.F) {
 	const skeleton = `<table><tr><td class="c" id="i" width="600">` +
 		`<p class="c x" style="margin:0"><span>t</span></p></td></tr></table>`
 
-	in := New()
+	inliners := []*Inliner{New(), New(Juice9())}
 	f.Fuzz(func(t *testing.T, css string) {
 		if len(css) > 8192 {
 			t.Skip()
 		}
 		doc := []byte("<style>" + css + "</style>" + skeleton)
-		a, errA := in.InlineBytes(doc)
-		b, errB := in.InlineBytes(doc)
-		if (errA == nil) != (errB == nil) {
-			t.Fatalf("nondeterministic error: %v vs %v", errA, errB)
-		}
-		if !bytes.Equal(a, b) {
-			t.Fatalf("nondeterministic output for %q:\n  %q\n  %q", css, a, b)
+		for _, in := range inliners {
+			a, errA := in.InlineBytes(doc)
+			b, errB := in.InlineBytes(doc)
+			if (errA == nil) != (errB == nil) {
+				t.Fatalf("nondeterministic error: %v vs %v", errA, errB)
+			}
+			if !bytes.Equal(a, b) {
+				t.Fatalf("nondeterministic output for %q:\n  %q\n  %q", css, a, b)
+			}
 		}
 	})
 }
