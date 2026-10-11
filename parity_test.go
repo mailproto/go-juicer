@@ -92,6 +92,9 @@ func parityVariant(t *testing.T, target, variant string, variantOpts map[string]
 			fixtureOpts, fixtureUnsupported := loadOptions(t, strings.TrimSuffix(p, ".html")+".json")
 			opts = append(opts, fixtureOpts...)
 			unsupported = append(unsupported, fixtureUnsupported...)
+			if target == "juice-9" {
+				opts = append(opts, Juice9())
+			}
 			want, wantErr := loadGolden(t, filepath.Join(target, name))
 
 			got, gotErr := New(opts...).InlineBytes(in)

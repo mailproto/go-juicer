@@ -119,10 +119,18 @@ const maxExpansion = 32
 //
 // It returns ignored=true for an arm juice preserves rather than inlines, and
 // no rules at all for one neither engine can match.
-func compileRule(arm []byte, decls []decl) (rules []rule, ignored bool) {
+func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored bool) {
 	_, spec, pseudo, ign := scanSelector(arm)
 	if ign {
 		return nil, true
+	}
+	if juice9 {
+		if !balanced(arm) {
+			// Half of a list mensch split inside parentheses: cheerio
+			// throws on it and juice 9 skips the rule.
+			return nil, false
+		}
+		spec = juice9Specificity(arm)
 	}
 
 	for _, variant := range expandFunctional(arm) {
