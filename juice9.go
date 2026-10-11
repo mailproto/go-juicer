@@ -1,6 +1,9 @@
 package juicer
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Where the Juice9 profile reads stylesheets and selectors differently from
 // juice 12.
@@ -50,26 +53,8 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 			continue
 		}
 		var decls []decl
-		throws := false
-		for _, d := range n.decls {
-			if d.typ != "property" {
-				continue
-			}
-			if d.value == "" {
-				// mensch reads "a{b{" as a declaration b with no value,
-				// which juice 9 reads with value.match and throws on.
-				throws = true
-				continue
-			}
-			v, important := strings.CutSuffix(d.value, "!important")
-			if important {
-				v = strings.TrimRight(v, " \t\n\r\f\v")
-			} else {
-				v = d.value
-			}
-			decls = append(decls, decl{prop: d.name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
-			ord++
-		}
+		var throws bool
+		decls, throws, ord = menschDecls(n, ord)
 		if len(decls) > 0 || throws {
 			for _, sel := range n.selectors {
 				if sel == "" {
@@ -88,6 +73,47 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 		}
 	}
 	return rules, keep, ord
+}
+
+// menschDecls reads a rule's declarations as juice 9's addProps does. bang
+// holds the value as written, which juice 9 keeps when preserving !important.
+func menschDecls(n menschNode, ord uint32) (decls []decl, throws bool, _ uint32) {
+	for _, d := range n.decls {
+		if d.typ != "property" {
+			continue
+		}
+		if d.value == "" {
+			// mensch reads "a{b{" as a declaration b with no value, which
+			// juice 9 reads with value.match and throws on.
+			throws = true
+			continue
+		}
+		v, important := strings.CutSuffix(d.value, "!important")
+		if important {
+			v = strings.TrimRightFunc(v, jsSpace)
+		} else {
+			v = d.value
+		}
+		decls = append(decls, decl{prop: d.name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
+		ord++
+	}
+	return decls, throws, ord
+}
+
+// menschStyle reads a style attribute as juice 9 does, through mensch as the
+// body of a "*" rule.
+func menschStyle(style []byte) ([]decl, error) {
+	for _, n := range menschParse(menschLex("* { " + string(style) + " } ")) {
+		if n.typ != "rule" {
+			continue
+		}
+		decls, throws, _ := menschDecls(n, 0)
+		if throws {
+			break
+		}
+		return decls, nil
+	}
+	return nil, fmt.Errorf("juicer: juice 9 fails on the style attribute %q", style)
 }
 
 // menschPseudo is juice 9's matchesPseudo, which looks for "hover" and the

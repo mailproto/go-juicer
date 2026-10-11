@@ -3,20 +3,13 @@
 #
 # The Go package targets juice 12, so every entry here is a juice 9 behaviour
 # it does not reproduce. Ratcheting works as in juice-12.txt.
-preserve-important/cascade/inline-important-wins  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
-*/inline-seed/important-spellings  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
 */inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
 */malformed/stray-closing-bracket  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 # juice's own test suite (testdata/in/juice-suite)
 # premailer's test suite (testdata/in/premailer-suite)
 # Found by the generated differential against juice
 # css-inline's test suite (testdata/in/css-inline-suite)
-*/css-inline-suite/tests/invalid_rule-test_case_1_wrong_color_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
-*/css-inline-suite/tests/invalid_rule-test_case_2_ttt_123_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_3_wrong_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
-*/css-inline-suite/tests/invalid_rule-test_case_4_color_red_foo_invalid_rule_foo_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
-*/css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
-*/css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
 */pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
 */pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
