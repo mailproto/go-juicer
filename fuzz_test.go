@@ -51,7 +51,7 @@ var fuzzOptions = []func(bool) Option{
 	ApplyHeightAttributes, ApplyAttributesTableElements, ResolveCSSVariables,
 	InlinePseudoElements, RemoveIDs, RemoveClasses, RemoveComments,
 	ResetContentEditable, PreserveContainerQueries, PreserveLayers,
-	InsertPreservedExtraCSS, XMLMode,
+	InsertPreservedExtraCSS, XMLMode, InlineDuplicateProperties, RemoveInlinedSelectors,
 }
 
 // FuzzDocument fuzzes whole documents under every option combination, which

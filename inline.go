@@ -10,6 +10,7 @@ package juicer
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -29,6 +30,7 @@ type options struct {
 	insertExtraCSSInto          string
 	applyStyleTags              bool
 	removeStyleTags             bool
+	removeInlined               bool
 	preserveMediaQueries        bool
 	preserveFontFaces           bool
 	preserveKeyFrames           bool
@@ -108,6 +110,12 @@ func ApplyStyleTags(v bool) Option { return func(o *options) { o.applyStyleTags 
 // RemoveStyleTags controls whether <style> elements are removed after
 // inlining. Rules that cannot be inlined are kept regardless.
 func RemoveStyleTags(v bool) Option { return func(o *options) { o.removeStyleTags = v } }
+
+// RemoveInlinedSelectors, with RemoveStyleTags(false), rewrites each <style>
+// without the selectors that were inlined. Other rules, at-rules and comments
+// stay, reformatted as juice formats the rules it keeps; a block left empty
+// is removed.
+func RemoveInlinedSelectors(v bool) Option { return func(o *options) { o.removeInlined = v } }
 
 // PreserveMediaQueries keeps @media blocks in a surviving <style> element.
 func PreserveMediaQueries(v bool) Option { return func(o *options) { o.preserveMediaQueries = v } }
@@ -244,6 +252,10 @@ type pass struct {
 
 	controlAttrs bool // the document mentions data-juice-* attributes
 
+	// RemoveInlinedSelectors only.
+	inlined  map[string]bool     // selectors that matched a visible element
+	embedded map[*html.Node]bool // data-embed <style> elements, left alone
+
 	// InlinePseudoElements only.
 	pseudos     map[*html.Node]*pseudoMaps
 	pseudoOrder []*html.Node
@@ -269,6 +281,10 @@ func appendRules(dst, src []rule) []rule {
 func (in *pass) run(root *html.Node) error {
 	o := in.o
 
+	if o.removeInlined && !o.removeStyleTags {
+		in.inlined = map[string]bool{}
+		in.embedded = map[*html.Node]bool{}
+	}
 	var st ignoreState
 	rules := in.collectCSS(root, &st)
 	var keep []preserved
@@ -304,6 +320,9 @@ func (in *pass) run(root *html.Node) error {
 	if err := in.emitPreserved(root, keep); err != nil {
 		return err
 	}
+	if in.inlined != nil {
+		in.removeInlinedSelectors(root)
+	}
 	in.cleanup(root)
 	return nil
 }
@@ -332,6 +351,9 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 			continue
 		}
 		if _, embedded := getAttr(s, "data-embed"); embedded {
+			if in.embedded != nil {
+				in.embedded[s] = true
+			}
 			removeAttr(s, "data-embed")
 			continue
 		}
@@ -396,6 +418,9 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				return
 			}
 			applied = r.group
+			if in.inlined != nil {
+				in.inlined[r.sel] = true
+			}
 			if track {
 				in.matches = append(in.matches, matchEvent{r.group, doc, n})
 			}
@@ -500,6 +525,58 @@ func (in *pass) emitPreserved(root *html.Node, keep []preserved) error {
 	in.appendPreserved(host, keep)
 	return nil
 }
+
+// removeInlinedSelectors is juice's updateStyleTags: every <style> left in the
+// document, the one added for extraCss included, loses the selectors that
+// were inlined.
+func (in *pass) removeInlinedSelectors(root *html.Node) {
+	var styles []*html.Node
+	walk(root, func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "style" && !in.embedded[n] {
+			styles = append(styles, n)
+		}
+	})
+	keepAll := *in.o
+	keepAll.keepAll = true
+	for _, s := range styles {
+		if s.FirstChild == nil || s.FirstChild != s.LastChild || s.FirstChild.Type != html.TextNode {
+			continue
+		}
+		nodes, _ := parseCSSNodes(flattenNesting([]byte(s.FirstChild.Data)), 0, false)
+		var parts []string
+		for _, n := range nodes {
+			if n.kind == 'r' {
+				arms := splitSelector([]byte(n.head))
+				keepWhole := in.o.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) ||
+					matchesPreserved(arms, in.o.preservedSelectors)
+				if !keepWhole {
+					var left [][]byte
+					for _, a := range arms {
+						if !in.inlined[string(a)] {
+							left = append(left, a)
+						}
+					}
+					if len(left) == 0 {
+						continue
+					}
+					// postcss rejoins the list with its first separator.
+					sep := listSeparator.FindString(n.head)
+					n = &cssNode{kind: 'r', head: string(bytes.Join(left, []byte(sep))), kids: n.kids, block: true, semi: n.semi}
+				}
+			}
+			if t := formatNode(n, &keepAll); t != "" {
+				parts = append(parts, t)
+			}
+		}
+		if text := strings.Join(parts, "\n"); strings.TrimSpace(text) != "" {
+			s.FirstChild.Data = text
+		} else {
+			detach(s)
+		}
+	}
+}
+
+var listSeparator = regexp.MustCompile(`,\s*`)
 
 // appendPreserved adds the <style> as juice does, by appending markup: in XML
 // mode a "<" in the rules is parsed as a tag.

@@ -192,6 +192,7 @@ for (let i = 0; i < count; i++) {
   const html = document();
   const options = {};
   for (const [k, v] of Object.entries(OPTIONS)) if (chance(0.1)) options[k] = v;
+  if (chance(0.06)) Object.assign(options, { removeStyleTags: false, removeInlinedSelectors: true });
   if (chance(0.05)) options.preservedSelectors = times(1, 2, () => pick(['.a', 'btn', '#main', 'td', 'x-y >']));
   if (chance(0.15)) {
     options.extraCss = stylesheet();
