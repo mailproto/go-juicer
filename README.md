@@ -142,7 +142,8 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
    in the default set here.
 2. **Cyclic custom properties.** `--a:var(--b);--b:var(--a)` recurses until
    juice's stack overflows, which makes a cyclic stylesheet a denial of
-   service. Resolution here is depth-capped.
+   service, and a property that refers to itself twice never finishes.
+   Resolution here is capped in depth and in substitutions per value.
 3. **Malformed style attributes.** juice throws, failing the whole document,
    on a `style` attribute postcss cannot parse: `ttt { 123 }`, `----`, or
    `font-family:&quot;A B&quot;` (`decodeStyleAttributes` defaults off, so the
