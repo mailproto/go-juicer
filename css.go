@@ -275,7 +275,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			// a:hover keeps its :hover arm in <style> while the plain arm is
 			// still inlined. It only looks at the first arm, though, so
 			// "td, a:hover" is not preserved at all.
-			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) || matchesPreserved(arms, opts.preservedSelectors) {
+			if opts.keepAll || opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) || matchesPreserved(arms, opts.preservedSelectors) {
 				keep = append(keep, preserved{"pseudo", append(ruleText(sel, shared), ownSemicolon(orig[end:])...)})
 			}
 		}
@@ -400,6 +400,9 @@ func atRuleKind(prelude []byte) string {
 }
 
 func preserveKind(kind string, o *options) bool {
+	if o.keepAll {
+		return true
+	}
 	switch kind {
 	case "media":
 		return o.preserveMediaQueries

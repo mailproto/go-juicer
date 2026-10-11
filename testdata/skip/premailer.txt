@@ -23,9 +23,14 @@ css-inline-suite/tests/remove_inlined_selectors_only_at_rules  premailer inlines
 duplicates/gradient-fallback  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
 ignore/end-without-start  premailer inlines rules inside @media print, which juice keeps in <style>
 ignore/extra-css  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/next-across-blocks  premailer has no juice ignore comments
+ignore/next-declaration  premailer has no juice ignore comments
+ignore/next-rule  premailer has no juice ignore comments
 ignore/pseudo-and-semicolon  premailer's CSS parser drops the rule after a stray semicolon
 ignore/start-end  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/start-unterminated  premailer has no juice ignore comments
 ignore/whole-file  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/whole-file-first-block  premailer has no juice ignore comments
 important/attr-pseudo  premailer does not turn ::before/::after content into elements
 important/spaced-bang  premailer's css_parser recognises only the exact !important spelling
 inline-seed/important-spellings  premailer's css_parser recognises only the exact !important spelling

@@ -20,18 +20,3 @@
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
 inline-pseudo-elements/serialization/style-in-string  ALLOW: juice joins every <style> block with newlines, so a string left open at the end of the last one ends in "\n" and so does the generated content; each block is its own stylesheet here (README divergence 5)
-*/ignore/extra-css  juice ignore comments are not supported
-*/ignore/next-across-blocks  juice ignore comments are not supported
-*/ignore/next-declaration  juice ignore comments are not supported
-*/ignore/next-rule  juice ignore comments are not supported
-no-preserve/ignore/pseudo-and-semicolon  juice ignore comments are not supported
-*/ignore/start-end  juice ignore comments are not supported
-*/ignore/start-unterminated  juice ignore comments are not supported
-*/ignore/whole-file  juice ignore comments are not supported
-*/ignore/whole-file-first-block  juice ignore comments are not supported
-default/ignore/whole-file-second-block  juice ignore comments are not supported
-inline-pseudo-elements/ignore/whole-file-second-block  juice ignore comments are not supported
-no-attributes/ignore/whole-file-second-block  juice ignore comments are not supported
-no-css-variables/ignore/whole-file-second-block  juice ignore comments are not supported
-no-preserve/ignore/whole-file-second-block  juice ignore comments are not supported
-preserve-important/ignore/whole-file-second-block  juice ignore comments are not supported
