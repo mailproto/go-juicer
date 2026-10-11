@@ -209,6 +209,11 @@ type pass struct {
 	o        *options
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
+
+	// InlinePseudoElements only.
+	pseudos     map[*html.Node]*pseudoMaps
+	pseudoOrder []*html.Node
+	matches     []matchEvent // recorded only when content reads a counter
 }
 
 // process runs the inlining pipeline over an already-parsed tree.
@@ -242,10 +247,17 @@ func (in *pass) run(root *html.Node) error {
 	}
 
 	in.applyRules(root, rules)
+	imgs, err := in.materializePseudos(rules)
+	if err != nil {
+		return err
+	}
 	if o.resolveCSSVariables {
 		in.resolveVariables()
 	}
 	in.writeStyles()
+	for _, img := range imgs {
+		img.apply()
+	}
 	in.promoteAttributes(root)
 	if err := in.emitPreserved(root, keep); err != nil {
 		return err
@@ -310,25 +322,34 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 	o := in.o
 	rs := newRuleSet(rules)
 	var sc scratch
+	track := o.inlinePseudoElements && needCounters(rules)
+	var doc int32
 	walk(root, func(n *html.Node) {
 		if n.Type != html.ElementNode || nonVisualElements[n.Data] {
 			return
 		}
 		var m *propMap
 		applied := int32(-1)
+		doc++
 		rs.forEach(n, &sc, func(i int, r *rule) {
-			if r.pseudo != pseudoNone {
-				// Declarations for ::before/::after belong to a detached
-				// element; without materialization they are simply dropped,
-				// and the base element is not touched at all.
-				return
-			}
 			// One selector applies once, however many of its :is()
 			// expansions match.
 			if r.group == applied {
 				return
 			}
 			applied = r.group
+			if track {
+				in.matches = append(in.matches, matchEvent{r.group, doc, n})
+			}
+			if r.pseudo != pseudoNone {
+				// Declarations for ::before/::after belong to their own
+				// element; without materialization they are dropped. The
+				// base element is not touched either way.
+				if o.inlinePseudoElements {
+					addDecls(in.pseudoMap(n, r.pseudo), r, i)
+				}
+				return
+			}
 			if m == nil {
 				m = &propMap{}
 				// The existing style attribute seeds the map on first match.
@@ -338,22 +359,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 					m.seedInline([]byte(v), o)
 				}
 			}
-			for _, d := range r.decls {
-				if d.prop == "" {
-					continue
-				}
-				prio := 0
-				if d.important {
-					prio = 2
-				}
-				m.add(property{
-					prop:  d.prop,
-					value: d.value,
-					key:   packKey(prio, r.spec[0], r.spec[1], r.spec[2]),
-					ord:   d.ord,
-					rule:  int32(i),
-				})
-			}
+			addDecls(m, r, i)
 		})
 		if m == nil {
 			return
@@ -364,6 +370,25 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		}
 		in.byNode[n] = m
 	})
+}
+
+func addDecls(m *propMap, r *rule, i int) {
+	for _, d := range r.decls {
+		if d.prop == "" {
+			continue
+		}
+		prio := 0
+		if d.important {
+			prio = 2
+		}
+		m.add(property{
+			prop:  d.prop,
+			value: d.value,
+			key:   packKey(prio, r.spec[0], r.spec[1], r.spec[2]),
+			ord:   d.ord,
+			rule:  int32(i),
+		})
+	}
 }
 
 // writeStyles serializes each element's resolved declarations. It runs after

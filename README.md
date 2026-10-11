@@ -160,10 +160,10 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 ## Status
 
 The cascade, at-rule preservation, attribute promotion, CSS variables,
-Selectors L4 specificity, `:is()`/`:where()` and CSS nesting (flattened as
-juice does, through postcss-nesting's rules) are implemented. Not yet:
-`::before`/`::after` materialization (off by default
-in juice too), and `/* juice ignore */` directives.
+Selectors L4 specificity, `:is()`/`:where()`, CSS nesting (flattened as
+juice does, through postcss-nesting's rules) and `::before`/`::after`
+materialization (`InlinePseudoElements`, off by default as in juice) are
+implemented. Not yet: `/* juice ignore */` directives.
 
 External resources are out of scope. This package does no network I/O; resolve
 `<link rel=stylesheet>` yourself and pass the CSS via `ExtraCSS`.
