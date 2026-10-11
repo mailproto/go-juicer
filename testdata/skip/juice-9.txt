@@ -7,9 +7,7 @@ preserve-important/cascade/inline-important-wins  juice 9 keeps the author's `!i
 */inline-seed/important-spellings  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
 */inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
 */malformed/stray-closing-bracket  juice 9's CSS parser (mensch) recovers from malformed CSS differently
-*/nesting/stray-paren  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 # juice's own test suite (testdata/in/juice-suite)
-*/juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 # premailer's test suite (testdata/in/premailer-suite)
 # Found by the generated differential against juice
 # css-inline's test suite (testdata/in/css-inline-suite)
@@ -20,20 +18,6 @@ preserve-important/cascade/inline-important-wins  juice 9 keeps the author's `!i
 */css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
-default/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-preserve-important/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-no-attributes/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-no-css-variables/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-inline-pseudo-elements/nesting/comments  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/complex-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/compound  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/custom-property  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/declarations-after  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/deep  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/descendant  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/list-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
-*/nesting/self  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
 */pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
 */l4-spec/ignored-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments, so it inlines :not(a:visited) .x
-*/remove-inlined/nesting-and-empty  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does

@@ -50,8 +50,15 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 			continue
 		}
 		var decls []decl
+		throws := false
 		for _, d := range n.decls {
 			if d.typ != "property" {
+				continue
+			}
+			if d.value == "" {
+				// mensch reads "a{b{" as a declaration b with no value,
+				// which juice 9 reads with value.match and throws on.
+				throws = true
 				continue
 			}
 			v, important := strings.CutSuffix(d.value, "!important")
@@ -63,7 +70,7 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 			decls = append(decls, decl{prop: d.name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
 			ord++
 		}
-		if len(decls) > 0 {
+		if len(decls) > 0 || throws {
 			for _, sel := range n.selectors {
 				if sel == "" {
 					continue
@@ -71,6 +78,7 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 				armRules, _ := compileRule([]byte(sel), decls, true)
 				for k := range armRules {
 					armRules[k].group = int32(len(rules))
+					armRules[k].throws = throws
 				}
 				rules = append(rules, armRules...)
 			}
