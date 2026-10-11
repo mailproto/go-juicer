@@ -15,7 +15,6 @@ inline-pseudo-elements/serialization/style-in-string  inlinePseudoElements is no
 
 # juice's own test suite (testdata/in/juice-suite)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
-*/juice-suite/juice-content/layers-preserve  preserveLayers is not supported
 */juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/pseudo-elements  inlinePseudoElements is not implemented yet
 */juice-suite/juice-content/pseudo-elements-and-width-attr  inlinePseudoElements is not implemented yet

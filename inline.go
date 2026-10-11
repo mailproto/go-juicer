@@ -28,6 +28,7 @@ type options struct {
 	preserveFontFaces           bool
 	preserveKeyFrames           bool
 	preserveContainerQueries    bool
+	preserveLayers              bool
 	preservePseudos             bool
 	preserveImportant           bool
 	applyWidthAttributes        bool
@@ -58,6 +59,7 @@ func defaults() options {
 		preserveFontFaces:           true,
 		preserveKeyFrames:           true,
 		preserveContainerQueries:    true,
+		preserveLayers:              true,
 		preservePseudos:             true,
 		applyWidthAttributes:        true,
 		applyHeightAttributes:       true,
@@ -89,6 +91,9 @@ func PreserveFontFaces(v bool) Option { return func(o *options) { o.preserveFont
 
 // PreserveKeyFrames keeps @keyframes blocks in a surviving <style> element.
 func PreserveKeyFrames(v bool) Option { return func(o *options) { o.preserveKeyFrames = v } }
+
+// PreserveLayers keeps @layer blocks and statements in a surviving <style> element.
+func PreserveLayers(v bool) Option { return func(o *options) { o.preserveLayers = v } }
 
 // PreserveContainerQueries keeps @container blocks in a surviving <style> element.
 func PreserveContainerQueries(v bool) Option {

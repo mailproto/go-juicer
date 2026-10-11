@@ -399,6 +399,8 @@ func preserveKind(kind string, o *options) bool {
 		return o.preserveKeyFrames
 	case "container":
 		return o.preserveContainerQueries
+	case "layer":
+		return o.preserveLayers
 	}
 	return false
 }

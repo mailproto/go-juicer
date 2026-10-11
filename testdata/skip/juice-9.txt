@@ -84,7 +84,7 @@ preserve-important/variables/nested  juice 9 does not resolve CSS custom propert
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)
 */juice-suite/juice-content/insert-preserve-fragment  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/keyframes-preserve  juice 9 writes a preserved selector list one selector per line
-*/juice-suite/juice-content/layers-preserve  preserveLayers is not supported
+*/juice-suite/juice-content/layers-preserve  juice 9 has no preserveLayers option and drops @layer
 */juice-suite/juice-content/media-preserve  insertPreservedExtraCss is not supported
 */juice-suite/juice-content/nesting-atrule  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */juice-suite/juice-content/nesting-basic  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
