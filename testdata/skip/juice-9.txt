@@ -237,3 +237,4 @@ inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preserved
 */duplicates/same-rule  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
 */duplicates/variables  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
 */duplicates/attr-on  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/ignore/pseudo-and-semicolon  juice 9's mensch parser drops the semicolon after a preserved rule
