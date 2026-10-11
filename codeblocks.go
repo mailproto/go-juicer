@@ -1,6 +1,9 @@
 package juicer
 
-import "bytes"
+import (
+	"bytes"
+	"slices"
+)
 
 // Template expressions are swapped for inert placeholders before parsing and
 // restored after serializing, so the HTML parser never sees them. Without
@@ -37,25 +40,30 @@ func encodeCodeBlocks(src []byte, blocks []CodeBlock) ([]byte, [][]byte) {
 	var found [][]byte
 	var out []byte
 	i := 0
+	// A delimiter pair that is left open once is open for good: no later
+	// opening can find a close either. Other pairs still apply.
+	open := slices.Clone(blocks)
 	for i < len(src) {
 		// Earliest opening delimiter wins, so nested-looking syntax is taken
 		// in source order rather than delimiter order.
-		best, bestEnd := -1, ""
-		for _, b := range blocks {
+		best, bestBlock := -1, -1
+		for k, b := range open {
 			if j := bytes.Index(src[i:], []byte(b.Start)); j >= 0 && (best < 0 || j < best) {
-				best, bestEnd = j, b.End
+				best, bestBlock = j, k
 			}
 		}
 		if best < 0 {
 			break
 		}
+		b := open[bestBlock]
 		start := i + best
-		close := bytes.Index(src[start:], []byte(bestEnd))
+		// The close comes after the whole opening, so "<%>" is not a block.
+		close := bytes.Index(src[start+len(b.Start):], []byte(b.End))
 		if close < 0 {
-			// Unterminated: leave the rest of the document alone.
-			break
+			open = slices.Delete(open, bestBlock, bestBlock+1)
+			continue
 		}
-		end := start + close + len(bestEnd)
+		end := start + len(b.Start) + close + len(b.End)
 		if out == nil {
 			out = make([]byte, 0, len(src))
 		}

@@ -24,17 +24,23 @@ const IGNORE = new Set(['width', 'height', 'inline-size', 'block-size', 'perspec
 const ignored = (p) => IGNORE.has(p) || p.startsWith('--');
 const TIMEOUT_MS = 20000;
 
-const browser = await puppeteer.launch({
+const launch = () => puppeteer.launch({
   executablePath: process.env.CHROME_PATH,
   headless: true,
   args: ['--no-sandbox', '--disable-gpu'],
 });
+let browser = await launch();
 
 let page;
 async function newPage() {
   if (page) await page.close().catch(() => {});
   page = await browser.newPage();
   await page.setJavaScriptEnabled(false);
+  // Animated values depend on when they are read; hold every animation at
+  // its start so both renders are sampled at the same point.
+  const cdp = await page.createCDPSession();
+  await cdp.send('Animation.enable');
+  await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 });
   await page.setViewport({ width: 1024, height: 768 });
   await page.setRequestInterception(true);
   page.on('request', (r) => (r.url() === 'about:blank' || r.url().startsWith('data:') ? r.continue() : r.abort()));
@@ -73,6 +79,19 @@ function compare(a, b) {
 const withTimeout = (p) =>
   Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), TIMEOUT_MS))]);
 
+// A fresh page, or a fresh browser if the old one has died and cannot open
+// one: a crashed Chrome otherwise leaves every later call waiting forever.
+async function recover() {
+  try {
+    await withTimeout(newPage());
+  } catch {
+    browser.process()?.kill('SIGKILL');
+    browser = await launch();
+    page = undefined;
+    await newPage();
+  }
+}
+
 let n = 0;
 for await (const line of readline.createInterface({ input: process.stdin })) {
   if (!line) continue;
@@ -82,7 +101,7 @@ for await (const line of readline.createInterface({ input: process.stdin })) {
     diffs = await withTimeout((async () => compare(await computed(original), await computed(inlined)))());
   } catch (err) {
     diffs = [`error: ${err.message}`];
-    await newPage();
+    await recover();
   }
   process.stdout.write(JSON.stringify({ name, diffs }) + '\n');
   if (++n % 100 === 0) process.stderr.write(`cascade.mjs: ${n} documents\n`);

@@ -110,7 +110,7 @@ func (in *pass) promoteAttributes(root *html.Node) {
 		if o.applyHeightAttributes {
 			in.setDimension(n, m, "height")
 		}
-		if o.applyAttributesTableElement && tableElements[n.Data] {
+		if o.applyAttributesTableElement && tableElements[foldedName(n)] {
 			// juice walks the element's properties, so attributes land in
 			// property order rather than table order.
 			for _, i := range m.order() {
@@ -135,14 +135,14 @@ func (in *pass) promoteAttributes(root *html.Node) {
 // attrValue drops a preserved !important, which has no place in an attribute.
 func (in *pass) attrValue(v []byte) string {
 	s := string(v)
-	if in.o.preserveImportant && strings.HasSuffix(s, "!important") {
+	if strings.HasSuffix(s, "!important") {
 		s = strings.TrimRight(strings.TrimSuffix(s, "!important"), " \t\n\r\f")
 	}
 	return s
 }
 
 func (in *pass) setDimension(n *html.Node, m *propMap, dim string) {
-	if !widthHeightElements[n.Data] {
+	if !widthHeightElements[foldedName(n)] {
 		return
 	}
 	i := m.find(dim)
@@ -156,9 +156,18 @@ func (in *pass) setDimension(n *html.Node, m *propMap, dim string) {
 		setAttr(n, dim, strings.Replace(v, "px", "", 1))
 		return
 	}
-	if tableElements[n.Data] && strings.Contains(v, "%") {
+	if tableElements[foldedName(n)] && strings.Contains(v, "%") {
 		setAttr(n, dim, v)
 	}
+}
+
+// foldedName is the element name for juice's table and dimension lists, which
+// it checks case-insensitively; names only keep their case in XML mode.
+func foldedName(n *html.Node) string {
+	if strings.IndexFunc(n.Data, func(r rune) bool { return 'A' <= r && r <= 'Z' }) < 0 {
+		return n.Data
+	}
+	return strings.ToLower(n.Data)
 }
 
 // extractURL unwraps url(x), url('x') or url("x") to x, exactly as juice's

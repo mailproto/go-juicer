@@ -142,7 +142,8 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
    in the default set here.
 2. **Cyclic custom properties.** `--a:var(--b);--b:var(--a)` recurses until
    juice's stack overflows, which makes a cyclic stylesheet a denial of
-   service. Resolution here is depth-capped.
+   service, and a property that refers to itself twice never finishes.
+   Resolution here is capped in depth and in substitutions per value.
 3. **Malformed style attributes.** juice throws, failing the whole document,
    on a `style` attribute postcss cannot parse: `ttt { 123 }`, `----`, or
    `font-family:&quot;A B&quot;` (`decodeStyleAttributes` defaults off, so the
@@ -160,10 +161,11 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 ## Status
 
 The cascade, at-rule preservation, attribute promotion, CSS variables,
-Selectors L4 specificity, `:is()`/`:where()` and CSS nesting (flattened as
-juice does, through postcss-nesting's rules) are implemented. Not yet:
-`::before`/`::after` materialization (off by default
-in juice too), and `/* juice ignore */` directives.
+Selectors L4 specificity, `:is()`/`:where()`, CSS nesting (flattened as
+juice does, through postcss-nesting's rules), `::before`/`::after`
+materialization (`InlinePseudoElements`, off by default as in juice) and
+`/* juice ignore */` comments are implemented, as is every juice 12 option
+except `url`, which only matters for fetching.
 
 External resources are out of scope. This package does no network I/O; resolve
 `<link rel=stylesheet>` yourself and pass the CSS via `ExtraCSS`.

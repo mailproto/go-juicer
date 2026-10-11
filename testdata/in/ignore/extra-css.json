@@ -1,0 +1,5 @@
+{
+  "options": {
+    "extraCss": "/* juice ignore next */ .a{color:blue} .b{margin:0} /* juice start ignore */ @media print{.b{padding:0}} /* juice end ignore */"
+  }
+}
