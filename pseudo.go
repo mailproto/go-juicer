@@ -290,8 +290,9 @@ func (in *pass) counterOp(s *counterScope, global map[string]int, d decl) {
 	if d.prop != "counter-reset" && d.prop != "counter-increment" {
 		return
 	}
+	// juice reads the counter before dropping !important.
 	v := string(d.value)
-	if d.important && !in.o.preserveImportant {
+	if d.important {
 		v += " !important"
 	}
 	tok := strings.Fields(v)

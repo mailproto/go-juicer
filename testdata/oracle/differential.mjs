@@ -138,6 +138,7 @@ function attrs(tag) {
   if (chance(0.08)) add('align', 'center');
   if (chance(0.05)) add('bgcolor', '#eee');
   if (chance(0.05)) add('data-x', 'y');
+  if (chance(0.04)) out.push(pick(['data-juice-important', 'data-juice-important="false"', 'data-juice-important="true"']));
   if (tag === 'a') add('href', pick(['https://example.com/?a=1&b=2', '#i1', 'mailto:x@example.com']));
   if (tag === 'img') add('src', 'https://example.com/x.png');
   if (chance(0.03)) out.push('hidden');
