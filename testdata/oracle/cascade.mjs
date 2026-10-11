@@ -24,11 +24,12 @@ const IGNORE = new Set(['width', 'height', 'inline-size', 'block-size', 'perspec
 const ignored = (p) => IGNORE.has(p) || p.startsWith('--');
 const TIMEOUT_MS = 20000;
 
-const browser = await puppeteer.launch({
+const launch = () => puppeteer.launch({
   executablePath: process.env.CHROME_PATH,
   headless: true,
   args: ['--no-sandbox', '--disable-gpu'],
 });
+let browser = await launch();
 
 let page;
 async function newPage() {
@@ -78,6 +79,19 @@ function compare(a, b) {
 const withTimeout = (p) =>
   Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), TIMEOUT_MS))]);
 
+// A fresh page, or a fresh browser if the old one has died and cannot open
+// one: a crashed Chrome otherwise leaves every later call waiting forever.
+async function recover() {
+  try {
+    await withTimeout(newPage());
+  } catch {
+    browser.process()?.kill('SIGKILL');
+    browser = await launch();
+    page = undefined;
+    await newPage();
+  }
+}
+
 let n = 0;
 for await (const line of readline.createInterface({ input: process.stdin })) {
   if (!line) continue;
@@ -87,7 +101,7 @@ for await (const line of readline.createInterface({ input: process.stdin })) {
     diffs = await withTimeout((async () => compare(await computed(original), await computed(inlined)))());
   } catch (err) {
     diffs = [`error: ${err.message}`];
-    await newPage();
+    await recover();
   }
   process.stdout.write(JSON.stringify({ name, diffs }) + '\n');
   if (++n % 100 === 0) process.stderr.write(`cascade.mjs: ${n} documents\n`);

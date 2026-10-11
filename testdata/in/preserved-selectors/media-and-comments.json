@@ -1,0 +1,8 @@
+{
+  "options": {
+    "preservedSelectors": [
+      ".keep"
+    ],
+    "preserveMediaQueries": false
+  }
+}

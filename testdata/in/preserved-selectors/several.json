@@ -1,0 +1,8 @@
+{
+  "options": {
+    "preservedSelectors": [
+      "#main",
+      ".cta"
+    ]
+  }
+}

@@ -16,6 +16,7 @@ type decl struct {
 	value     []byte // sliced from the source, so original spacing survives
 	text      []byte // value and !important as written, for a preserved block
 	important bool
+	bang      []byte // value + " !important", for elements that keep it
 	ord       uint32 // position in the stylesheet; breaks specificity ties
 }
 
@@ -217,11 +218,13 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			decls = appendComments(decls, d.before)
 			// juice drops empty values, preserving mensch behaviour.
 			if len(v) > 0 {
-				// Scored as important either way; only the text may be dropped.
-				if d.important && opts.preserveImportant {
-					v = append(append([]byte{}, v...), " !important"...)
+				// Scored as important either way; whether the text keeps it
+				// is decided per element.
+				var bang []byte
+				if d.important {
+					bang = append(append([]byte{}, v...), " !important"...)
 				}
-				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, ord: ord})
+				decls = append(decls, decl{prop: d.name, value: v, text: d.text, important: d.important, bang: bang, ord: ord})
 				ord++
 			}
 			decls = appendComments(decls, d.after)
@@ -272,12 +275,19 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			// a:hover keeps its :hover arm in <style> while the plain arm is
 			// still inlined. It only looks at the first arm, though, so
 			// "td, a:hover" is not preserved at all.
-			if opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) {
+			if opts.keepAll || opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) || matchesPreserved(arms, opts.preservedSelectors) {
 				keep = append(keep, preserved{"pseudo", append(ruleText(sel, shared), ownSemicolon(orig[end:])...)})
 			}
 		}
 	}
 	return rules, keep, ord
+}
+
+// matchesPreserved is juice's matchesPreservedSelector over every arm.
+func matchesPreserved(arms [][]byte, patterns []string) bool {
+	return slices.ContainsFunc(arms, func(a []byte) bool {
+		return slices.ContainsFunc(patterns, func(p string) bool { return bytes.Contains(a, []byte(p)) })
+	})
 }
 
 // ruleText re-emits a rule that could not be inlined, formatted the way
@@ -390,6 +400,9 @@ func atRuleKind(prelude []byte) string {
 }
 
 func preserveKind(kind string, o *options) bool {
+	if o.keepAll {
+		return true
+	}
 	switch kind {
 	case "media":
 		return o.preserveMediaQueries

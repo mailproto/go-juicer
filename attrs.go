@@ -135,7 +135,7 @@ func (in *pass) promoteAttributes(root *html.Node) {
 // attrValue drops a preserved !important, which has no place in an attribute.
 func (in *pass) attrValue(v []byte) string {
 	s := string(v)
-	if in.o.preserveImportant && strings.HasSuffix(s, "!important") {
+	if strings.HasSuffix(s, "!important") {
 		s = strings.TrimRight(strings.TrimSuffix(s, "!important"), " \t\n\r\f")
 	}
 	return s

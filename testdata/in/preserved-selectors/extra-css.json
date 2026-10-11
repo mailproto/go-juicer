@@ -1,0 +1,8 @@
+{
+  "options": {
+    "preservedSelectors": [
+      ".keep"
+    ],
+    "extraCss": ".keep{color:red}p{margin:0}"
+  }
+}

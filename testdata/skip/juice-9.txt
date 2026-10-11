@@ -195,3 +195,69 @@ inline-pseudo-elements/nesting/media  juice 9 does not support CSS nesting: it t
 */nesting/semicolons  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 */nesting/not-parent  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 inline-pseudo-elements/serialization/style-in-string  juice 9's mensch parser drops a declaration whose string is never closed
+default/preserved-selectors/basic  juice 9 has no preservedSelectors option
+preserve-important/preserved-selectors/basic  juice 9 has no preservedSelectors option
+no-attributes/preserved-selectors/basic  juice 9 has no preservedSelectors option
+no-preserve/preserved-selectors/basic  juice 9 has no preservedSelectors option
+no-css-variables/preserved-selectors/basic  juice 9 has no preservedSelectors option
+inline-pseudo-elements/preserved-selectors/basic  juice 9 has no preservedSelectors option
+*/preserved-selectors/extra-css  juice 9 has no preservedSelectors option
+*/preserved-selectors/media-and-comments  juice 9 has no preservedSelectors option
+default/preserved-selectors/several  juice 9 has no preservedSelectors option
+preserve-important/preserved-selectors/several  juice 9 has no preservedSelectors option
+no-attributes/preserved-selectors/several  juice 9 has no preservedSelectors option
+no-preserve/preserved-selectors/several  juice 9 has no preservedSelectors option
+no-css-variables/preserved-selectors/several  juice 9 has no preservedSelectors option
+inline-pseudo-elements/preserved-selectors/several  juice 9 has no preservedSelectors option
+default/preserved-selectors/substring  juice 9 has no preservedSelectors option
+preserve-important/preserved-selectors/substring  juice 9 has no preservedSelectors option
+no-attributes/preserved-selectors/substring  juice 9 has no preservedSelectors option
+no-preserve/preserved-selectors/substring  juice 9 has no preservedSelectors option
+no-css-variables/preserved-selectors/substring  juice 9 has no preservedSelectors option
+inline-pseudo-elements/preserved-selectors/substring  juice 9 has no preservedSelectors option
+default/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+preserve-important/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+no-attributes/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+no-preserve/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+no-css-variables/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+inline-pseudo-elements/preserved-selectors/with-pseudo  juice 9 has no preservedSelectors option
+*/important/attr-dimensions  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-false  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-inline-style  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-preserve  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-pseudo  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-selector  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/important/attr-untouched  juice 9 has no data-juice-important attribute, so keeps it and ignores it
+*/pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
+*/pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
+*/duplicates/attr-off  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/dimensions  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/important  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/option  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/same-rule  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/variables  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/duplicates/attr-on  juice 9 has no inlineDuplicateProperties option or data-juice-duplicates attribute
+*/ignore/pseudo-and-semicolon  juice 9's mensch parser drops the semicolon after a preserved rule
+*/ignore/extra-css  juice 9 has no ignore comments
+*/ignore/next-across-blocks  juice 9 has no ignore comments
+*/ignore/next-declaration  juice 9 has no ignore comments
+*/ignore/next-rule  juice 9 has no ignore comments
+*/ignore/start-end  juice 9 has no ignore comments
+*/ignore/start-unterminated  juice 9 has no ignore comments
+*/ignore/whole-file  juice 9 has no ignore comments
+*/ignore/whole-file-first-block  juice 9 has no ignore comments
+default/ignore/whole-file-second-block  juice 9 has no ignore comments
+inline-pseudo-elements/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-attributes/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-css-variables/ignore/whole-file-second-block  juice 9 has no ignore comments
+no-preserve/ignore/whole-file-second-block  juice 9 has no ignore comments
+preserve-important/ignore/whole-file-second-block  juice 9 has no ignore comments
+*/remove-inlined/all-inlined  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/basic  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/data-embed  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/extra-css  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/nesting-and-empty  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/preserved-selectors  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/pseudo-element-and-head  juice 9 has no removeInlinedSelectors option
+keep-style-tags/remove-inlined/remove-style-tags  juice 9 has no removeInlinedSelectors option
+*/remove-inlined/selector-list  juice 9 has no removeInlinedSelectors option

@@ -21,6 +21,17 @@ css-inline-suite/tests/extra_css  premailer applies css_string before <style> ru
 css-inline-suite/tests/first_child_descendant_selector_complex_dom  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 css-inline-suite/tests/remove_inlined_selectors_only_at_rules  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 duplicates/gradient-fallback  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+ignore/end-without-start  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/extra-css  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/next-across-blocks  premailer has no juice ignore comments
+ignore/next-declaration  premailer has no juice ignore comments
+ignore/next-rule  premailer has no juice ignore comments
+ignore/pseudo-and-semicolon  premailer's CSS parser drops the rule after a stray semicolon
+ignore/start-end  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/start-unterminated  premailer has no juice ignore comments
+ignore/whole-file  premailer inlines rules inside @media print, which juice keeps in <style>
+ignore/whole-file-first-block  premailer has no juice ignore comments
+important/attr-pseudo  premailer does not turn ::before/::after content into elements
 important/spaced-bang  premailer's css_parser recognises only the exact !important spelling
 inline-seed/important-spellings  premailer's css_parser recognises only the exact !important spelling
 juice-suite/cli/code-block-cli  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
@@ -91,6 +102,13 @@ premailer-suite/premailer/premailer_related_attributes  premailer turns its own 
 premailer-suite/premailer/preserving_ignored_link_elements  premailer honours its own data-premailer="ignore"; juice does not
 premailer-suite/premailer/rgb_color_without_commas_and_with_alpha_modifier  premailer drops a color's alpha channel when it writes bgcolor
 premailer-suite/premailer/rgb_color_without_commas_and_with_percentage_modifier  premailer drops a color's alpha channel when it writes bgcolor
+preserved-selectors/media-and-comments  premailer inlines rules inside @media print, which juice keeps in <style>
+pseudo-elements/empty-argument  premailer does not turn ::before/::after content into elements
+pseudo-elements/trailing-combinator  premailer does not turn ::before/::after content into elements
+remove-inlined/basic  premailer inlines rules inside @media print, which juice keeps in <style>
+remove-inlined/data-embed  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
+remove-inlined/extra-css  premailer inlines rules inside @media print, which juice keeps in <style>
+remove-inlined/nesting-and-empty  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 roundtrip/close-br-p  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 roundtrip/p-not-closed  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 serialization/style-in-string  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
