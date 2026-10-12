@@ -94,7 +94,12 @@ func menschDecls(n menschNode, ord uint32) (decls []decl, throws bool, _ uint32)
 		} else {
 			v = d.value
 		}
-		decls = append(decls, decl{prop: d.name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
+		name := d.name
+		if name == "" {
+			// A word with no colon, which juice 9 writes out as it reads it.
+			name = "undefined"
+		}
+		decls = append(decls, decl{prop: name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
 		ord++
 	}
 	return decls, throws, ord
