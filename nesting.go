@@ -26,20 +26,14 @@ func hasNesting(src []byte) bool {
 	var buf [16]bool
 	stack := buf[:0] // true for a style rule's block
 	stmt, amp := 0, false
-	var quote byte
+	var q quotes
 	for i := 0; i < len(src); i++ {
 		c := src[i]
 		switch {
-		case quote != 0:
-			if c == '\\' {
-				i++
-			} else if c == quote {
-				quote = 0
-			}
 		case c == '\\':
 			i++
 		case c == '"' || c == '\'':
-			quote = c
+			i = q.end(src, i)
 		case c == '/' && i+1 < len(src) && src[i+1] == '*':
 			if k := bytes.Index(src[i+2:], []byte("*/")); k >= 0 {
 				i += k + 3
@@ -164,20 +158,14 @@ func parseCSSNodes(src []byte, i int, inBlock bool) ([]*cssNode, int) {
 // statementEnd finds the "{", ";" or "}" that ends the statement at i.
 func statementEnd(src []byte, i int) int {
 	depth := 0
-	var quote byte
+	var q quotes
 	for ; i < len(src); i++ {
 		c := src[i]
 		switch {
-		case quote != 0:
-			if c == '\\' {
-				i++
-			} else if c == quote {
-				quote = 0
-			}
 		case c == '\\':
 			i++
 		case c == '"' || c == '\'':
-			quote = c
+			i = q.end(src, i)
 		case c == '/' && i+1 < len(src) && src[i+1] == '*':
 			if k := bytes.Index(src[i+2:], []byte("*/")); k >= 0 {
 				i += k + 3

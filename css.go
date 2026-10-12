@@ -344,7 +344,8 @@ func ruleText(sel []byte, decls []decl) []byte {
 // into it. At-rules holding rules that tdewolff does not know become @media,
 // so it parses their contents; kinds and preludes are read from src. Only tok
 // blanks a ")" or "]" with no opener, which postcss ignores but tdewolff
-// waits forever to match.
+// waits forever to match, and a quote that never closes, which tdewolff
+// would run to the end of src.
 func tokenizerInput(src []byte) (text, tok []byte) {
 	out := src
 	clone := func() {
@@ -353,18 +354,12 @@ func tokenizerInput(src []byte) (text, tok []byte) {
 		}
 	}
 	empty := true
-	var quote byte
 	var open []byte
 	var stray []int
+	var q quotes
 	for i := 0; i < len(src); i++ {
 		c := src[i]
 		switch {
-		case quote != 0:
-			if c == '\\' {
-				i++
-			} else if c == quote {
-				quote = 0
-			}
 		case isCSSSpace(c):
 		case c == '/' && i+1 < len(src) && src[i+1] == '*':
 			if k := bytes.Index(src[i+2:], []byte("*/")); k >= 0 {
@@ -388,7 +383,11 @@ func tokenizerInput(src []byte) (text, tok []byte) {
 			empty = false
 			switch c {
 			case '"', '\'':
-				quote = c
+				end := q.end(src, i)
+				if end == i || src[end] != c {
+					stray = append(stray, i, end)
+				}
+				i = end
 			case '\\':
 				i++
 			case '(':
@@ -538,17 +537,11 @@ const cssSpaces = " \t\n\r\f"
 func splitDeclarationSpans(b []byte) [][]byte {
 	var out [][]byte
 	depth, start := 0, 0
-	var quote byte
+	var q quotes
 	for i := 0; i < len(b); i++ {
 		switch c := b[i]; {
-		case quote != 0:
-			if c == '\\' {
-				i++
-			} else if c == quote {
-				quote = 0
-			}
 		case c == '"' || c == '\'':
-			quote = c
+			i = q.end(b, i)
 		case c == '(':
 			depth++
 		case c == ')':
@@ -628,6 +621,31 @@ func skipNonWord(span []byte) (rest []byte, colon bool) {
 		n += len(t.text)
 	}
 	return nil, colon
+}
+
+// quotes finds where strings end. A quote that never closes means no later
+// quote of its kind does either, so it remembers that to stay linear.
+type quotes [2]int
+
+// end is the index of the quote closing the string opened at i. When none
+// does, postcss ends the string after the next character and reads on.
+func (q *quotes) end(src []byte, i int) int {
+	k := 0
+	if src[i] == '"' {
+		k = 1
+	}
+	if q[k] == 0 || i < q[k]-1 {
+		for j := i + 1; j < len(src); j++ {
+			switch src[j] {
+			case '\\':
+				j++
+			case src[i]:
+				return j
+			}
+		}
+		q[k] = i + 1
+	}
+	return min(i+1, len(src)-1)
 }
 
 func trimCSSLeft(b []byte) []byte {
