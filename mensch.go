@@ -362,11 +362,10 @@ func stringState(quote byte) string {
 }
 
 // jsTrim is String.prototype.trim.
-func jsTrim(s string) string {
-	return strings.TrimFunc(s, func(r rune) bool {
-		return r == 0xfeff || r != 0x85 && unicode.IsSpace(r)
-	})
-}
+func jsTrim(s string) string { return strings.TrimFunc(s, jsSpace) }
+
+// jsSpace is JavaScript's \s.
+func jsSpace(r rune) bool { return r == 0xfeff || r != 0x85 && unicode.IsSpace(r) }
 
 // menschNode is a node of mensch's AST. rules is non-nil for an at-rule that
 // holds rules; decls for a rule or an at-rule that holds declarations.

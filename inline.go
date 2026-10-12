@@ -466,7 +466,9 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
-					m.seedInline([]byte(v), keepImportant())
+					if err := m.seedInline([]byte(v), keepImportant(), o.juice9); err != nil && in.juice9Err == nil {
+						in.juice9Err = err
+					}
 				}
 			}
 			addDecls(m, r, i, keepImportant())
