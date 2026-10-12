@@ -1,24 +1,9 @@
 package juicer
 
-import (
-	"bytes"
-	"strings"
-)
+import "strings"
 
-// Where the Juice9 profile reads selectors differently from juice 12.
-
-// menschArms splits a selector list as mensch does: on every comma, inside
-// parentheses, brackets and strings too, so ":is(.a, .b)" is two broken arms
-// that match nothing.
-func menschArms(sel []byte) [][]byte {
-	var out [][]byte
-	for _, a := range bytes.Split(sel, []byte(",")) {
-		if a = trimCSS(a); len(a) > 0 {
-			out = append(out, a)
-		}
-	}
-	return out
-}
+// Where the Juice9 profile reads stylesheets and selectors differently from
+// juice 12.
 
 // balanced reports whether every parenthesis and bracket in a selector
 // closes, outside strings.
@@ -50,6 +35,62 @@ func balanced(sel []byte) bool {
 		}
 	}
 	return len(stack) == 0 && quote == 0
+}
+
+// parseMensch is parseStylesheet for the Juice9 profile: juice 9 reads
+// stylesheets with mensch and preserves rules through its stringifier.
+func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
+	var rules []rule
+	var keep []preserved
+	for _, n := range menschParse(menschLex(string(src))) {
+		if n.typ != "rule" {
+			if preserveKind(n.typ, opts) {
+				keep = append(keep, preserved{n.typ, menschStringify(n)})
+			}
+			continue
+		}
+		var decls []decl
+		for _, d := range n.decls {
+			if d.typ != "property" {
+				continue
+			}
+			v, important := strings.CutSuffix(d.value, "!important")
+			if important {
+				v = strings.TrimRight(v, " \t\n\r\f\v")
+			} else {
+				v = d.value
+			}
+			decls = append(decls, decl{prop: d.name, value: []byte(v), important: important, bang: []byte(d.value), ord: ord})
+			ord++
+		}
+		if len(decls) > 0 {
+			for _, sel := range n.selectors {
+				if sel == "" {
+					continue
+				}
+				armRules, _ := compileRule([]byte(sel), decls, true)
+				for k := range armRules {
+					armRules[k].group = int32(len(rules))
+				}
+				rules = append(rules, armRules...)
+			}
+		}
+		if opts.preservePseudos && menschPseudo(n.selectors[0]) {
+			keep = append(keep, preserved{"pseudo", menschStringify(n)})
+		}
+	}
+	return rules, keep, ord
+}
+
+// menschPseudo is juice 9's matchesPseudo, which looks for "hover" and the
+// rest anywhere in the selector, without the colon.
+func menschPseudo(sel string) bool {
+	for p := range ignoredPseudos {
+		if strings.Contains(sel, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // juice9Specificity is juice 9's slick-based score: every pseudo-class and
