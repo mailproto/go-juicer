@@ -80,6 +80,7 @@ markup-decl/xml-empty-close  premailer parses with libxml2's HTML4 parser, which
 nesting/complex-parent  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 nesting/compound  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 nesting/custom-property  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
+nesting/dangling-combinator  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 nesting/declarations-after  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 nesting/deep  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations
 nesting/descendant  premailer does not understand CSS nesting: nested rules are dropped or inlined as declarations

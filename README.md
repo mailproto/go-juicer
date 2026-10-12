@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 4004 | 3940 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0, with `Juice9()` | 4004 | 4004 | none |
+| juice 12.1.3 | 4018 | 3954 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0, with `Juice9()` | 4018 | 4018 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -66,14 +66,14 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 456 of 570 documents agree; the rest are
+splits, quotes and color spellings. 456 of 572 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 541 of 572 render identically. The rest are
+every element's computed style. 541 of 574 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
 this package copies for parity: `<style media>` ignored, pseudo-class
 specificity, `:first-child` seeing a tree without `<style>` elements,

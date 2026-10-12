@@ -400,6 +400,7 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			// the rule, and a pseudo-element makes it a rule for that
 			// pseudo-element, matched with every pseudo-element stripped.
 			call := arm[i:ae]
+			list := name == "is" || name == "where" || name == "matches" || name == "not"
 			if arg != nil {
 				var parts [][]byte
 				inner := pseudoNone
@@ -416,9 +417,14 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 						// css-select rejects the empty argument.
 						return "", spec, pseudoNone, true
 					}
+					if list && t != "" && strings.IndexByte("+>~", t[0]) >= 0 {
+						// css-select matches nothing for an argument that starts
+						// with a combinator.
+						t = ":not(*)"
+					}
 					parts = append(parts, []byte(t))
 				}
-				if inner != pseudoNone {
+				if inner != pseudoNone || list {
 					if pseudo == pseudoNone {
 						pseudo = inner
 					}
