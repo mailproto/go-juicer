@@ -3,3 +3,4 @@
 #
 # Juice9() matches juice 9 exactly, divergences included, so this is empty.
 # Ratcheting works as in juice-12.txt.
+*/l4-spec/dangling-combinator  gap: inside :not() and :is(), css-select reads a trailing combinator as if followed by * and an argument starting with a combinator as matching nothing; cascadia rejects both and the rule is dropped
