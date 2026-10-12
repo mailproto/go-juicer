@@ -55,18 +55,18 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 		var decls []decl
 		var throws bool
 		decls, throws, ord = menschDecls(n, ord)
-		if len(decls) > 0 || throws {
-			for _, sel := range n.selectors {
-				if sel == "" {
-					continue
-				}
-				armRules, _ := compileRule([]byte(sel), decls, true)
-				for k := range armRules {
-					armRules[k].group = int32(len(rules))
-					armRules[k].throws = throws
-				}
-				rules = append(rules, armRules...)
+		// An empty rule still counts: juice 9 rewrites the style attribute of
+		// every element a rule matches.
+		for _, sel := range n.selectors {
+			if sel == "" {
+				continue
 			}
+			armRules, _ := compileRule([]byte(sel), decls, true)
+			for k := range armRules {
+				armRules[k].group = int32(len(rules))
+				armRules[k].throws = throws
+			}
+			rules = append(rules, armRules...)
 		}
 		if opts.preservePseudos && menschPseudo(n.selectors[0]) {
 			keep = append(keep, preserved{"pseudo", menschStringify(n)})
