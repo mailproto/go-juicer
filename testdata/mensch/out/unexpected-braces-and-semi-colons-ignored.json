@@ -1,0 +1,32 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "font-size",
+   "value": "small"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "h2"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "red"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body {\n  font-size: small;\n}",
+  "h2 {\n  color: red;\n}"
+ ]
+}

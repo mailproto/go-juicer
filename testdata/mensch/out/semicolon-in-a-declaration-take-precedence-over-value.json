@@ -1,0 +1,19 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "line-height",
+   "value": "10px"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body {\n  line-height: 10px;\n}"
+ ]
+}

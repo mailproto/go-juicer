@@ -1,0 +1,32 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "selector"
+  },
+  {
+   "type": "property",
+   "name": "prop",
+   "value": "val"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "selector"
+  },
+  {
+   "type": "property",
+   "name": "prop",
+   "value": "val"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "selector {\n  prop: val;\n}",
+  "selector {\n  prop: val;\n}"
+ ]
+}

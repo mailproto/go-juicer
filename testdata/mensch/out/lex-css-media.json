@@ -1,0 +1,26 @@
+{
+ "tokens": [
+  {
+   "type": "media",
+   "name": "screen and (min-width: 700px)"
+  },
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@media screen and (min-width: 700px) {\n  body {\n    color: black;\n  }\n}"
+ ]
+}

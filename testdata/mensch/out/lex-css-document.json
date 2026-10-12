@@ -1,0 +1,31 @@
+{
+ "tokens": [
+  {
+   "type": "document",
+   "name": "url(http://www.w3.org/),url-prefix(http://www.w3.org/Style/),domain(mozilla.org),regexp(\"https:.*\")"
+  },
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "purple"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "yellow"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@document url(http://www.w3.org/),url-prefix(http://www.w3.org/Style/),domain(mozilla.org),regexp(\"https:.*\") {\n  body {\n    color: purple;\n    background: yellow;\n  }\n}"
+ ]
+}

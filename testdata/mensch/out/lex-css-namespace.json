@@ -1,0 +1,21 @@
+{
+ "tokens": [
+  {
+   "type": "namespace",
+   "value": "url(http://www.w3.org/1999/xhtml)"
+  },
+  {
+   "type": "namespace",
+   "value": "svg url(http://www.w3.org/2000/svg)"
+  },
+  {
+   "type": "namespace",
+   "value": "\"booga\""
+  }
+ ],
+ "text": [
+  "@namespace url(http://www.w3.org/1999/xhtml);",
+  "@namespace svg url(http://www.w3.org/2000/svg);",
+  "@namespace \"booga\";"
+ ]
+}

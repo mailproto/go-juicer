@@ -1,0 +1,29 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": ".onemore"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"\\\"\""
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"\\'\""
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"{}\""
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  ".onemore {\n  content: \"\\\"\";\n  content: \"\\'\";\n  content: \"{}\";\n}"
+ ]
+}

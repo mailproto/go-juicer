@@ -1,0 +1,11 @@
+{
+ "tokens": [
+  {
+   "type": "import",
+   "value": "\"foo.css\" print"
+  }
+ ],
+ "text": [
+  "@import \"foo.css\" print;"
+ ]
+}

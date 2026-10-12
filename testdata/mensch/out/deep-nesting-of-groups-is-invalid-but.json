@@ -1,0 +1,61 @@
+{
+ "tokens": [
+  {
+   "type": "supports",
+   "name": "(display: border-box)"
+  },
+  {
+   "type": "selector",
+   "text": ".foo"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "red"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "media",
+   "name": "print"
+  },
+  {
+   "type": "selector",
+   "text": ".foo"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "supports",
+   "name": "(display: table)"
+  },
+  {
+   "type": "selector",
+   "text": ".foo"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "blue"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@supports (display: border-box) {\n  .foo {\n    color: red;\n  }\n\n  @media print {\n    .foo {\n      color: black;\n    }\n\n    @supports (display: table) {\n      .foo {\n        color: blue;\n      }\n\n    }\n\n  }\n}"
+ ]
+}

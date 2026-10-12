@@ -1,0 +1,39 @@
+{
+ "tokens": [
+  {
+   "type": "media",
+   "name": "tty"
+  },
+  {
+   "type": "selector",
+   "text": "i"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  },
+  {
+   "type": "selector",
+   "text": "a"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "white"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "@media tty {\n  i {\n    color: black;\n  }\n}",
+  "a {\n  color: white;\n}"
+ ]
+}

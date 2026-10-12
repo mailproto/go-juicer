@@ -1,0 +1,19 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": ".sele"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"hel\\\"lo\""
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  ".sele {\n  content: \"hel\\\"lo\";\n}"
+ ]
+}

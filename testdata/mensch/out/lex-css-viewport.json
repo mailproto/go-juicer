@@ -1,0 +1,22 @@
+{
+ "tokens": [
+  {
+   "type": "viewport",
+   "name": ""
+  },
+  {
+   "type": "property",
+   "name": "width",
+   "value": "320px auto"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@viewport {\n  width: 320px auto;}"
+ ]
+}

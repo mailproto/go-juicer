@@ -1,0 +1,38 @@
+{
+ "tokens": [
+  {
+   "type": "keyframes",
+   "name": "foo"
+  },
+  {
+   "type": "selector",
+   "text": "from"
+  },
+  {
+   "type": "property",
+   "name": "opacity",
+   "value": "0"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "to"
+  },
+  {
+   "type": "property",
+   "name": "opacity",
+   "value": "1"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@keyframes foo {\n  from {\n    opacity: 0;\n  }\n\n  to {\n    opacity: 1;\n  }\n}"
+ ]
+}

@@ -1,0 +1,32 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "abbr[title*=\"{\"]"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "abbr[title^=\"}\"]"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "red"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "abbr[title*=\"{\"] {\n  color: black;\n}",
+  "abbr[title^=\"}\"] {\n  color: red;\n}"
+ ]
+}

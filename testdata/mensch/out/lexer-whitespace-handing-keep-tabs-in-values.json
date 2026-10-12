@@ -1,0 +1,19 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "a"
+  },
+  {
+   "type": "property",
+   "name": "border-width",
+   "value": "2px 3px\t4px 5px"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "a {\n  border-width: 2px 3px\t4px 5px;\n}"
+ ]
+}

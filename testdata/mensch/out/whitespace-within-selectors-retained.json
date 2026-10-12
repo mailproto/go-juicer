@@ -1,0 +1,19 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body \t \ndiv \r \nspan \f \na"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "red"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body \t \ndiv \r \nspan \f \na {\n  color: red;\n}"
+ ]
+}

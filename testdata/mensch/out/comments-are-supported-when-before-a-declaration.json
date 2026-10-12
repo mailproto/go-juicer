@@ -1,0 +1,23 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "comment",
+   "text": " filibuster! "
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body {\n  color: black;\n}"
+ ]
+}

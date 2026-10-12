@@ -1,0 +1,24 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "property",
+   "name": "font-weight",
+   "value": "bold"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body {\n  color: black;\n  font-weight: bold;\n}"
+ ]
+}

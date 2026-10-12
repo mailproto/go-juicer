@@ -1,0 +1,39 @@
+{
+ "tokens": [
+  {
+   "type": "keyframes",
+   "name": "boom",
+   "prefix": "-ms-"
+  },
+  {
+   "type": "selector",
+   "text": "from"
+  },
+  {
+   "type": "property",
+   "name": "background-position",
+   "value": "0 0"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "to"
+  },
+  {
+   "type": "property",
+   "name": "background-position",
+   "value": "100% 100%"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@-ms-keyframes boom {\n  from {\n    background-position: 0 0;\n  }\n\n  to {\n    background-position: 100% 100%;\n  }\n}"
+ ]
+}

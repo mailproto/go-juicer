@@ -1,0 +1,22 @@
+{
+ "tokens": [
+  {
+   "type": "page",
+   "name": ":pseudo-class"
+  },
+  {
+   "type": "property",
+   "name": "margin",
+   "value": "2in"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@page :pseudo-class {\n  margin: 2in;\n}"
+ ]
+}

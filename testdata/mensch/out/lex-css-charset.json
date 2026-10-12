@@ -1,0 +1,11 @@
+{
+ "tokens": [
+  {
+   "type": "charset",
+   "value": "\"UTF-8\""
+  }
+ ],
+ "text": [
+  "@charset \"UTF-8\";"
+ ]
+}

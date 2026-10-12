@@ -1,0 +1,24 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": ".sele"
+  },
+  {
+   "type": "property",
+   "name": "voice-family",
+   "value": "\"\\\"}\\\"\""
+  },
+  {
+   "type": "property",
+   "name": "voice-family",
+   "value": "inherit"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  ".sele {\n  voice-family: \"\\\"}\\\"\";\n  voice-family: inherit;\n}"
+ ]
+}

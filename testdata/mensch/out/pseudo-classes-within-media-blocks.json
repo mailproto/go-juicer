@@ -1,0 +1,50 @@
+{
+ "tokens": [
+  {
+   "type": "media",
+   "name": "screen and (max-width: 700px)"
+  },
+  {
+   "type": "selector",
+   "text": ".nav a"
+  },
+  {
+   "type": "property",
+   "name": "display",
+   "value": "block"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": ".nav a:hover"
+  },
+  {
+   "type": "property",
+   "name": "text-decoration",
+   "value": "none"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": ".nav a:focus"
+  },
+  {
+   "type": "property",
+   "name": "text-decoration",
+   "value": "underline"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@media screen and (max-width: 700px) {\n  .nav a {\n    display: block;\n  }\n\n  .nav a:hover {\n    text-decoration: none;\n  }\n\n  .nav a:focus {\n    text-decoration: underline;\n  }\n}"
+ ]
+}

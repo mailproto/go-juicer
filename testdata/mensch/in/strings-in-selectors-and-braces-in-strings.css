@@ -1,0 +1,7 @@
+abbr[title*="{"] {
+color: black;
+}
+
+abbr[title^="}"] {
+color: red;
+}
