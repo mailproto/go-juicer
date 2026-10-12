@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>.a:after b {
+color: red;
+}
+.a::before > b {
+margin: 0;
+}
+:is(.a::after) b {
+padding: 0;
+}
+.a:after+ {
+content: "x";
+}
+.b::after {
+content: "y";
+}
+</style>
+</head>
+<body>
+<p class="a"><b>1</b></p>
+<i>2</i><p class="b">3</p>
+</body>
+</html>
