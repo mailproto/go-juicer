@@ -173,6 +173,39 @@ func juice9Arguments(arm []byte) ([]byte, bool) {
 	return out, true
 }
 
+// juice9PseudoLast reports whether any ::before or ::after is where juice 9
+// looks for one: on the last compound, outside arguments. Anywhere else it
+// reaches css-select, which rejects it, and the rule is dropped.
+func juice9PseudoLast(arm []byte) bool {
+	t := trimCSS(arm)
+	tail := rightmostCompound(string(t))
+	if _, _, p, _ := scanSelector(t[:len(t)-len(tail)]); p != pseudoNone {
+		return false
+	}
+	if _, _, p, _ := scanSelector([]byte(tail)); p == pseudoNone {
+		return true
+	}
+	depth := 0
+	for i := 0; i < len(tail); i++ {
+		switch tail[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ':':
+			j := i + 1
+			if j < len(tail) && tail[j] == ':' {
+				j++
+			}
+			name := strings.ToLower(tail[j:identEnd([]byte(tail), j)])
+			if depth == 0 && (name == "before" || name == "after") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // juice9Tail is a selector as juice 9 matches it once its trailing
 // pseudo-element is stripped: what precedes it is kept as a combinator, so
 // ".c ::before" is ".c *" and "::after" alone is "*".
