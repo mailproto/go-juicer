@@ -25,6 +25,7 @@ l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates ar
 l4-spec/universal-type  juice bug: "*a" is not valid CSS, so browsers drop the rule and juice applies it to <a>
 malformed/stray-closing-bracket  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
+nesting/dangling-combinator  juice bug: a nested selector ending in a combinator is not valid CSS, so browsers drop the rule and juice applies it
 nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
 nesting/stray-paren  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
 nesting/top-level-amp  juice bug: a top-level & means :scope, the root element, which juice never matches
