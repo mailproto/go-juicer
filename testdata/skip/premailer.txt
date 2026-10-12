@@ -46,6 +46,7 @@ juice-suite/juice-content/nesting-basic  premailer does not understand CSS nesti
 juice-suite/juice-content/nesting-pseudo  premailer does not understand CSS nesting and inlines nested selectors and at-rules as declarations
 juice-suite/juice-content/pseudo-elements  premailer does not turn ::before/::after content into elements
 juice-suite/juice-content/pseudo-elements-and-width-attr  premailer does not turn ::before/::after content into elements
+l4-spec/dangling-combinator  premailer's selector engine (Nokogiri) rejects a combinator with nothing on one side, so it applies none of these rules
 l4-spec/empty-whitespace  premailer's :empty does not match an element holding only a comment
 l4-spec/is  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-complex-inside  premailer does not support :is()
