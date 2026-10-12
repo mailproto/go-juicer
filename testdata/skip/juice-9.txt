@@ -11,7 +11,3 @@
 # css-inline's test suite (testdata/in/css-inline-suite)
 */css-inline-suite/tests/invalid_rule-test_case_3_wrong_invalid_rule_wrong_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  ALLOW: juice concatenates all <style> blocks, so an unclosed at-rule swallows the next block's rules; browsers parse each block separately, as we do
-*/pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
-*/pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
-*/l4-spec/ignored-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments, so it inlines :not(a:visited) .x
-*/l4-spec/dynamic-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments: inside them css-select matches nothing for :hover, :active and :visited, reads :link as a link with an href, and rejects :focus
