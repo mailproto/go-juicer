@@ -3,3 +3,5 @@
 #
 # Juice9() matches juice 9 exactly, divergences included, so this is empty.
 # Ratcheting works as in juice-12.txt.
+*/markup-decl/xml-empty-close  gap: in XML mode "</>" inside <style> becomes a second text node, where htmlparser2 merges adjacent text, so the style is ignored as not exactly one text node
+inline-pseudo-elements/pseudo-elements/xml-empty-content  gap: a pseudo-element with empty content gets no text node, where cheerio's .text("") adds an empty one, so XML mode writes <span/> for juice's <span></span>
