@@ -106,8 +106,8 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 
 	src = flattenNesting(src)
 	orig := src
-	src = tokenizerInput(src)
-	p := css.NewParser(parse.NewInputBytes(src), false)
+	src, tok := tokenizerInput(src)
+	p := css.NewParser(parse.NewInputBytes(tok), false)
 	prev := 0
 	atKind := ""
 
@@ -180,12 +180,15 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 				break
 			}
 			// A malformed declaration: tdewolff skips it and carries on.
-			// postcss drops a word with no colon too, but reads past
-			// leading colons, so ":t:u" declares t.
+			// postcss drops a word with no colon too, but reads past what
+			// comes before the first word, so ":t:u" and "'s't:u" declare t.
 			if inRuleset {
 				comments, rest := leadingComments(src[start:end])
-				if colons := bytes.TrimLeft(rest, ":"); len(colons) < len(rest) {
-					rest = trimCSSLeft(colons)
+				if skipped, colon := skipNonWord(rest); len(skipped) < len(rest) {
+					rest = skipped
+					if bytes.IndexByte(rest, ':') < 0 && !colon {
+						continue
+					}
 					if len(stack) == 0 {
 						decls = appendComments(decls, comments)
 					} else {
@@ -337,13 +340,15 @@ func ruleText(sel []byte, decls []decl) []byte {
 	return b.Bytes()
 }
 
-// tokenizerInput is the copy of src that tdewolff reads, with the same
-// offsets. Semicolons that start an empty statement become spaces: postcss
-// treats them as whitespace, and tdewolff would read one as the start of a
-// selector and swallow a following at-rule into it. At-rules holding rules
-// that tdewolff does not know become @media, so it parses their contents;
-// kinds and preludes are read from src.
-func tokenizerInput(src []byte) []byte {
+// tokenizerInput returns the copy of src that text is read from and the one
+// tdewolff reads, with the same offsets. Semicolons that start an empty
+// statement become spaces: postcss treats them as whitespace, and tdewolff
+// would read one as the start of a selector and swallow a following at-rule
+// into it. At-rules holding rules that tdewolff does not know become @media,
+// so it parses their contents; kinds and preludes are read from src. Only tok
+// blanks a ")" or "]" with no opener, which postcss ignores but tdewolff
+// waits forever to match.
+func tokenizerInput(src []byte) (text, tok []byte) {
 	out := src
 	clone := func() {
 		if &out[0] == &src[0] {
@@ -352,6 +357,8 @@ func tokenizerInput(src []byte) []byte {
 	}
 	empty := true
 	var quote byte
+	var open []byte
+	var stray []int
 	for i := 0; i < len(src); i++ {
 		c := src[i]
 		switch {
@@ -382,14 +389,32 @@ func tokenizerInput(src []byte) []byte {
 			empty = true
 		default:
 			empty = false
-			if c == '"' || c == '\'' {
+			switch c {
+			case '"', '\'':
 				quote = c
-			} else if c == '\\' {
+			case '\\':
 				i++
+			case '(':
+				open = append(open, ')')
+			case '[':
+				open = append(open, ']')
+			case ')', ']':
+				if len(open) == 0 {
+					stray = append(stray, i)
+				} else if open[len(open)-1] == c {
+					open = open[:len(open)-1]
+				}
 			}
 		}
 	}
-	return out
+	if len(stray) == 0 {
+		return out, out
+	}
+	tok = bytes.Clone(out)
+	for _, i := range stray {
+		tok[i] = ' '
+	}
+	return out, tok
 }
 
 // ownSemicolon is a semicolon following a rule, which postcss keeps with the
@@ -471,6 +496,7 @@ func selectorText(src []byte, start, end int) []byte {
 // can re-emit them.
 func declParts(span []byte, custom bool) (d parsedDecl) {
 	d.before, span = leadingComments(span)
+	span, _ = skipNonWord(span)
 	i := bytes.IndexByte(span, ':')
 	if i < 0 {
 		return d
@@ -581,6 +607,30 @@ func leadingComments(span []byte) ([][]byte, []byte) {
 		out = append(out, span[:end])
 		span = span[end:]
 	}
+}
+
+// skipNonWord drops what postcss files under a declaration's raws.before:
+// everything ahead of its first word, such as colons, stray closers, strings
+// and bracketed groups. colon reports whether a colon was among it.
+func skipNonWord(span []byte) (rest []byte, colon bool) {
+	if len(span) == 0 || bytes.IndexByte([]byte(":)]\"'("), span[0]) < 0 {
+		return span, false
+	}
+	n, depth := 0, 0
+	for _, t := range tokenizeValue(span) {
+		switch {
+		case t.kind == 'w' && depth == 0:
+			return span[n:], colon
+		case t.text[0] == '(':
+			depth++
+		case t.text[0] == ')' && depth > 0:
+			depth--
+		case t.text[0] == ':' && depth == 0:
+			colon = true
+		}
+		n += len(t.text)
+	}
+	return nil, colon
 }
 
 func trimCSSLeft(b []byte) []byte {
