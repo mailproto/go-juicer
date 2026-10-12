@@ -14,3 +14,4 @@
 */pseudo-elements/empty-argument  juice 9 reads a selector emptied by stripping its pseudo-element as matching every element
 */pseudo-elements/trailing-combinator  juice 9 keeps a trailing descendant combinator, so ".c ::before" styles .c's descendants rather than .c
 */l4-spec/ignored-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments, so it inlines :not(a:visited) .x
+*/l4-spec/dynamic-pseudo-argument  juice 9 skips ignored pseudo-classes only outside arguments: inside them css-select matches nothing for :hover, :active and :visited, reads :link as a link with an href, and rejects :focus

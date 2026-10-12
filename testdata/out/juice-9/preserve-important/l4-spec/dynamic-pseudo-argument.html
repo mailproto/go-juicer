@@ -1,0 +1,17 @@
+<style>
+a:not(:hover) {
+  color: red;
+}
+:is(:link) b {
+  margin: 0;
+}
+:not(:link) i {
+  padding: 0;
+}
+:is(a:focus) b {
+  border: 0;
+}
+.x:has(a:visited) {
+  color: blue;
+}
+</style><a href="#" style="color: red;"><b style="margin: 0;">1</b></a><a style="color: red;"><b>2</b></a><area href="#"><p class="x"><a href="#" style="color: red;"><i style="padding: 0;">3</i></a></p><div><i style="padding: 0;">4</i></div>
