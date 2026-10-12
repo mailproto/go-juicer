@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 3948 | 3884 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0, with `Juice9()` | 3948 | 3520 | 428: the same, plus juice 9 behaviour not yet matched |
+| juice 12.1.3 | 3962 | 3898 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 9.1.0, with `Juice9()` | 3962 | 3520 | 442: the same, plus juice 9 behaviour not yet matched |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -66,7 +66,7 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 451 of 562 documents agree; the rest are
+splits, quotes and color spellings. 451 of 564 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 

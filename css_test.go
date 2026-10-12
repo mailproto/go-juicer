@@ -34,8 +34,20 @@ func TestTokenizerInput(t *testing.T) {
 		"p{content:'@container'}":           "p{content:'@container'}",
 		"/* @container */@Container x{p{}}": "/* @container */@media     x{p{}}",
 	} {
-		if got := string(tokenizerInput([]byte(in))); got != want {
+		if got, _ := tokenizerInput([]byte(in)); string(got) != want {
 			t.Errorf("tokenizerInput(%q) = %q, want %q", in, got, want)
+		}
+	}
+	for in, want := range map[string]string{
+		"p{)a:b}":       "p{ a:b}",
+		"p{a:b)]}":      "p{a:b  }",
+		"p{a:f(x)}":     "p{a:f(x)}",
+		"p{a:'('}q{)}":  "p{a:'('}q{ }",
+		"p{a:[(])}q{)}": "p{a:[(])}q{)}",
+		"/*)*/p{a:\\)}": "/*)*/p{a:\\)}",
+	} {
+		if _, got := tokenizerInput([]byte(in)); string(got) != want {
+			t.Errorf("tokenizerInput(%q) tok = %q, want %q", in, got, want)
 		}
 	}
 }
