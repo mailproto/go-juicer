@@ -45,6 +45,12 @@ func TestTokenizerInput(t *testing.T) {
 		"p{a:'('}q{)}":  "p{a:'('}q{ }",
 		"p{a:[(])}q{)}": "p{a:[(])}q{)}",
 		"/*)*/p{a:\\)}": "/*)*/p{a:\\)}",
+		"p{a:'b}q{}":    "p{a:  }q{}",
+		"p{a:'}}q{}":    "p{a:  }q{}",
+		"p{a:'b\\'}q{}": "p{a:  \\'}q{}",
+		"p{a:'}":        "p{a:  ",
+		"p{a:'":         "p{a: ",
+		"p{a:'b'}q{)}":  "p{a:'b'}q{ }",
 	} {
 		if _, got := tokenizerInput([]byte(in)); string(got) != want {
 			t.Errorf("tokenizerInput(%q) tok = %q, want %q", in, got, want)

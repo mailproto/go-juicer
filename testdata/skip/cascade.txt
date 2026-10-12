@@ -24,6 +24,8 @@ l4-spec/dangling-combinator  juice bug: a combinator with nothing on one side is
 l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 l4-spec/universal-type  juice bug: "*a" is not valid CSS, so browsers drop the rule and juice applies it to <a>
 malformed/stray-closing-bracket  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
+malformed/unclosed-double-quote  juice bug: browsers end a string that never closes only at a line break, so they drop the rules it runs over, and juice applies them
+malformed/unclosed-quote  juice bug: browsers end a string that never closes only at a line break, so they drop the rules it runs over, and juice applies them
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
 nesting/dangling-combinator  juice bug: a nested selector ending in a combinator is not valid CSS, so browsers drop the rule and juice applies it
 nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
