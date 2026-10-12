@@ -8,6 +8,8 @@
 # An ALLOW entry is a divergence we have decided to keep. Those are described
 # in the README and should stay rare.
 */inline-seed/quotes  ALLOW: juice throws a CssSyntaxError on style="font-family:&quot;A B&quot;" because it feeds the undecoded attribute to postcss. Crashing on ordinary email is not worth matching.
+*/malformed/stray-closing-bracket  gap: an unmatched ")" or "]" makes tdewolff skip the rest of the stylesheet, and punctuation ahead of a property name drops the declaration
+*/nesting/stray-paren  gap: an unmatched ")" or "]" makes tdewolff skip the rest of the stylesheet, and punctuation ahead of a property name drops the declaration
 # juice's own test suite (testdata/in/juice-suite)
 # premailer's test suite (testdata/in/premailer-suite)
 */premailer-suite/misc/commented_out_styles_in_the_body  ALLOW: juice reads "<!-- p" as a selector and applies nothing; CSS ignores <!-- and --> in a stylesheet, so browsers and premailer apply the rule, and so do we.

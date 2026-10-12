@@ -32,8 +32,10 @@ preserve-important/important/strip-default  juice 9 keeps the author's `!importa
 */inline-seed/important-spellings  juice 9 recognises only the exact `!important` spelling and keeps other spellings in the value
 */inline-seed/quotes  ALLOW: same divergence as juice 12 (CssSyntaxError on an encoded quote in a style attribute)
 */malformed/bad-css  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+*/malformed/stray-closing-bracket  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unresolvable-bare  juice 9's CSS parser (mensch) recovers from malformed CSS differently
 */malformed/var-unterminated  juice 9's CSS parser (mensch) recovers from malformed CSS differently
+*/nesting/stray-paren  juice 9 does not support CSS nesting: it throws or misreads nested rules, while this package flattens them as juice 12 does
 preserve-important/real-world/cerberus-fluid  juice 9 keeps the author's `!important` text instead of normalising it to ` !important`
 # juice's own test suite (testdata/in/juice-suite)
 */juice-suite/juice-content/font-face-preserve  juice 9 closes a preserved at-rule's last declaration on the same line (`;}`)

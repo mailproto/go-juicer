@@ -60,6 +60,7 @@ malformed/atrule-bare-declarations  malformed CSS is recovered differently by cs
 malformed/colonless-nightly  premailer does not apply a rule that follows a declaration with no colon
 malformed/leading-colon  premailer does not read past leading colons in a declaration, as postcss does
 malformed/semicolon-after-rule  premailer inlines rules inside @media print, which juice keeps in <style>
+malformed/stray-closing-bracket  premailer keeps punctuation ahead of a property name as part of the name, where postcss drops it
 malformed/unclosed-pseudo-arg  malformed CSS is recovered differently by css_parser and postcss
 malformed/var-unterminated  malformed CSS is recovered differently by css_parser and postcss
 markup-decl/cdata  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
