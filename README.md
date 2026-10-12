@@ -117,7 +117,11 @@ minimized against a live juice process before it is reported, so it arrives
 as a few bytes of HTML ready to become a fixture. CI runs 2,000 documents on
 every change and 50,000 with a fresh seed nightly. The generator exercises
 every supported option, nesting and juice's ignore comments, and avoids the
-deliberate divergences below, so any mismatch is a bug.
+deliberate divergences below, so any mismatch is a bug. `TARGET=juice-9` runs
+the same documents through juice 9 and `Juice9()`; CI runs both.
+
+`TestMensch` checks the mensch port against every stylesheet in mensch's own
+test suite (`testdata/mensch`), token for token.
 
 ### Why the HTML parser is not `html.Parse`
 

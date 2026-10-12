@@ -54,9 +54,10 @@ bench-compare: ## benchmark BASE (a git ref) against the working tree, alternati
 	go run $(BENCHSTAT) base=$(BENCH_DIR)/base.txt head=$(BENCH_DIR)/head.txt
 
 SEED ?= 1
+TARGET ?= juice-12
 COUNT ?= 10000
 CORPUS ?= $(CURDIR)/testdata/differential.jsonl
 
-differential: ## compare with juice on COUNT generated documents from SEED, minimizing mismatches
-	cd $(ORACLE) && npm ci --silent && node differential.mjs --seed $(SEED) --count $(COUNT) > $(CORPUS)
+differential: ## compare with juice (TARGET juice-12 or juice-9) on COUNT generated documents from SEED, minimizing mismatches
+	cd $(ORACLE) && npm ci --silent && node differential.mjs --seed $(SEED) --count $(COUNT) --target $(TARGET) > $(CORPUS)
 	JUICER_DIFFERENTIAL=$(CORPUS) JUICER_MINIMIZE=1 go test -run TestDifferential -v -timeout 60m .

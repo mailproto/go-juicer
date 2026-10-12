@@ -27,10 +27,8 @@ func TestDifferential(t *testing.T) {
 	}
 	defer f.Close()
 
-	var oracle *juiceProcess
-	if os.Getenv("JUICER_MINIMIZE") != "" {
-		oracle = startJuice(t)
-	}
+	minimize := os.Getenv("JUICER_MINIMIZE") != ""
+	oracles := map[string]*juiceProcess{} // by target, started on first mismatch
 	// JUICER_DIFFERENTIAL_DUMP writes each mismatch as a JSON line, for triage.
 	var dump *json.Encoder
 	if p := os.Getenv("JUICER_DIFFERENTIAL_DUMP"); p != "" {
@@ -52,6 +50,7 @@ func TestDifferential(t *testing.T) {
 	for sc.Scan() {
 		var c struct {
 			Seed, I int
+			Target  string // "juice-9", or empty for juice 12
 			HTML    string
 			Options map[string]any
 			Out     *string
@@ -64,6 +63,9 @@ func TestDifferential(t *testing.T) {
 		opts, unsupported := mapOptions(t, c.Options)
 		if len(unsupported) > 0 {
 			t.Fatalf("generator used unsupported options %v", unsupported)
+		}
+		if c.Target == "juice-9" {
+			opts = append(opts, Juice9())
 		}
 		got, gotErr := New(opts...).Inline(c.HTML)
 		switch {
@@ -78,8 +80,11 @@ func TestDifferential(t *testing.T) {
 			t.Errorf("seed %d #%d: Inline failed where juice did not: %v\n  html: %q", c.Seed, c.I, gotErr, c.HTML)
 		case got != *c.Out:
 			html, want := c.HTML, *c.Out
-			if oracle != nil {
-				html, want, got = oracle.minimize(t, html, c.Options)
+			if minimize {
+				if oracles[c.Target] == nil {
+					oracles[c.Target] = startJuice(t, c.Target)
+				}
+				html, want, got = oracles[c.Target].minimize(t, html, c.Options, opts)
 			}
 			if dump != nil {
 				dump.Encode(map[string]any{"seed": c.Seed, "i": c.I, "options": c.Options, "html": html, "want": want, "got": got})
@@ -105,9 +110,9 @@ type juiceProcess struct {
 	out *bufio.Scanner
 }
 
-func startJuice(t *testing.T) *juiceProcess {
+func startJuice(t *testing.T, target string) *juiceProcess {
 	t.Helper()
-	cmd := exec.Command("node", "serve.mjs")
+	cmd := exec.Command("node", "serve.mjs", target)
 	cmd.Dir = filepath.Join("testdata", "oracle")
 	cmd.Stderr = os.Stderr
 	w, err := cmd.StdinPipe()
@@ -148,9 +153,8 @@ func (j *juiceProcess) inline(t *testing.T, html string, options map[string]any)
 // minimize shrinks html while Go and juice still disagree and neither fails,
 // deleting ever smaller chunks (ddmin). It returns the reduced document with
 // both outputs.
-func (j *juiceProcess) minimize(t *testing.T, html string, options map[string]any) (doc, want, got string) {
+func (j *juiceProcess) minimize(t *testing.T, html string, options map[string]any, opts []Option) (doc, want, got string) {
 	t.Helper()
-	opts, _ := mapOptions(t, options)
 	in := New(opts...)
 	differs := func(doc string) (string, string, bool) {
 		// Shrinking drifts toward broken input, which has bugs of its own: keep

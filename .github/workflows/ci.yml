@@ -48,9 +48,14 @@ jobs:
           path: testdata/fuzz
 
   # Generated documents against juice, with a fresh seed each night. A small
-  # run on every change keeps the harness itself from rotting.
+  # run on every change keeps the harness itself from rotting. juice-9 runs
+  # with Juice9().
   differential:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [juice-12, juice-9]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -65,12 +70,12 @@ jobs:
       - name: differential against juice
         env:
           JUICER_DIFFERENTIAL_DUMP: ${{ runner.temp }}/mismatches.jsonl
-        run: make differential SEED=${{ github.run_id }} COUNT=${{ github.event_name == 'schedule' && '50000' || '2000' }}
+        run: make differential TARGET=${{ matrix.target }} SEED=${{ github.run_id }} COUNT=${{ github.event_name == 'schedule' && '50000' || '2000' }}
       # Each line is a minimized document with both outputs; add it as a fixture.
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: differential-mismatches
+          name: differential-mismatches-${{ matrix.target }}
           path: ${{ runner.temp }}/mismatches.jsonl
 
   # Every fixture rendered in headless Chrome as written and as inlined must
