@@ -222,7 +222,8 @@ func New(opts ...Option) *Inliner {
 // stay identical to an existing juice 9 deployment. juice 9 resolves no CSS
 // variables, matches no :is() or :where(), and has none of juice 12's newer
 // options or control comments and attributes; with this set, those options
-// are ignored as juice 9 ignores them.
+// are ignored as juice 9 ignores them. Nested CSS is not flattened, and a
+// nested rule that juice 9 throws on makes Inline return an error.
 func Juice9() Option { return func(o *options) { o.juice9 = true } }
 
 // Inline inlines the document's CSS into style attributes.
@@ -267,6 +268,7 @@ type pass struct {
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 
 	controlAttrs bool // the document mentions data-juice-* attributes
+	juice9Err    error
 
 	// RemoveInlinedSelectors only.
 	inlined  map[string]bool     // selectors that matched a visible element
@@ -314,6 +316,9 @@ func (in *pass) run(root *html.Node) error {
 	}
 
 	in.applyRules(root, rules)
+	if in.juice9Err != nil {
+		return in.juice9Err
+	}
 	if in.controlAttrs {
 		// juice's per-element control attributes never reach the output.
 		walk(root, func(n *html.Node) {
@@ -437,6 +442,9 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				return
 			}
 			applied = r.group
+			if r.throws && in.juice9Err == nil {
+				in.juice9Err = fmt.Errorf("juicer: juice 9 fails on %q, which has a declaration with no value", r.sel)
+			}
 			if in.inlined != nil {
 				in.inlined[r.sel] = true
 			}

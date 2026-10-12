@@ -30,6 +30,7 @@ type rule struct {
 	key     keyKind
 	keyName string
 	decls   []decl
+	throws  bool // juice 9 throws when it applies this rule
 }
 
 type keyKind uint8

@@ -520,7 +520,12 @@ func menschBlock(b *bytes.Buffer, n menschNode, level int, chomp bool) {
 			if c.name != "" {
 				cb.WriteString(c.name + ": ")
 			}
-			cb.WriteString(c.value + ";")
+			if c.value == "" {
+				// Only a declaration cut short by "{" has no value.
+				cb.WriteString("undefined;")
+			} else {
+				cb.WriteString(c.value + ";")
+			}
 			parts = append(parts, cb.Bytes())
 		}
 	}

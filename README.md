@@ -51,7 +51,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3 | 3962 | 3898 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0, with `Juice9()` | 3962 | 3788 | 174: the same, plus juice 9 behaviour not yet matched |
+| juice 9.1.0, with `Juice9()` | 3962 | 3870 | 92: the same, plus juice 9 behaviour not yet matched |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -86,8 +86,9 @@ deployed, so the `Juice9()` option switches to its behaviour where the two
 differ: stylesheets are read and preserved rules re-emitted through a port of
 juice 9's CSS parser (mensch), selectors are scored as juice 9 scores them,
 and there is no CSS variable resolution and none of juice 12's newer options
-and control comments. The
-juice 9 suite runs with it set, and its skip list shows what is left.
+and control comments. Nested CSS is read as juice 9 reads it, and where
+juice 9 throws, `Inline` returns an error. The juice 9 suite runs with it set,
+and its skip list shows what is left.
 juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;
 its `^1.0.0-rc.12` range now resolves to cheerio 1.x, whose serializer differs.
 
