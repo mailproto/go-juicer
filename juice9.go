@@ -2,6 +2,7 @@ package juicer
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -188,15 +189,24 @@ func juice9Tail(variant []byte, text string) string {
 // except :not(), which scores as the first selector in its argument.
 func juice9Specificity(arm []byte) [3]int {
 	var spec [3]int
-	compound := false // a tag already counted in this compound
+	// slick keeps one tag and one id per compound, and each class once.
+	var tag, id bool
+	var classes []string
 	for i := 0; i < len(arm); {
 		switch c := arm[i]; {
 		case c == '#':
-			spec[0]++
+			if !id {
+				spec[0]++
+			}
+			id = true
 			i = identEnd(arm, i+1)
 		case c == '.':
-			spec[1]++
-			i = identEnd(arm, i+1)
+			j := identEnd(arm, i+1)
+			if name := string(arm[i+1 : j]); !slices.Contains(classes, name) {
+				classes = append(classes, name)
+				spec[1]++
+			}
+			i = j
 		case c == '[':
 			spec[1]++
 			i = attrEnd(arm, i)
@@ -225,14 +235,14 @@ func juice9Specificity(arm []byte) [3]int {
 		case c == '*':
 			i++
 		case isSelectorNameStart(c):
-			if !compound {
+			if !tag {
 				spec[2]++
 			}
-			compound = true
+			tag = true
 			i = identEnd(arm, i)
 		default:
 			if isCSSSpace(c) || c == '>' || c == '+' || c == '~' {
-				compound = false
+				tag, id, classes = false, false, classes[:0]
 			}
 			i++
 		}
