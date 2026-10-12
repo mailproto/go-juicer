@@ -129,7 +129,7 @@ func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored b
 			return nil, false
 		}
 		var ok bool
-		if arm, ok = juice9Arguments(arm); !ok {
+		if arm, ok = juice9Arguments(arm); !ok || !juice9PseudoLast(arm) {
 			return nil, false
 		}
 	}

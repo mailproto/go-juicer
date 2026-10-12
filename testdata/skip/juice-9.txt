@@ -3,6 +3,3 @@
 #
 # Juice9() matches juice 9 exactly, divergences included, so this is empty.
 # Ratcheting works as in juice-12.txt.
-*/inline-seed/empty-rule  juice 9 rewrites the style attribute of every element a rule matches, even a rule with no declarations
-*/cascade/repeated-simple-selectors  juice 9 (slick) counts one id per compound and each class once, so .c.c scores as .c
-inline-pseudo-elements/pseudo-elements/not-last  juice 9 drops a rule with ::before or ::after anywhere but the last compound, which css-select rejects

@@ -2,6 +2,7 @@ package juicer
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -55,18 +56,18 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 		var decls []decl
 		var throws bool
 		decls, throws, ord = menschDecls(n, ord)
-		if len(decls) > 0 || throws {
-			for _, sel := range n.selectors {
-				if sel == "" {
-					continue
-				}
-				armRules, _ := compileRule([]byte(sel), decls, true)
-				for k := range armRules {
-					armRules[k].group = int32(len(rules))
-					armRules[k].throws = throws
-				}
-				rules = append(rules, armRules...)
+		// An empty rule still counts: juice 9 rewrites the style attribute of
+		// every element a rule matches.
+		for _, sel := range n.selectors {
+			if sel == "" {
+				continue
 			}
+			armRules, _ := compileRule([]byte(sel), decls, true)
+			for k := range armRules {
+				armRules[k].group = int32(len(rules))
+				armRules[k].throws = throws
+			}
+			rules = append(rules, armRules...)
 		}
 		if opts.preservePseudos && menschPseudo(n.selectors[0]) {
 			keep = append(keep, preserved{"pseudo", menschStringify(n)})
@@ -172,6 +173,39 @@ func juice9Arguments(arm []byte) ([]byte, bool) {
 	return out, true
 }
 
+// juice9PseudoLast reports whether any ::before or ::after is where juice 9
+// looks for one: on the last compound, outside arguments. Anywhere else it
+// reaches css-select, which rejects it, and the rule is dropped.
+func juice9PseudoLast(arm []byte) bool {
+	t := trimCSS(arm)
+	tail := rightmostCompound(string(t))
+	if _, _, p, _ := scanSelector(t[:len(t)-len(tail)]); p != pseudoNone {
+		return false
+	}
+	if _, _, p, _ := scanSelector([]byte(tail)); p == pseudoNone {
+		return true
+	}
+	depth := 0
+	for i := 0; i < len(tail); i++ {
+		switch tail[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ':':
+			j := i + 1
+			if j < len(tail) && tail[j] == ':' {
+				j++
+			}
+			name := strings.ToLower(tail[j:identEnd([]byte(tail), j)])
+			if depth == 0 && (name == "before" || name == "after") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // juice9Tail is a selector as juice 9 matches it once its trailing
 // pseudo-element is stripped: what precedes it is kept as a combinator, so
 // ".c ::before" is ".c *" and "::after" alone is "*".
@@ -188,15 +222,24 @@ func juice9Tail(variant []byte, text string) string {
 // except :not(), which scores as the first selector in its argument.
 func juice9Specificity(arm []byte) [3]int {
 	var spec [3]int
-	compound := false // a tag already counted in this compound
+	// slick keeps one tag and one id per compound, and each class once.
+	var tag, id bool
+	var classes []string
 	for i := 0; i < len(arm); {
 		switch c := arm[i]; {
 		case c == '#':
-			spec[0]++
+			if !id {
+				spec[0]++
+			}
+			id = true
 			i = identEnd(arm, i+1)
 		case c == '.':
-			spec[1]++
-			i = identEnd(arm, i+1)
+			j := identEnd(arm, i+1)
+			if name := string(arm[i+1 : j]); !slices.Contains(classes, name) {
+				classes = append(classes, name)
+				spec[1]++
+			}
+			i = j
 		case c == '[':
 			spec[1]++
 			i = attrEnd(arm, i)
@@ -225,14 +268,14 @@ func juice9Specificity(arm []byte) [3]int {
 		case c == '*':
 			i++
 		case isSelectorNameStart(c):
-			if !compound {
+			if !tag {
 				spec[2]++
 			}
-			compound = true
+			tag = true
 			i = identEnd(arm, i)
 		default:
 			if isCSSSpace(c) || c == '>' || c == '+' || c == '~' {
-				compound = false
+				tag, id, classes = false, false, classes[:0]
 			}
 			i++
 		}
