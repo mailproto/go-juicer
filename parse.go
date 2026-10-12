@@ -243,8 +243,27 @@ func parseMarkup(src []byte, xml bool) *html.Node {
 			}
 		}
 	}
+	mergeText(root)
 	// Anything still open at EOF stays open; the serializer closes it.
 	return root
+}
+
+// mergeText joins adjacent text nodes, as htmlparser2's DOM handler does.
+func mergeText(root *html.Node) {
+	walk(root, func(n *html.Node) {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type != html.TextNode || c.NextSibling == nil || c.NextSibling.Type != html.TextNode {
+				continue
+			}
+			var b strings.Builder
+			b.WriteString(c.Data)
+			for d := c.NextSibling; d != nil && d.Type == html.TextNode; d = c.NextSibling {
+				b.WriteString(d.Data)
+				n.RemoveChild(d)
+			}
+			c.Data = b.String()
+		}
+	})
 }
 
 // markupDecl reads the "<!" or "<?" construct at src[p:] the way htmlparser2's

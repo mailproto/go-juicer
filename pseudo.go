@@ -71,7 +71,9 @@ func (in *pass) materializePseudos(rules []rule) (imgs []pseudoImg, err error) {
 			}
 			if img != "" {
 				imgs = append(imgs, pseudoImg{span, img})
-			} else if text != "" {
+			} else {
+				// cheerio's .text("") still adds a text node, so XML mode
+				// writes <span></span>.
 				span.AppendChild(&html.Node{Type: html.TextNode, Data: text})
 			}
 		}
