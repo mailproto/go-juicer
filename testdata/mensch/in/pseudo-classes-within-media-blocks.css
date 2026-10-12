@@ -1,0 +1,13 @@
+@media screen and (max-width: 700px) {
+.nav a {
+display: block;
+}
+
+.nav a:hover {
+text-decoration: none;
+}
+
+.nav a:focus {
+text-decoration: underline;
+}
+}

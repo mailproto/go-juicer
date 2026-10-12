@@ -1,0 +1,49 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": "( yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": "@ yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": "* yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": "/ yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": "{ yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": ") yellow"
+  },
+  {
+   "type": "property",
+   "name": "background-color",
+   "value": ": yellow"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body {\n  background-color: ( yellow;\n  background-color: @ yellow;\n  background-color: * yellow;\n  background-color: / yellow;\n  background-color: { yellow;\n  background-color: ) yellow;\n  background-color: : yellow;\n}"
+ ]
+}

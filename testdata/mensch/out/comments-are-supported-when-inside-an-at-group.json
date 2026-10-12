@@ -1,0 +1,30 @@
+{
+ "tokens": [
+  {
+   "type": "media",
+   "name": "(max-width: 1024)"
+  },
+  {
+   "type": "comment",
+   "text": " boom! "
+  },
+  {
+   "type": "selector",
+   "text": ".foo"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "blue"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@media (max-width: 1024) {\n  .foo {\n    color: blue;\n  }\n}"
+ ]
+}

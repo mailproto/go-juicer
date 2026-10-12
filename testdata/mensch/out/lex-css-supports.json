@@ -1,0 +1,26 @@
+{
+ "tokens": [
+  {
+   "type": "supports",
+   "name": "(display: table-cell)"
+  },
+  {
+   "type": "selector",
+   "text": "body"
+  },
+  {
+   "type": "property",
+   "name": "color",
+   "value": "black"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@supports (display: table-cell) {\n  body {\n    color: black;\n  }\n}"
+ ]
+}

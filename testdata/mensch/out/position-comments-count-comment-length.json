@@ -1,0 +1,14 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": "body p"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "body p {}"
+ ]
+}

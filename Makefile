@@ -11,11 +11,11 @@ vet:
 fmt:
 	go fmt ./...
 
-goldens: ## regenerate expectations from pinned juice, then review the diff
-	cd $(ORACLE) && npm ci --silent && node generate.mjs
+goldens: ## regenerate expectations from pinned juice and mensch, then review the diff
+	cd $(ORACLE) && npm ci --silent && node generate.mjs && node mensch.mjs
 
-goldens-verify: ## fail if committed goldens disagree with pinned juice
-	cd $(ORACLE) && npm ci --silent && node generate.mjs --check
+goldens-verify: ## fail if committed goldens disagree with pinned juice or mensch
+	cd $(ORACLE) && npm ci --silent && node generate.mjs --check && node mensch.mjs --check
 
 CHROME_PATH ?= $(or $(shell command -v google-chrome),/Applications/Google Chrome.app/Contents/MacOS/Google Chrome)
 

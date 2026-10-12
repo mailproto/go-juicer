@@ -1,0 +1,585 @@
+{
+ "tokens": [
+  {
+   "type": "comment",
+   "text": " tests compressed for easy testing "
+  },
+  {
+   "type": "comment",
+   "text": " http://mathiasbynens.be/notes/css-escapes "
+  },
+  {
+   "type": "comment",
+   "text": " will match elements with class=\":`(\" "
+  },
+  {
+   "type": "selector",
+   "text": ".\\3A \\`\\("
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " will match elements with class=\"1a2b3c\" "
+  },
+  {
+   "type": "selector",
+   "text": ".\\31 a2b3c"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " will match the element with id=\"#fake-id\" "
+  },
+  {
+   "type": "selector",
+   "text": "#\\#fake-id"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " will match the element with id=\"---\" "
+  },
+  {
+   "type": "selector",
+   "text": "#\\---"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " will match the element with id=\"-a-b-c-\" "
+  },
+  {
+   "type": "selector",
+   "text": "#-a-b-c-"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " will match the element with id=\"©\" "
+  },
+  {
+   "type": "selector",
+   "text": "#©"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "comment",
+   "text": " More tests from http://mathiasbynens.be/demo/html5-id "
+  },
+  {
+   "type": "selector",
+   "text": "html"
+  },
+  {
+   "type": "property",
+   "name": "font",
+   "value": "1.2em/1.6 Arial"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "code"
+  },
+  {
+   "type": "property",
+   "name": "font-family",
+   "value": "Consolas"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "li code"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "rgba(255, 255, 255, .5)"
+  },
+  {
+   "type": "property",
+   "name": "padding",
+   "value": ".3em"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "li"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "orange"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#♥"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#©"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#“‘’”"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#☺☃"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#⌘⌥"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#𝄞♪♩♫♬"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\?"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\@"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\."
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\3A \\)"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\3A \\`\\("
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\31 23"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\31 a2b3c"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\<p\\>"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\<\\>\\<\\<\\<\\>\\>\\<\\>"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\[\\>\\+\\+\\+\\+\\+\\+\\+\\>\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\>\\+\\+\\+\\>\\+\\<\\<\\<\\<\\-\\]\\>\\+\\+\\.\\>\\+\\.\\+\\+\\+\\+\\+\\+\\+\\.\\.\\+\\+\\+\\.\\>\\+\\+\\.\\<\\<\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\.\\>\\.\\+\\+\\+\\.\\-\\-\\-\\-\\-\\-\\.\\-\\-\\-\\-\\-\\-\\-\\-\\.\\>\\+\\.\\>\\."
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\#"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\#\\#"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\#\\.\\#\\.\\#"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\_"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\{\\}"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\.fake\\-class"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#foo\\.bar"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\3A hover"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\3A hover\\3A focus\\3A active"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#\\[attr\\=value\\]"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\/o\\/o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\\\o\\\\o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\*o\\*o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\!o\\!o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\'o\\'o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\~o\\~o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "selector",
+   "text": "#f\\+o\\+o"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "lime"
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  "",
+  "",
+  "",
+  ".\\3A \\`\\( {}",
+  "",
+  ".\\31 a2b3c {}",
+  "",
+  "#\\#fake-id {}",
+  "",
+  "#\\--- {}",
+  "",
+  "#-a-b-c- {}",
+  "",
+  "#© {}",
+  "",
+  "html {\n  font: 1.2em/1.6 Arial;\n}",
+  "code {\n  font-family: Consolas;\n}",
+  "li code {\n  background: rgba(255, 255, 255, .5);\n  padding: .3em;\n}",
+  "li {\n  background: orange;\n}",
+  "#♥ {\n  background: lime;\n}",
+  "#© {\n  background: lime;\n}",
+  "#“‘’” {\n  background: lime;\n}",
+  "#☺☃ {\n  background: lime;\n}",
+  "#⌘⌥ {\n  background: lime;\n}",
+  "#𝄞♪♩♫♬ {\n  background: lime;\n}",
+  "#\\? {\n  background: lime;\n}",
+  "#\\@ {\n  background: lime;\n}",
+  "#\\. {\n  background: lime;\n}",
+  "#\\3A \\) {\n  background: lime;\n}",
+  "#\\3A \\`\\( {\n  background: lime;\n}",
+  "#\\31 23 {\n  background: lime;\n}",
+  "#\\31 a2b3c {\n  background: lime;\n}",
+  "#\\<p\\> {\n  background: lime;\n}",
+  "#\\<\\>\\<\\<\\<\\>\\>\\<\\> {\n  background: lime;\n}",
+  "#\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\[\\>\\+\\+\\+\\+\\+\\+\\+\\>\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\>\\+\\+\\+\\>\\+\\<\\<\\<\\<\\-\\]\\>\\+\\+\\.\\>\\+\\.\\+\\+\\+\\+\\+\\+\\+\\.\\.\\+\\+\\+\\.\\>\\+\\+\\.\\<\\<\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\+\\.\\>\\.\\+\\+\\+\\.\\-\\-\\-\\-\\-\\-\\.\\-\\-\\-\\-\\-\\-\\-\\-\\.\\>\\+\\.\\>\\. {\n  background: lime;\n}",
+  "#\\# {\n  background: lime;\n}",
+  "#\\#\\# {\n  background: lime;\n}",
+  "#\\#\\.\\#\\.\\# {\n  background: lime;\n}",
+  "#\\_ {\n  background: lime;\n}",
+  "#\\{\\} {\n  background: lime;\n}",
+  "#\\.fake\\-class {\n  background: lime;\n}",
+  "#foo\\.bar {\n  background: lime;\n}",
+  "#\\3A hover {\n  background: lime;\n}",
+  "#\\3A hover\\3A focus\\3A active {\n  background: lime;\n}",
+  "#\\[attr\\=value\\] {\n  background: lime;\n}",
+  "#f\\/o\\/o {\n  background: lime;\n}",
+  "#f\\\\o\\\\o {\n  background: lime;\n}",
+  "#f\\*o\\*o {\n  background: lime;\n}",
+  "#f\\!o\\!o {\n  background: lime;\n}",
+  "#f\\'o\\'o {\n  background: lime;\n}",
+  "#f\\~o\\~o {\n  background: lime;\n}",
+  "#f\\+o\\+o {\n  background: lime;\n}"
+ ]
+}

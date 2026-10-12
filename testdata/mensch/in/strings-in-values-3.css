@@ -1,0 +1,14 @@
+.klass {
+/* " */
+/*  ' */
+/* \' \" \*/
+content: '"';
+content: '\"';
+content: "'";
+content: "\'";
+content: '/* dude \*/';
+content: '/* ';
+background: url('\"');
+content: "du\
+de";
+}

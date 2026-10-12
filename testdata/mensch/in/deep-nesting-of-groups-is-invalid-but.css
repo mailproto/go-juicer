@@ -1,0 +1,19 @@
+@supports (display: border-box) {
+.foo {
+color: red;
+}
+
+@media print {
+.foo {
+color: black;
+}
+
+@supports (display: table) {
+.foo {
+color: blue;
+}
+
+}
+
+}
+}

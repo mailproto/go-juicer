@@ -1,0 +1,14 @@
+{
+ "tokens": [
+  {
+   "type": "media",
+   "name": "screen"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@media screen {}"
+ ]
+}

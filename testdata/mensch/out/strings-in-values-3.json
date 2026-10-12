@@ -1,0 +1,66 @@
+{
+ "tokens": [
+  {
+   "type": "selector",
+   "text": ".klass"
+  },
+  {
+   "type": "comment",
+   "text": " \" "
+  },
+  {
+   "type": "comment",
+   "text": "  ' "
+  },
+  {
+   "type": "comment",
+   "text": " \\' \\\" \\"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "'\"'"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "'\\\"'"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"'\""
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"\\'\""
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "'/* dude \\*/'"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "'/* '"
+  },
+  {
+   "type": "property",
+   "name": "background",
+   "value": "url('\\\"')"
+  },
+  {
+   "type": "property",
+   "name": "content",
+   "value": "\"du\\\nde\""
+  },
+  {
+   "type": "end"
+  }
+ ],
+ "text": [
+  ".klass {\n  content: '\"';\n  content: '\\\"';\n  content: \"'\";\n  content: \"\\'\";\n  content: '/* dude \\*/';\n  content: '/* ';\n  background: url('\\\"');\n  content: \"du\\\nde\";\n}"
+ ]
+}

@@ -1,0 +1,27 @@
+{
+ "tokens": [
+  {
+   "type": "font-face",
+   "name": ""
+  },
+  {
+   "type": "property",
+   "name": "font-family",
+   "value": "Gentium"
+  },
+  {
+   "type": "property",
+   "name": "src",
+   "value": "url(http://example.com/fonts/Gentium.ttf)"
+  },
+  {
+   "type": "end"
+  },
+  {
+   "type": "at-group-end"
+  }
+ ],
+ "text": [
+  "@font-face {\n  font-family: Gentium;\n  src: url(http://example.com/fonts/Gentium.ttf);}"
+ ]
+}
