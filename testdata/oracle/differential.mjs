@@ -1,19 +1,20 @@
 // Generates random email-like documents, inlines each with juice, and writes
 // one JSON object per line for TestDifferential to replay against Go.
 //
-//   node differential.mjs --seed 1 --count 10000 > corpus.jsonl
+//   node differential.mjs --seed 1 --count 10000 [--target juice-9] > corpus.jsonl
 //
 // The generator sticks to what this package implements and steers clear of
 // its deliberate divergences from juice (README), so every mismatch it finds
-// is a bug or an undocumented divergence.
-import juice from 'juice';
-
+// is a bug or an undocumented divergence. With --target juice-9, documents
+// are inlined with juice 9 and replayed with Juice9().
 const arg = (name, def) => {
   const i = process.argv.indexOf(`--${name}`);
-  return i < 0 ? def : Number(process.argv[i + 1]);
+  return i < 0 ? def : process.argv[i + 1];
 };
-const seed = arg('seed', 1);
-const count = arg('count', 1000);
+const seed = Number(arg('seed', 1));
+const count = Number(arg('count', 1000));
+const target = arg('target', 'juice-12');
+const { default: juice } = await import(target === 'juice-9' ? 'juice-9' : 'juice');
 
 // mulberry32: small, fast and seedable, so a corpus can be regenerated exactly.
 let state = seed >>> 0;
@@ -188,6 +189,9 @@ const OPTIONS = {
   inlinePseudoElements: true, xmlMode: true, inlineDuplicateProperties: true,
 };
 
+// juice 12 options that juice 9 does not have.
+const JUICE_12_ONLY = ['preserveContainerQueries', 'preserveLayers', 'inlineDuplicateProperties', 'removeInlinedSelectors', 'preservedSelectors'];
+
 for (let i = 0; i < count; i++) {
   const html = document();
   const options = {};
@@ -199,6 +203,10 @@ for (let i = 0; i < count; i++) {
     if (chance(0.3)) options.insertPreservedExtraCss = pick([false, 'td', 'p', 'body']);
   }
   const row = { seed, i, html, options };
+  if (target === 'juice-9') {
+    for (const k of JUICE_12_ONLY) delete options[k];
+    row.target = target;
+  }
   try {
     row.out = juice(html, options);
   } catch (err) {
