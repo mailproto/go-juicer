@@ -562,51 +562,43 @@ func foldName(b []byte, lower bool) string {
 // render serializes the tree the way dom-serializer does with
 // decodeEntities:false: text is written untouched and only the double quote is
 // escaped inside attribute values.
-func render(buf *bytes.Buffer, n *html.Node) {
-	switch n.Type {
-	case html.TextNode, html.DoctypeNode, html.CommentNode:
-		// Comments hold their markup as htmlparser2 would serialize it.
-		buf.WriteString(n.Data)
-		return
-	}
-
-	if n.Type == html.ElementNode {
-		buf.WriteByte('<')
-		buf.WriteString(n.Data)
-		for _, a := range jsKeyOrder(n.Attr) {
-			buf.WriteByte(' ')
-			buf.WriteString(a.Key)
-			if a.Val != "" {
-				buf.WriteString(`="`)
-				writeAttrValue(buf, a.Val)
-				buf.WriteByte('"')
+func render(buf *bytes.Buffer, root *html.Node) {
+	// Childless elements in foreign content (svg, math) close themselves.
+	selfClosing := func(n *html.Node) bool { return n.Namespace != "" && n.FirstChild == nil }
+	traverse(root, func(n *html.Node) bool {
+		switch n.Type {
+		case html.TextNode, html.DoctypeNode, html.CommentNode:
+			// Comments hold their markup as htmlparser2 would serialize it.
+			buf.WriteString(n.Data)
+			return false
+		case html.ElementNode:
+			buf.WriteByte('<')
+			buf.WriteString(n.Data)
+			for _, a := range jsKeyOrder(n.Attr) {
+				buf.WriteByte(' ')
+				buf.WriteString(a.Key)
+				if a.Val != "" {
+					buf.WriteString(`="`)
+					writeAttrValue(buf, a.Val)
+					buf.WriteByte('"')
+				}
 			}
-		}
-		// Childless elements in foreign content (svg, math) close themselves.
-		if n.Namespace != "" && n.FirstChild == nil {
-			buf.WriteString("/>")
-			return
-		}
-		buf.WriteByte('>')
-		if voidElements[n.Data] {
-			// Only a materialized pseudo-element gives a void element
-			// children; dom-serializer writes them after the tag, unclosed.
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				render(buf, c)
+			if selfClosing(n) {
+				buf.WriteString("/>")
+				return false
 			}
-			return
+			buf.WriteByte('>')
 		}
-	}
-
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		render(buf, c)
-	}
-
-	if n.Type == html.ElementNode {
-		buf.WriteString("</")
-		buf.WriteString(n.Data)
-		buf.WriteByte('>')
-	}
+		return true
+	}, func(n *html.Node) {
+		// Only a materialized pseudo-element gives a void element children;
+		// dom-serializer writes them after the tag, unclosed.
+		if n.Type == html.ElementNode && !selfClosing(n) && !voidElements[n.Data] {
+			buf.WriteString("</")
+			buf.WriteString(n.Data)
+			buf.WriteByte('>')
+		}
+	})
 }
 
 func writeAttrValue(buf *bytes.Buffer, v string) {
@@ -630,37 +622,38 @@ func renderDocument(n *html.Node) []byte {
 
 // renderXML serializes as dom-serializer does in XML mode: an element without
 // children closes itself, and an empty attribute keeps its ="".
-func renderXML(buf *bytes.Buffer, n *html.Node) {
-	if n.Type != html.ElementNode {
-		if n.Type == html.DocumentNode {
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				renderXML(buf, c)
-			}
-			return
+func renderXML(buf *bytes.Buffer, root *html.Node) {
+	traverse(root, func(n *html.Node) bool {
+		switch n.Type {
+		case html.DocumentNode:
+			return true
+		case html.ElementNode:
+		default:
+			render(buf, n)
+			return false
 		}
-		render(buf, n)
-		return
-	}
-	buf.WriteByte('<')
-	buf.WriteString(n.Data)
-	for _, a := range jsKeyOrder(n.Attr) {
-		buf.WriteByte(' ')
-		buf.WriteString(a.Key)
-		buf.WriteString(`="`)
-		writeAttrValue(buf, a.Val)
-		buf.WriteByte('"')
-	}
-	if n.FirstChild == nil {
-		buf.WriteString("/>")
-		return
-	}
-	buf.WriteByte('>')
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		renderXML(buf, c)
-	}
-	buf.WriteString("</")
-	buf.WriteString(n.Data)
-	buf.WriteByte('>')
+		buf.WriteByte('<')
+		buf.WriteString(n.Data)
+		for _, a := range jsKeyOrder(n.Attr) {
+			buf.WriteByte(' ')
+			buf.WriteString(a.Key)
+			buf.WriteString(`="`)
+			writeAttrValue(buf, a.Val)
+			buf.WriteByte('"')
+		}
+		if n.FirstChild == nil {
+			buf.WriteString("/>")
+			return false
+		}
+		buf.WriteByte('>')
+		return true
+	}, func(n *html.Node) {
+		if n.Type == html.ElementNode && n.FirstChild != nil {
+			buf.WriteString("</")
+			buf.WriteString(n.Data)
+			buf.WriteByte('>')
+		}
+	})
 }
 
 // jsKeyOrder orders attributes the way juice emits them from a JavaScript
@@ -736,20 +729,40 @@ func detach(n *html.Node) {
 // nodes must collect them first: RemoveChild clears NextSibling, which would
 // silently truncate the walk.
 func walk(n *html.Node, fn func(*html.Node)) {
-	fn(n)
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		walk(c, fn)
+	traverse(n, func(n *html.Node) bool { fn(n); return true }, func(*html.Node) {})
+}
+
+// traverse visits root and its descendants in document order, calling enter
+// on the way down and leave on the way back up, once each per node. enter
+// reports whether to visit the node's children. It keeps no stack, so an
+// arbitrarily deep tree, which unclosed tags readily produce, cannot overflow
+// the goroutine's.
+func traverse(root *html.Node, enter func(*html.Node) bool, leave func(*html.Node)) {
+	n := root
+	for {
+		if enter(n) && n.FirstChild != nil {
+			n = n.FirstChild
+			continue
+		}
+		leave(n)
+		for n != root && n.NextSibling == nil {
+			n = n.Parent
+			leave(n)
+		}
+		if n == root {
+			return
+		}
+		n = n.NextSibling
 	}
 }
 
-func findFirst(n *html.Node, tag string) *html.Node {
-	if n.Type == html.ElementNode && n.Data == tag {
-		return n
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if f := findFirst(c, tag); f != nil {
-			return f
+func findFirst(root *html.Node, tag string) *html.Node {
+	var found *html.Node
+	traverse(root, func(n *html.Node) bool {
+		if found == nil && n.Type == html.ElementNode && n.Data == tag {
+			found = n
 		}
-	}
-	return nil
+		return found == nil
+	}, func(*html.Node) {})
+	return found
 }
