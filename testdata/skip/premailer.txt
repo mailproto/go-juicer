@@ -8,6 +8,7 @@
 
 at-rules/nested-not-inlined  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 cascade/dup-progressive  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+cascade/pseudo-class-specificity  premailer scores pseudo-classes like classes (as CSS does); juice scores them like type selectors
 cascade/pseudo-first-selector  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 cascade/selector-list-ties  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
 comments/in-values  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
