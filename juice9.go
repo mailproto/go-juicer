@@ -119,7 +119,7 @@ func menschStyle(style []byte) ([]decl, error) {
 		}
 		return decls, nil
 	}
-	return nil, fmt.Errorf("juicer: juice 9 fails on the style attribute %q", style)
+	return nil, fmt.Errorf("%w: juice 9 cannot read the style attribute %q", ErrJuiceFails, style)
 }
 
 // menschPseudo is juice 9's matchesPseudo, which looks for "hover" and the
