@@ -8,3 +8,10 @@
 */style-tags/media-lists  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
 */style-tags/media-matching  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
 */style-tags/media-query  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
+*/cascade/pseudo-class-specificity  pseudo-classes score as classes, as CSS scores them, where juice scores them as types
+*/cascade/selector-list-ties  pseudo-classes score as classes, as CSS scores them, so :only-child outranks td and writes its declarations after it
+*/juice-suite/inline-content/pseudo-specificity  pseudo-classes score as classes, as CSS scores them, where juice scores them as types
+no-css-variables/variables/basic  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
+no-css-variables/variables/function-name  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
+no-css-variables/variables/in-shorthand  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
+no-css-variables/variables/nested  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations

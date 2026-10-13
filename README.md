@@ -50,9 +50,9 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4060 | 3996 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4060 | 3968 | the same 64, plus 28 where the default follows the browser (`testdata/skip/default.txt`) |
-| juice 9.1.0, with `CompatibilityMode(Juice9)` | 4060 | 4060 | none |
+| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4067 | 4003 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 12.1.3, default mode | 4067 | 3950 | the same 64, plus 53 where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 9.1.0, with `CompatibilityMode(Juice9)` | 4067 | 4067 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -67,16 +67,16 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 456 of 578 documents agree; the rest are
+splits, quotes and color spellings. 457 of 579 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 546 of 580 render identically. The rest are
+every element's computed style. 548 of 581 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
-this package still copies for parity: pseudo-class specificity, `:first-child` seeing a tree without `<style>` elements,
+this package still copies for parity: `:first-child` seeing a tree without `<style>` elements,
 `[width=600]` and `*a` applied though browsers drop them, `content` on
 `<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
 dropped, and a few more. Each is a candidate for a deliberate divergence.
@@ -92,6 +92,9 @@ that has to match juice 12 byte for byte. So far:
   matches; juice ignores the attribute and inlines mobile-only rules for
   everyone. With `RemoveStyleTags` on and `PreserveMediaQueries` off it is
   removed, as `@media` blocks are.
+- **Pseudo-classes score as classes**, as CSS scores them, so
+  `p:first-child` beats `.x`. juice scores them as types, where `.x` wins.
+  Pseudo-elements still score as types.
 
 juice 9 is still widely deployed, so `CompatibilityMode(Juice9)` switches to
 its behaviour where the two differ: stylesheets are read and preserved rules re-emitted through a port of

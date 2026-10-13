@@ -296,7 +296,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 			shared := append([]decl(nil), decls...)
 			arms := splitSelector(sel)
 			for _, arm := range arms {
-				armRules, ignored := compileRule(arm, shared, false)
+				armRules, ignored := compileRule(arm, shared, opts)
 				if !ignored && !empty {
 					for k := range armRules {
 						armRules[k].group = int32(len(rules))

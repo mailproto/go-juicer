@@ -5,7 +5,6 @@
 # parity, a limit of inlining itself, or a gap here.
 
 cascade/nonvisual  limit: the rule matches the <html> element a browser creates around a fragment, which has nothing to inline onto
-cascade/pseudo-class-specificity  juice bug: pseudo-classes are scored like type selectors; CSS and browsers score them like classes
 cascade/selector-list-ties  limit: :only-child matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 duplicates/variables  juice bug: with inlineDuplicateProperties, var() reads the first rule's custom property rather than the one that wins the cascade
 ignore/next-across-blocks  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
@@ -15,7 +14,6 @@ ignore/start-end  limit: a rule juice is told to ignore stays in <style>, where 
 ignore/start-unterminated  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
 important/attr-pseudo  limit: inlinePseudoElements turns ::after into a real <span>, an element the original never had
 juice-suite/inline-content/ignore-pseudos  juice bug: pseudo-class rules in extraCss are dropped rather than preserved, so a:link styles are lost
-juice-suite/inline-content/pseudo-specificity  juice bug: pseudo-classes are scored like type selectors; CSS and browsers score them like classes
 juice-suite/juice-content/nesting-atrule  limit: an inlined declaration outranks a later rule kept in a preserved @media block
 juice-suite/juice-content/pseudo-elements  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 juice-suite/juice-content/pseudo-elements-and-width-attr  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
