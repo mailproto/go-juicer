@@ -4,3 +4,7 @@
 # keeps juice's behaviour and is checked against the same goldens without
 # these lines.
 # Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
+*/css-inline-suite/benchmarks/big_email_1  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
+*/style-tags/media-lists  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
+*/style-tags/media-matching  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone
+*/style-tags/media-query  <style media="..."> applies only where its query matches, so it is left as written rather than inlined for everyone

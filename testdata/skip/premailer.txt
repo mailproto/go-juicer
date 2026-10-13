@@ -126,3 +126,5 @@ style-tags/data-embed  premailer inlines rules juice keeps in <style>: @media pr
 variables/function-name  premailer does not resolve CSS custom properties
 variables/in-shorthand  premailer does not resolve CSS custom properties
 style-tags/media-matching  premailer inlines rules inside @media print, which juice keeps in <style>
+style-tags/media-lists  premailer ignores a <style media="..."> attribute and inlines its rules for everyone, as juice does
+style-tags/media-query  premailer ignores a <style media="..."> attribute and inlines its rules for everyone, as juice does

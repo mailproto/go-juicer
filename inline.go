@@ -243,6 +243,9 @@ const (
 // that has to stay identical to an existing deployment of it.
 func CompatibilityMode(c Compatibility) Option { return func(o *options) { o.compat = c } }
 
+// fixesJuiceBugs reports whether the default mode's fixes for juice bugs apply.
+func (o *options) fixesJuiceBugs() bool { return o.compat == standard }
+
 // Inline inlines the document's CSS into style attributes.
 func (in *Inliner) Inline(doc string) (string, error) {
 	out, err := in.InlineBytes([]byte(doc))
@@ -402,6 +405,17 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 			removeAttr(s, "data-embed")
 			continue
 		}
+		if v, ok := getAttr(s, "media"); ok && o.fixesJuiceBugs() && !screenMedia(v) {
+			// juice ignores media; browsers apply these rules only where
+			// the query matches, so they stay as written, or go with
+			// @media blocks when those are not preserved.
+			if o.removeStyleTags && !o.preserveMediaQueries {
+				detach(s)
+			} else if in.embedded != nil {
+				in.embedded[s] = true
+			}
+			continue
+		}
 
 		var r []rule
 		var k []preserved
@@ -543,6 +557,22 @@ func (in *pass) writeStyles() {
 			setAttr(el.node, in.o.styleAttributeName, string(v))
 		}
 	}
+}
+
+// screenMedia reports whether a media attribute applies to every screen: it
+// is empty, or one of its queries is a bare all or screen.
+func screenMedia(media string) bool {
+	if strings.TrimSpace(media) == "" {
+		return true
+	}
+	for q := range strings.SplitSeq(media, ",") {
+		q = strings.ToLower(strings.TrimSpace(q))
+		q = strings.TrimSpace(strings.TrimPrefix(q, "only "))
+		if q == "all" || q == "screen" {
+			return true
+		}
+	}
+	return false
 }
 
 func preservedText(keep []preserved) []byte {
