@@ -62,6 +62,8 @@ type options struct {
 	removeClasses        bool
 	removeComments       bool
 	resetContentEditable bool
+
+	maxInputSize, maxDepth int // see limits.go
 }
 
 // defaults mirror juice's getDefaultOptions. Note that preserveImportant and
@@ -85,6 +87,8 @@ func defaults() options {
 		resolveCSSVariables:         true,
 		styleAttributeName:          "style",
 		codeBlocks:                  DefaultCodeBlocks(),
+		maxInputSize:                defaultMaxInputSize,
+		maxDepth:                    defaultMaxDepth,
 	}
 }
 
@@ -239,6 +243,9 @@ func (o *options) validate() error {
 	if o.styleAttributeName == "" {
 		return fmt.Errorf("%w: StyleAttributeName cannot be empty", ErrInvalidOption)
 	}
+	if o.maxInputSize < 0 || o.maxDepth < 0 {
+		return fmt.Errorf("%w: MaxInputSize and MaxDepth cannot be negative", ErrInvalidOption)
+	}
 	if o.insertExtraCSSInto != "" {
 		m, err := cascadia.Compile(o.insertExtraCSSInto)
 		if err != nil {
@@ -285,6 +292,9 @@ func (in *Inliner) Inline(doc string) (string, error) {
 
 // InlineBytes is Inline over a byte slice.
 func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
+	if err := checkSize(doc, &in.opts); err != nil {
+		return nil, err
+	}
 	src, blocks := encodeCodeBlocks(doc, in.opts.codeBlocks)
 	root := parseMarkup(src, in.opts.xmlMode)
 	if err := in.process(root, src); err != nil {
@@ -338,6 +348,9 @@ type pass struct {
 
 // process runs the inlining pipeline over an already-parsed tree.
 func (in *Inliner) process(root *html.Node, src []byte) error {
+	if err := checkDepth(root, &in.opts); err != nil {
+		return err
+	}
 	p := &pass{o: &in.opts, controlAttrs: in.opts.compat != Juice9 && bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
