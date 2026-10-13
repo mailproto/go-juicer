@@ -120,8 +120,9 @@ const maxExpansion = 32
 //
 // It returns ignored=true for an arm juice preserves rather than inlines, and
 // no rules at all for one neither engine can match.
-func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored bool) {
+func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bool) {
 	sel := string(arm)
+	juice9 := o.compat == Juice9
 	if juice9 {
 		if !balanced(arm) {
 			// Half of a list mensch split inside parentheses: cheerio
@@ -133,7 +134,9 @@ func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored b
 			return nil, false
 		}
 	}
-	_, spec, pseudo, ign := scanSelector(arm)
+	// juice scores pseudo-classes like type selectors; CSS scores them like
+	// classes.
+	_, spec, pseudo, ign := scanSelector(arm, o.fixesJuiceBugs())
 	if ign {
 		return nil, true
 	}
@@ -142,7 +145,7 @@ func compileRule(arm []byte, decls []decl, juice9 bool) (rules []rule, ignored b
 	}
 
 	for _, variant := range expandFunctional(arm) {
-		text, _, _, vIgn := scanSelector(variant)
+		text, _, _, vIgn := scanSelector(variant, false)
 		if vIgn {
 			continue
 		}
@@ -347,8 +350,13 @@ func findSelectorList(sel []byte) (start, end int, ok bool) {
 // scanSelector walks a single comma-arm, returning the text to hand cascadia
 // (pseudo-elements stripped, :is()/:where() desugared away, unquoted
 // attribute values quoted), its specificity, any pseudo-element, and whether
-// it must be skipped.
-func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored bool) {
+// it must be skipped. With browser set, pseudo-classes score as classes, as
+// CSS scores them; otherwise as types, as juice scores them.
+func scanSelector(arm []byte, browser bool) (text string, spec [3]int, pseudo uint8, ignored bool) {
+	pseudoClass := 2
+	if browser {
+		pseudoClass = 1
+	}
 	var out []byte
 	i := 0
 	for i < len(arm) {
@@ -405,7 +413,7 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 				var parts [][]byte
 				inner := pseudoNone
 				for _, a := range splitSelector(arg) {
-					t, _, p, ign := scanSelector(a)
+					t, _, p, ign := scanSelector(a, false)
 					if ign {
 						return "", spec, pseudoNone, true
 					}
@@ -450,17 +458,21 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 			case name == "is" || name == "matches" || name == "not" || name == "has":
 				// Selectors L4: these take the maximum specificity of
 				// their arguments.
-				s := argSpecificity(arg)
+				s := argSpecificity(arg, browser)
 				spec[0] += s[0]
 				spec[1] += s[1]
 				spec[2] += s[2]
 				out = append(out, rewriteHas(call, name)...)
 			case name == "empty" && !dbl:
 				// css-select counts whitespace text as content; cascadia does not.
-				spec[2]++
+				spec[pseudoClass]++
 				out = append(out, `:empty:not(:matchesOwn([\s\S]))`...)
-			default:
+			case dbl || name == "first-line" || name == "first-letter":
+				// Pseudo-elements score as types either way.
 				spec[2]++
+				out = append(out, arm[i:ae]...)
+			default:
+				spec[pseudoClass]++
 				out = append(out, arm[i:ae]...)
 			}
 			i = ae
@@ -494,10 +506,10 @@ func scanSelector(arm []byte) (text string, spec [3]int, pseudo uint8, ignored b
 
 // argSpecificity returns the highest specificity among a selector list, which
 // is how Selectors L4 scores :is(), :not() and :has().
-func argSpecificity(arg []byte) [3]int {
+func argSpecificity(arg []byte, browser bool) [3]int {
 	var best [3]int
 	for _, a := range splitSelector(arg) {
-		_, s, _, ign := scanSelector(a)
+		_, s, _, ign := scanSelector(a, browser)
 		if ign {
 			continue
 		}

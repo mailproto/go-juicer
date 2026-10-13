@@ -62,7 +62,7 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 			if sel == "" {
 				continue
 			}
-			armRules, _ := compileRule([]byte(sel), decls, true)
+			armRules, _ := compileRule([]byte(sel), decls, opts)
 			for k := range armRules {
 				armRules[k].group = int32(len(rules))
 				armRules[k].throws = throws
@@ -179,10 +179,10 @@ func juice9Arguments(arm []byte) ([]byte, bool) {
 func juice9PseudoLast(arm []byte) bool {
 	t := trimCSS(arm)
 	tail := rightmostCompound(string(t))
-	if _, _, p, _ := scanSelector(t[:len(t)-len(tail)]); p != pseudoNone {
+	if _, _, p, _ := scanSelector(t[:len(t)-len(tail)], false); p != pseudoNone {
 		return false
 	}
-	if _, _, p, _ := scanSelector([]byte(tail)); p == pseudoNone {
+	if _, _, p, _ := scanSelector([]byte(tail), false); p == pseudoNone {
 		return true
 	}
 	depth := 0
@@ -211,7 +211,7 @@ func juice9PseudoLast(arm []byte) bool {
 // ".c ::before" is ".c *" and "::after" alone is "*".
 func juice9Tail(variant []byte, text string) string {
 	tail := rightmostCompound(string(trimCSS(variant)))
-	if t, _, p, _ := scanSelector([]byte(tail)); p == pseudoNone || t != "" || strings.HasSuffix(text, "*") {
+	if t, _, p, _ := scanSelector([]byte(tail), false); p == pseudoNone || t != "" || strings.HasSuffix(text, "*") {
 		return text
 	}
 	return strings.TrimSpace(text + " *")
