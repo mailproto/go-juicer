@@ -106,7 +106,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 
 	src = flattenNesting(src)
 	orig := src
-	src, tok := tokenizerInput(src)
+	src, tok := tokenizerInput(src, !opts.fixesJuiceBugs())
 	p := css.NewParser(parse.NewInputBytes(tok), false)
 	prev := 0
 	atKind := ""
@@ -345,8 +345,10 @@ func ruleText(sel []byte, decls []decl) []byte {
 // so it parses their contents; kinds and preludes are read from src. Only tok
 // blanks a ")" or "]" with no opener, which postcss ignores but tdewolff
 // waits forever to match, and a quote that never closes, which tdewolff
-// would run to the end of src.
-func tokenizerInput(src []byte) (text, tok []byte) {
+// would run to the end of src. With markers set, tok also hides "<!--" and
+// "-->" from tdewolff, which drops them as CSS says to, so they stay part of
+// a selector as in postcss.
+func tokenizerInput(src []byte, markers bool) (text, tok []byte) {
 	out := src
 	clone := func() {
 		if &out[0] == &src[0] {
@@ -355,7 +357,7 @@ func tokenizerInput(src []byte) (text, tok []byte) {
 	}
 	empty := true
 	var open []byte
-	var stray []int
+	var stray, hidden []int
 	var q quotes
 	for i := 0; i < len(src); i++ {
 		c := src[i]
@@ -390,6 +392,17 @@ func tokenizerInput(src []byte) (text, tok []byte) {
 				i = end
 			case '\\':
 				i++
+			case '<', '-':
+				m := "<!--"
+				if c == '-' {
+					m = "-->"
+				}
+				if markers && bytes.HasPrefix(src[i:], []byte(m)) && (i == 0 || !isSelectorNameChar(src[i-1])) {
+					for k := range len(m) {
+						hidden = append(hidden, i+k)
+					}
+					i += len(m) - 1
+				}
 			case '(':
 				open = append(open, ')')
 			case '[':
@@ -403,12 +416,15 @@ func tokenizerInput(src []byte) (text, tok []byte) {
 			}
 		}
 	}
-	if len(stray) == 0 {
+	if len(stray) == 0 && len(hidden) == 0 {
 		return out, out
 	}
 	tok = bytes.Clone(out)
 	for _, i := range stray {
 		tok[i] = ' '
+	}
+	for _, i := range hidden {
+		tok[i] = '_'
 	}
 	return out, tok
 }
