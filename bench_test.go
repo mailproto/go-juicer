@@ -66,7 +66,7 @@ func TestAllocBudget(t *testing.T) {
 		"inline":            31000,
 		"tiny":              75,
 		"small":             950,
-		"manyRulesFewNodes": 18500,
+		"manyRulesFewNodes": 21000, // a node per rule and declaration since the postcss parser
 		"fewRulesManyNodes": 79500,
 		"unbucketable":      8200,
 		"deepDescendant":    8400,
