@@ -74,7 +74,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 		tok = pcToken{"space", css[pos:next], pos, next - 1}
 		pos = next - 1
 	case strings.IndexByte("[]{}:;)", c) >= 0:
-		tok = pcToken{string(c), string(c), pos, pos}
+		tok = pcToken{css[pos : pos+1], css[pos : pos+1], pos, pos}
 	case c == '(':
 		prev := ""
 		if n := len(t.buffer); n > 0 {
@@ -212,6 +212,9 @@ type pcNode struct {
 
 func (n *pcNode) push(c *pcNode) {
 	c.parent = n
+	if n.nodes == nil {
+		n.nodes = make([]*pcNode, 0, 4) // most rules hold a few declarations
+	}
 	n.nodes = append(n.nodes, c)
 }
 
