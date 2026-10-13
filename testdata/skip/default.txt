@@ -15,3 +15,5 @@ no-css-variables/variables/basic  pseudo-classes score as classes, so :root outr
 no-css-variables/variables/function-name  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
 no-css-variables/variables/in-shorthand  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
 no-css-variables/variables/nested  pseudo-classes score as classes, so :root outranks a type and its custom properties come after the element's own declarations
+*/css-inline-suite/tests/remove_inlined_selectors_ends_unterminated_at_rules_with_their_block  each <style> block is its own stylesheet, as in browsers; juice joins them, so an unclosed at-rule swallows the next block's rules
+inline-pseudo-elements/serialization/style-in-string  each <style> block is its own stylesheet, as in browsers; juice joins them with newlines, so a string left open at the end of the last one takes in a "\n"
