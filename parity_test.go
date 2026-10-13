@@ -32,30 +32,48 @@ type fixtureOptions struct {
 	Client  map[string]any `json:"client"`
 }
 
+// parityRuns pairs each set of goldens with the mode it is checked under.
+// juice 12's goldens are checked twice: in Juice12 mode, which must match
+// them, and in the default mode, which differs only where testdata/skip/
+// default.txt says juice disagrees with browsers.
+var parityRuns = []struct {
+	name, target string
+	mode         Compatibility
+	skipFiles    []string
+}{
+	{"juice-12", "juice-12", Juice12, []string{"juice-12"}},
+	{"juice-9", "juice-9", Juice9, []string{"juice-9"}},
+	{"default", "juice-12", standard, []string{"juice-12", "default"}},
+}
+
 func TestParity(t *testing.T) {
 	variants := loadVariants(t)
-	for _, target := range []string{"juice-12", "juice-9"} {
-		t.Run(target, func(t *testing.T) {
-			skips := loadSkips(t, target)
+	for _, run := range parityRuns {
+		t.Run(run.name, func(t *testing.T) {
+			skips := map[string]string{}
+			for _, f := range run.skipFiles {
+				maps.Copy(skips, loadSkips(t, f))
+			}
 			var n tally
 			for _, variant := range slices.Sorted(maps.Keys(variants)) {
 				t.Run(variant, func(t *testing.T) {
-					parityVariant(t, target, variant, variants[variant], skips, &n)
+					parityVariant(t, run.target, run.mode, variant, variants[variant], skips, &n)
 				})
 			}
 
 			// A skip naming a variant or fixture that no longer exists is stale.
-			for name, reason := range skips {
+			own := loadSkips(t, run.skipFiles[len(run.skipFiles)-1])
+			for name, reason := range own {
 				variant, fixture, _ := strings.Cut(name, "/")
 				_, okVariant := variants[variant]
 				_, err := os.Stat(filepath.Join("testdata", "in", fixture+".html"))
 				if !(okVariant || variant == "*") || err != nil {
-					t.Errorf("testdata/skip/%s.txt names missing case %q (%s)", target, name, reason)
+					t.Errorf("testdata/skip/%s.txt names missing case %q (%s)", run.skipFiles[len(run.skipFiles)-1], name, reason)
 				}
 			}
 			if total := n.pass + n.skipped + n.failed; total > 0 {
 				t.Logf("%s parity: %d/%d cases (%.1f%%), %d skipped, %d failed",
-					target, n.pass, total, 100*float64(n.pass)/float64(total), n.skipped, n.failed)
+					run.name, n.pass, total, 100*float64(n.pass)/float64(total), n.skipped, n.failed)
 			}
 		})
 	}
@@ -65,7 +83,7 @@ type tally struct{ pass, skipped, failed int }
 
 // parityVariant runs every fixture under one option variant. A skip line
 // names "<variant>/<fixture>", or "*/<fixture>" for every variant.
-func parityVariant(t *testing.T, target, variant string, variantOpts map[string]any, skips map[string]string, n *tally) {
+func parityVariant(t *testing.T, target string, mode Compatibility, variant string, variantOpts map[string]any, skips map[string]string, n *tally) {
 	root := filepath.Join("testdata", "in")
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") {
@@ -92,8 +110,8 @@ func parityVariant(t *testing.T, target, variant string, variantOpts map[string]
 			fixtureOpts, fixtureUnsupported := loadOptions(t, strings.TrimSuffix(p, ".html")+".json")
 			opts = append(opts, fixtureOpts...)
 			unsupported = append(unsupported, fixtureUnsupported...)
-			if target == "juice-9" {
-				opts = append(opts, Juice9())
+			if mode != standard {
+				opts = append(opts, CompatibilityMode(mode))
 			}
 			want, wantErr := loadGolden(t, filepath.Join(target, name))
 
@@ -103,7 +121,7 @@ func parityVariant(t *testing.T, target, variant string, variantOpts map[string]
 			reason, isSkipped := skips[skipKey]
 			switch {
 			case isSkipped && ok:
-				t.Errorf("case now passes; drop its line from testdata/skip/%s.txt\n  was: %s", target, reason)
+				t.Errorf("case now passes; drop its skip line\n  was: %s", reason)
 			case isSkipped:
 				n.skipped++
 				t.Skipf("known gap: %s", reason)

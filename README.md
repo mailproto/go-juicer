@@ -50,8 +50,9 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3 | 4039 | 3975 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 9.1.0, with `Juice9()` | 4039 | 4039 | none |
+| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4039 | 3975 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 12.1.3, default mode | 4039 | 3975 | the same 64, plus any listed in `testdata/skip/default.txt` |
+| juice 9.1.0, with `CompatibilityMode(Juice9)` | 4039 | 4039 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -81,9 +82,14 @@ specificity, `:first-child` seeing a tree without `<style>` elements,
 `<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
 dropped, and a few more. Each is a candidate for a deliberate divergence.
 
-juice 12 is what this package implements by default. juice 9 is still widely
-deployed, so the `Juice9()` option switches to its behaviour where the two
-differ: stylesheets are read and preserved rules re-emitted through a port of
+juice 12 is what this package implements by default, except where juice
+disagrees with how browsers read the CSS: there the default follows the
+browser, and `testdata/skip/default.txt` lists each case.
+`CompatibilityMode(Juice12)` keeps juice's behaviour there too, for output
+that has to match juice 12 byte for byte.
+
+juice 9 is still widely deployed, so `CompatibilityMode(Juice9)` switches to
+its behaviour where the two differ: stylesheets are read and preserved rules re-emitted through a port of
 juice 9's CSS parser (mensch), selectors are scored as juice 9 scores them,
 and there is no CSS variable resolution and none of juice 12's newer options
 and control comments. Every `<style>` block is read as one stylesheet, nested
@@ -118,7 +124,7 @@ as a few bytes of HTML ready to become a fixture. CI runs 2,000 documents on
 every change and 50,000 with a fresh seed nightly. The generator exercises
 every supported option, nesting and juice's ignore comments, and avoids the
 deliberate divergences below, so any mismatch is a bug. `TARGET=juice-9` runs
-the same documents through juice 9 and `Juice9()`; CI runs both.
+the same documents through juice 9 and `CompatibilityMode(Juice9)`; CI runs both. The juice 12 run uses `CompatibilityMode(Juice12)`, so it stays byte-exact.
 
 `TestMensch` checks the mensch port against every stylesheet in mensch's own
 test suite (`testdata/mensch`), token for token.

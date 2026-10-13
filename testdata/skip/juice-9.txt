@@ -1,5 +1,5 @@
-# Cases not yet passing against juice 9.1.0 with Juice9(), with the reason.
+# Cases not yet passing against juice 9.1.0 with CompatibilityMode(Juice9), with the reason.
 # Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
 #
-# Juice9() matches juice 9 exactly, divergences included, so this is empty.
+# CompatibilityMode(Juice9) matches juice 9 exactly, divergences included, so this is empty.
 # Ratcheting works as in juice-12.txt.

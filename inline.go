@@ -53,7 +53,7 @@ type options struct {
 	// juice ignore comment keeps.
 	keepAll bool
 
-	juice9 bool // see Juice9
+	compat Compatibility
 
 	// Document cleanup, carried over from the Ruby premailer this package
 	// used to wrap. juice has no equivalent.
@@ -208,7 +208,7 @@ func New(opts ...Option) *Inliner {
 	for _, fn := range opts {
 		fn(&o)
 	}
-	if o.juice9 {
+	if o.compat == Juice9 {
 		// juice 9 has none of these; it ignores the options.
 		o.resolveCSSVariables = false
 		o.preserveContainerQueries, o.preserveLayers = false, false
@@ -218,13 +218,30 @@ func New(opts ...Option) *Inliner {
 	return &Inliner{opts: o}
 }
 
-// Juice9 matches juice 9.1.0 rather than juice 12, for output that has to
-// stay identical to an existing juice 9 deployment. juice 9 resolves no CSS
-// variables, matches no :is() or :where(), and has none of juice 12's newer
-// options or control comments and attributes; with this set, those options
-// are ignored as juice 9 ignores them. Nested CSS is not flattened, and a
-// nested rule that juice 9 throws on makes Inline return an error.
-func Juice9() Option { return func(o *options) { o.juice9 = true } }
+// Compatibility names an inliner whose output CompatibilityMode reproduces
+// byte for byte, its bugs included.
+type Compatibility int
+
+const (
+	// standard, the default, follows juice 12 except where juice disagrees
+	// with how browsers read the CSS.
+	standard Compatibility = iota
+
+	// Juice12 is juice 12.1.3, keeping juice's behaviour where the default
+	// follows the browser instead.
+	Juice12
+
+	// Juice9 is juice 9.1.0. juice 9 resolves no CSS variables, matches no
+	// :is() or :where(), and has none of juice 12's newer options or control
+	// comments and attributes; those options are ignored as juice 9 ignores
+	// them. Nested CSS is not flattened, and a nested rule that juice 9
+	// throws on makes Inline return an error.
+	Juice9
+)
+
+// CompatibilityMode reproduces another inliner's output exactly, for output
+// that has to stay identical to an existing deployment of it.
+func CompatibilityMode(c Compatibility) Option { return func(o *options) { o.compat = c } }
 
 // Inline inlines the document's CSS into style attributes.
 func (in *Inliner) Inline(doc string) (string, error) {
@@ -283,7 +300,7 @@ type pass struct {
 
 // process runs the inlining pipeline over an already-parsed tree.
 func (in *Inliner) process(root *html.Node, src []byte) error {
-	p := &pass{o: &in.opts, controlAttrs: !in.opts.juice9 && bytes.Contains(src, []byte("data-juice-"))}
+	p := &pass{o: &in.opts, controlAttrs: in.opts.compat != Juice9 && bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
 
@@ -315,7 +332,7 @@ func (in *pass) run(root *html.Node) error {
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
-	if o.juice9 {
+	if o.compat == Juice9 {
 		// juice 9 inlines every <style> block and extraCss as one
 		// stylesheet, so an unclosed block runs on into the next.
 		css := append(bytes.Join(in.juice9CSS, []byte("\n")), "\n"+o.extraCSS...)
@@ -391,7 +408,7 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 		if o.applyStyleTags {
 			r, k, ord = parseWithDirectives([]byte(s.FirstChild.Data), o, ord, st)
 			rules = appendRules(rules, r)
-			if o.juice9 {
+			if o.compat == Juice9 {
 				in.juice9CSS = append(in.juice9CSS, []byte(s.FirstChild.Data))
 			}
 		}
@@ -428,7 +445,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		doc++
 		keep := -1 // whether n keeps !important; read on first match
 		dup := func() bool {
-			if o.juice9 {
+			if o.compat == Juice9 {
 				return false
 			}
 			if v, ok := getAttr(n, "data-juice-duplicates"); ok {
@@ -439,7 +456,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		keepImportant := func() bool {
 			if keep < 0 {
 				keep = 0
-				if v, ok := getAttr(n, "data-juice-important"); ok && !o.juice9 && v != "false" || (!ok || o.juice9) && o.preserveImportant {
+				if v, ok := getAttr(n, "data-juice-important"); ok && o.compat != Juice9 && v != "false" || (!ok || o.compat == Juice9) && o.preserveImportant {
 					keep = 1
 				}
 			}
@@ -476,7 +493,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
-					if err := m.seedInline([]byte(v), keepImportant(), o.juice9); err != nil && in.juice9Err == nil {
+					if err := m.seedInline([]byte(v), keepImportant(), o.compat == Juice9); err != nil && in.juice9Err == nil {
 						in.juice9Err = err
 					}
 				}
