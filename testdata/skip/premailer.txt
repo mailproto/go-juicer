@@ -113,6 +113,7 @@ premailer-suite/premailer/preserving_ignored_link_elements  premailer honours it
 premailer-suite/premailer/rgb_color_without_commas_and_with_alpha_modifier  premailer drops a color's alpha channel when it writes bgcolor
 premailer-suite/premailer/rgb_color_without_commas_and_with_percentage_modifier  premailer drops a color's alpha channel when it writes bgcolor
 preserved-selectors/media-and-comments  premailer inlines rules inside @media print, which juice keeps in <style>
+pseudo-elements/content-markup  premailer does not turn ::before/::after content into elements
 pseudo-elements/empty-argument  premailer does not turn ::before/::after content into elements
 pseudo-elements/trailing-combinator  premailer does not turn ::before/::after content into elements
 remove-inlined/basic  premailer inlines rules inside @media print, which juice keeps in <style>
