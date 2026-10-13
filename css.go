@@ -101,6 +101,9 @@ func (b *cssBlock) text(indent int) []byte {
 // tdewolff normalizes whitespace inside a value ("rgba(0 , 0,0,.5)" becomes
 // "rgba(0,0,0,.5)") and juice emits it exactly as written.
 func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
+	if usePostcss {
+		return parseStylesheetPostcss(src, opts, ord)
+	}
 	var rules []rule
 	var keep []preserved
 
