@@ -1,16 +1,16 @@
 package juicer
 
 import (
-	"os"
+	"bytes"
 	"slices"
 	"strings"
 )
 
 // A port of the CSS reading juice 12 does: postcss 8's tokenizer and parser
 // with postcss-safe-parser's recovery, which never fails, and the stringifier
-// with juice's normalized raws for preserved rules. SPIKE: it stands in for
-// the tdewolff-based reading behind JUICER_POSTCSS, to measure whether one
-// parser modelled on postcss can replace the several now in use.
+// with juice's normalized raws for preserved rules. It replaces tdewolff and the
+// rewrites that bent it toward postcss: one parser, modelled on the one
+// juice uses, reads every stylesheet.
 
 type pcToken struct {
 	kind       string // space word string at-word brackets comment ( ) [ ] { } : ;
@@ -223,6 +223,8 @@ type pcParser struct {
 	spaces    string
 	semicolon bool
 	scratch   []pcToken // reused by other for each statement
+	slab      []pcNode  // nodes are allocated from here, a block at a time
+	slabSize  int
 }
 
 func parsePostcss(css string) *pcNode {
@@ -249,6 +251,19 @@ func parsePostcss(css string) *pcNode {
 	}
 	p.endFile()
 	return root
+}
+
+// node allocates from a slab, since a stylesheet makes one per declaration.
+func (p *pcParser) node(kind string) *pcNode {
+	if len(p.slab) == 0 {
+		// Blocks grow with the stylesheet, so a small one stays small.
+		p.slabSize = min(max(p.slabSize*2, 4), 256)
+		p.slab = make([]pcNode, p.slabSize)
+	}
+	n := &p.slab[0]
+	p.slab = p.slab[1:]
+	n.kind = kind
+	return n
 }
 
 func (p *pcParser) init(n *pcNode, offset int) {
@@ -339,7 +354,7 @@ func (p *pcParser) src(toks []pcToken) string {
 }
 
 func (p *pcParser) comment(tok pcToken) {
-	n := &pcNode{kind: "comment"}
+	n := p.node("comment")
 	p.init(n, tok.start)
 	text := strings.TrimPrefix(tok.text, "/*")
 	text = strings.TrimSuffix(text, "*/")
@@ -354,7 +369,8 @@ func (p *pcParser) comment(tok pcToken) {
 }
 
 func (p *pcParser) emptyRule(tok pcToken) {
-	n := &pcNode{kind: "rule", hasNodes: true}
+	n := p.node("rule")
+	n.hasNodes = true
 	p.init(n, tok.start)
 	p.current = n
 }
@@ -426,7 +442,8 @@ func (p *pcParser) unknownWord(toks []pcToken) { p.spaces += p.src(toks) }
 
 func (p *pcParser) rule(toks []pcToken) {
 	toks = toks[:len(toks)-1]
-	n := &pcNode{kind: "rule", hasNodes: true}
+	n := p.node("rule")
+	n.hasNodes = true
 	p.init(n, toks[0].start)
 	n.between, toks = spacesAndCommentsFromEnd(toks)
 	p.setRaw(n, "selector", toks, false)
@@ -455,7 +472,7 @@ func (p *pcParser) decl(toks []pcToken) {
 	if len(toks) <= 1 || !hasWord {
 		return
 	}
-	n := &pcNode{kind: "decl"}
+	n := p.node("decl")
 	p.init(n, toks[0].start)
 	if toks[len(toks)-1].kind == ";" {
 		p.semicolon = true
@@ -606,7 +623,8 @@ func (p *pcParser) precheckMissedSemicolon(toks []pcToken) []pcToken {
 }
 
 func (p *pcParser) atrule(tok pcToken) {
-	n := &pcNode{kind: "atrule", name: tok.text[1:]}
+	n := p.node("atrule")
+	n.name = tok.text[1:]
 	p.init(n, tok.start)
 	var params []pcToken
 	var brackets []string
@@ -703,13 +721,32 @@ func (p *pcParser) endFile() {
 }
 
 // selectors is postcss's rule.selectors: list.comma.
-func (n *pcNode) selectors() []string {
-	var out []string
-	var cur strings.Builder
+func (n *pcNode) selectors() []string { return commaList(n.selector) }
+
+// selectorBytes is selectors sliced from src, the bytes the rule was parsed
+// from, when the selector is a slice of it.
+func (n *pcNode) selectorBytes(src []byte) [][]byte {
+	if n.ve > n.vs && n.ve-n.vs == len(n.selector) {
+		return commaList(src[n.vs:n.ve:n.ve])
+	}
+	return commaList([]byte(n.selector))
+}
+
+func commaList[T string | []byte](s T) []T {
+	trim := func(v T) T {
+		switch v := any(v).(type) {
+		case string:
+			return T(strings.TrimSpace(v))
+		case []byte:
+			return T(bytes.TrimSpace(v))
+		}
+		return v
+	}
+	var out []T
+	start := 0
 	fn, quote, escape := 0, byte(0), false
-	for i := 0; i < len(n.selector); i++ {
-		c := n.selector[i]
-		split := false
+	for i := 0; i < len(s); i++ {
+		c := s[i]
 		switch {
 		case escape:
 			escape = false
@@ -728,16 +765,11 @@ func (n *pcNode) selectors() []string {
 				fn--
 			}
 		case fn == 0 && c == ',':
-			split = true
-		}
-		if split {
-			out = append(out, strings.TrimSpace(cur.String()))
-			cur.Reset()
-		} else {
-			cur.WriteByte(c)
+			out = append(out, trim(s[start:i]))
+			start = i + 1
 		}
 	}
-	return append(out, strings.TrimSpace(cur.String()))
+	return append(out, trim(s[start:]))
 }
 
 // stringifyPreserved is juice's stringifyNodes: postcss's stringifier over
@@ -811,12 +843,9 @@ func writeNode(b *strings.Builder, n *pcNode, depth int, first, semicolon bool) 
 	}
 }
 
-// usePostcss switches parseStylesheet to the postcss port. SPIKE only.
-var usePostcss = os.Getenv("JUICER_POSTCSS") != ""
-
-// parseStylesheetPostcss is parseStylesheet over the postcss port: juice's
+// parseStylesheet reads a stylesheet as juice does, through postcss: juice's
 // parseCSS for the rules, and its getPreservedText for what stays behind.
-func parseStylesheetPostcss(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
+func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
 	flat := flattenNesting(src)
 	text := string(flat)
 	if opts.fixesJuiceBugs() {
@@ -834,7 +863,7 @@ func parseStylesheetPostcss(src []byte, opts *options, ord uint32) ([]rule, []pr
 				keep = append(keep, preserved{kind, []byte(stringifyPreserved([]*pcNode{n}))})
 			}
 		case "rule":
-			var decls []decl
+			decls := make([]decl, 0, len(n.nodes))
 			for _, c := range n.nodes {
 				if c.kind != "decl" || strings.TrimSpace(c.value) == "" {
 					continue
@@ -848,15 +877,15 @@ func parseStylesheetPostcss(src []byte, opts *options, ord uint32) ([]rule, []pr
 				}
 				d := decl{prop: c.prop, value: v, important: c.important, ord: ord}
 				if c.important {
-					d.bang = []byte(c.value + " !important")
+					d.bang = append(v[:len(v):len(v)], " !important"...)
 				}
 				decls = append(decls, d)
 				ord++
 			}
-			sels := n.selectors()
+			sels := n.selectorBytes(flat)
 			if len(decls) > 0 {
 				for _, sel := range sels {
-					armRules, ignored := compileRule([]byte(sel), decls, opts)
+					armRules, ignored := compileRule(sel, decls, opts)
 					if ignored {
 						continue
 					}
@@ -866,11 +895,7 @@ func parseStylesheetPostcss(src []byte, opts *options, ord uint32) ([]rule, []pr
 					rules = append(rules, armRules...)
 				}
 			}
-			arms := make([][]byte, len(sels))
-			for i, s := range sels {
-				arms[i] = []byte(s)
-			}
-			if opts.keepAll || opts.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) || matchesPreserved(arms, opts.preservedSelectors) {
+			if opts.keepAll || opts.preservePseudos && hasIgnoredPseudo(sels[0]) || matchesPreserved(sels, opts.preservedSelectors) {
 				keep = append(keep, preserved{"pseudo", []byte(stringifyPreserved([]*pcNode{n}))})
 			}
 		default:
