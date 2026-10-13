@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4067 | 4003 | 64, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4067 | 3950 | the same 64, plus 53 where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4067 | 4011 | 56, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
+| juice 12.1.3, default mode | 4067 | 3950 | 117: the same 56, plus 61 where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4067 | 4067 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -183,7 +183,8 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 5. **Each `<style>` block is its own stylesheet.** juice concatenates every
    block before parsing, so an unclosed `@media` in one swallows the rules of
    the next and they are lost. Browsers parse each block separately, and so
-   does this package.
+   does the default here; `CompatibilityMode(Juice12)` joins them as juice
+   does.
 
 ## Status
 

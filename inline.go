@@ -289,7 +289,7 @@ type pass struct {
 
 	controlAttrs bool // the document mentions data-juice-* attributes
 	juice9Err    error
-	juice9CSS    [][]byte // the <style> blocks applied
+	joinedCSS    [][]byte // the <style> blocks applied, in a compatibility mode
 
 	// RemoveInlinedSelectors only.
 	inlined  map[string]bool     // selectors that matched a visible element
@@ -335,11 +335,16 @@ func (in *pass) run(root *html.Node) error {
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
-	if o.compat == Juice9 {
-		// juice 9 inlines every <style> block and extraCss as one
-		// stylesheet, so an unclosed block runs on into the next.
-		css := append(bytes.Join(in.juice9CSS, []byte("\n")), "\n"+o.extraCSS...)
-		rules, _, _ = parseMensch(css, o, 0)
+	if !o.fixesJuiceBugs() {
+		// juice inlines every <style> block and extraCss as one stylesheet,
+		// so an unclosed block runs on into the next. Browsers read each
+		// block on its own, as the default does.
+		css := append(bytes.Join(in.joinedCSS, []byte("\n")), "\n"+o.extraCSS...)
+		if o.compat == Juice9 {
+			rules, _, _ = parseMensch(css, o, 0)
+		} else {
+			rules, _, _ = parseWithDirectives(css, o, 0, &ignoreState{})
+		}
 	}
 
 	in.applyRules(root, rules)
@@ -422,8 +427,8 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 		if o.applyStyleTags {
 			r, k, ord = parseWithDirectives([]byte(s.FirstChild.Data), o, ord, st)
 			rules = appendRules(rules, r)
-			if o.compat == Juice9 {
-				in.juice9CSS = append(in.juice9CSS, []byte(s.FirstChild.Data))
+			if !o.fixesJuiceBugs() {
+				in.joinedCSS = append(in.joinedCSS, []byte(s.FirstChild.Data))
 			}
 		}
 

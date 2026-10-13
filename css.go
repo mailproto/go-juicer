@@ -648,6 +648,25 @@ func (q *quotes) end(src []byte, i int) int {
 	return min(i+1, len(src)-1)
 }
 
+// trimValue trims a value as postcss does: whitespace that a string takes in,
+// including the character after a quote that never closes, is kept.
+func trimValue(v []byte) []byte {
+	start := len(v) - len(bytes.TrimLeft(v, cssSpaces))
+	end := start + len(trimCSS(v[start:]))
+	var q quotes
+	for i := start; i < end; i++ {
+		switch v[i] {
+		case '\\':
+			i++
+		case '"', '\'':
+			j := q.end(v, i)
+			end = max(end, j+1)
+			i = j
+		}
+	}
+	return v[start:end]
+}
+
 func trimCSSLeft(b []byte) []byte {
 	for len(b) > 0 && (isCSSSpace(b[0]) || b[0] == ';') {
 		b = b[1:]
@@ -730,7 +749,7 @@ func isWordEnd(v []byte, i int) bool {
 func postcssValue(v []byte, closed bool) (value []byte, important bool, after [][]byte) {
 	if !bytes.Contains(v, []byte("/*")) {
 		// Without comments postcss's rules reduce to a trim.
-		v = trimCSS(v)
+		v = trimValue(v)
 		if j := importantSuffix(v); j >= 0 {
 			return trimCSS(v[:j]), true, nil
 		}
