@@ -50,8 +50,8 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4067 | 4011 | 56, all deliberate divergences (below), each with its reason in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4067 | 3950 | 117: the same 56, plus 61 where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4067 | 4018 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
+| juice 12.1.3, default mode | 4067 | 3950 | 117: the same 49, plus 68 where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4067 | 4067 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -161,7 +161,9 @@ as quick as the full parser, and nothing is escaped on the way out.
 ## Deliberate divergences from juice
 
 Five cases where matching juice would mean matching a bug. The first three
-are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
+are covered by tests in `divergence_test.go`, the rest by fixtures. The first
+three hold in every mode; `CompatibilityMode(Juice12)` matches juice on the
+last two.
 
 1. **Liquid templates.** juice's default `codeBlocks` covers Handlebars and
    EJS but not Liquid's `{% %}`, so it corrupts
@@ -174,12 +176,15 @@ are covered by tests in `divergence_test.go`, the rest by `ALLOW` fixtures.
 3. **Malformed style attributes.** juice throws, failing the whole document,
    on a `style` attribute postcss cannot parse: `ttt { 123 }`, `----`, or
    `font-family:&quot;A B&quot;` (`decodeStyleAttributes` defaults off, so the
-   raw entity reaches postcss). This package inlines the rest of the document.
+   raw entity reaches postcss). This package inlines the rest of the
+   document. Telling exactly which attributes postcss rejects would take a
+   port of its parser, so these stay `ALLOW` in `testdata/skip/juice-12.txt`.
 4. **HTML comment markers around a stylesheet.** Old email templates wrap
    CSS as `<style><!-- p { color: red } --></style>`. CSS ignores `<!--` and
    `-->` there, so browsers and premailer apply the rule; juice reads
-   `<!-- p` as a selector and silently drops it. This package applies it.
-   premailer's own `test_commented_out_styles_in_the_body` asserts the same.
+   `<!-- p` as a selector and silently drops it. The default applies it, as
+   premailer's own `test_commented_out_styles_in_the_body` asserts too;
+   `CompatibilityMode(Juice12)` drops it as juice does.
 5. **Each `<style>` block is its own stylesheet.** juice concatenates every
    block before parsing, so an unclosed `@media` in one swallows the rules of
    the next and they are lost. Browsers parse each block separately, and so
