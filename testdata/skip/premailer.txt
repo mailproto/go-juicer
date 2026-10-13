@@ -125,3 +125,4 @@ serialization/style-in-string  premailer parses with libxml2's HTML4 parser, whi
 style-tags/data-embed  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 variables/function-name  premailer does not resolve CSS custom properties
 variables/in-shorthand  premailer does not resolve CSS custom properties
+style-tags/media-matching  premailer inlines rules inside @media print, which juice keeps in <style>

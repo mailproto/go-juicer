@@ -38,4 +38,6 @@ premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments
 pseudo-elements/empty-argument  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 pseudo-elements/trailing-combinator  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 roundtrip/p-not-closed  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
+style-tags/media-lists  juice bug: a <style media="..."> element's media attribute is ignored, so mobile-only rules are inlined for everyone
+style-tags/media-query  juice bug: a <style media="..."> element's media attribute is ignored, so mobile-only rules are inlined for everyone
 variables/function-name  juice bug: var (--x), with a space, is resolved, but CSS treats it as invalid
