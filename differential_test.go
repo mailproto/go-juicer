@@ -64,9 +64,11 @@ func TestDifferential(t *testing.T) {
 		if len(unsupported) > 0 {
 			t.Fatalf("generator used unsupported options %v", unsupported)
 		}
+		mode := Juice12
 		if c.Target == "juice-9" {
-			opts = append(opts, Juice9())
+			mode = Juice9
 		}
+		opts = append(opts, CompatibilityMode(mode))
 		got, gotErr := New(opts...).Inline(c.HTML)
 		switch {
 		case c.Err != nil && gotErr != nil:

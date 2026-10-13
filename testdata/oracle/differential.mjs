@@ -6,7 +6,7 @@
 // The generator sticks to what this package implements and steers clear of
 // its deliberate divergences from juice (README), so every mismatch it finds
 // is a bug or an undocumented divergence. With --target juice-9, documents
-// are inlined with juice 9 and replayed with Juice9().
+// are inlined with juice 9 and replayed with CompatibilityMode(Juice9).
 const arg = (name, def) => {
   const i = process.argv.indexOf(`--${name}`);
   return i < 0 ? def : process.argv[i + 1];

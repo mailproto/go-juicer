@@ -1,0 +1,6 @@
+# Cases where the default mode deliberately differs from juice 12.1.3,
+# on top of testdata/skip/juice-12.txt: juice disagrees with how browsers
+# read the CSS, and the default follows the browser. CompatibilityMode(Juice12)
+# keeps juice's behaviour and is checked against the same goldens without
+# these lines.
+# Format: <variant>/<fixture>  <reason>, or */<fixture> for every variant.
