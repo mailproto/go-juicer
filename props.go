@@ -225,8 +225,6 @@ func (m *propMap) seedInline(style []byte, keepImportant, juice9 bool) error {
 	return nil
 }
 
-// splitDeclarations parses a style attribute body. It is deliberately lenient:
-// this text came from a document, not a stylesheet.
 // endsEntity reports whether b ends in the body of an HTML character
 // reference ("&quot", "&#34"), whose ";" is not a declaration separator.
 // The attribute is kept undecoded, so a browser decodes it only later.
@@ -238,6 +236,8 @@ func endsEntity(b []byte) bool {
 	return i > 0 && i < len(b) && b[i-1] == '&'
 }
 
+// splitDeclarations parses a style attribute body. It is deliberately lenient:
+// this text came from a document, not a stylesheet.
 func splitDeclarations(s []byte) []decl {
 	var out []decl
 	depth := 0
