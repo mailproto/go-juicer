@@ -19,6 +19,7 @@ juice-suite/juice-content/pseudo-elements  juice bug: <style> elements are remov
 juice-suite/juice-content/pseudo-elements-and-width-attr  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 l4-spec/attr-unquoted  juice bug: [width=600] is not valid CSS (an unquoted value must be an identifier), so browsers drop the rule and juice applies it
 l4-spec/dangling-combinator  juice bug: a combinator with nothing on one side is not valid CSS, so browsers drop the rule and juice applies it
+l4-spec/is-large-list  bug: an :is() or :where() list past 32 alternatives loses the rest
 l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 l4-spec/universal-type  juice bug: "*a" is not valid CSS, so browsers drop the rule and juice applies it to <a>
 malformed/stray-closing-bracket  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
