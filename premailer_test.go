@@ -263,7 +263,7 @@ func TestPremailerSemantics(t *testing.T) {
 				t.Fatal(err)
 			}
 			opts, _ := loadOptions(t, filepath.Join("testdata", "in", name+".json"))
-			got, err := New(opts...).Inline(string(in))
+			got, err := mustNew(t, opts...).Inline(string(in))
 			if err != nil {
 				t.Skipf("Inline failed: %v", err)
 			}

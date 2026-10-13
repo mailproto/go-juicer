@@ -52,7 +52,7 @@ func TestCascade(t *testing.T) {
 		if len(unsupported) > 0 {
 			return nil
 		}
-		out, err := New(opts...).Inline(string(in))
+		out, err := mustNew(t, opts...).Inline(string(in))
 		if err != nil {
 			return nil
 		}
