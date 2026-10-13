@@ -41,26 +41,42 @@ func encodeCodeBlocks(src []byte, blocks []CodeBlock) ([]byte, [][]byte) {
 	var out []byte
 	i := 0
 	// A delimiter pair that is left open once is open for good: no later
-	// opening can find a close either. Other pairs still apply.
+	// opening can find a close either, and one whose opening no longer
+	// occurs is done too. Other pairs still apply.
 	open := slices.Clone(blocks)
+	// next[k] is where open[k] next starts, at or after i once refreshed, so
+	// each delimiter's search moves forward through src only once.
+	next := make([]int, len(open))
+	for k := range next {
+		next[k] = -1
+	}
 	for i < len(src) {
 		// Earliest opening delimiter wins, so nested-looking syntax is taken
 		// in source order rather than delimiter order.
-		best, bestBlock := -1, -1
-		for k, b := range open {
-			if j := bytes.Index(src[i:], []byte(b.Start)); j >= 0 && (best < 0 || j < best) {
-				best, bestBlock = j, k
+		bestBlock := -1
+		for k := 0; k < len(open); k++ {
+			if next[k] < i {
+				j := bytes.Index(src[i:], []byte(open[k].Start))
+				if j < 0 {
+					open, next = slices.Delete(open, k, k+1), slices.Delete(next, k, k+1)
+					k--
+					continue
+				}
+				next[k] = i + j
+			}
+			if bestBlock < 0 || next[k] < next[bestBlock] {
+				bestBlock = k
 			}
 		}
-		if best < 0 {
+		if bestBlock < 0 {
 			break
 		}
 		b := open[bestBlock]
-		start := i + best
+		start := next[bestBlock]
 		// The close comes after the whole opening, so "<%>" is not a block.
 		close := bytes.Index(src[start+len(b.Start):], []byte(b.End))
 		if close < 0 {
-			open = slices.Delete(open, bestBlock, bestBlock+1)
+			open, next = slices.Delete(open, bestBlock, bestBlock+1), slices.Delete(next, bestBlock, bestBlock+1)
 			continue
 		}
 		end := start + len(b.Start) + close + len(b.End)
