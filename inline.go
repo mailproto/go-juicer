@@ -223,10 +223,13 @@ func New(opts ...Option) *Inliner {
 type Compatibility int
 
 const (
-	// Juice12 is juice 12.1.3. Without a compatibility mode this package
-	// follows juice 12 except where juice disagrees with how browsers read
-	// the CSS; this mode keeps juice's behaviour there too.
-	Juice12 Compatibility = iota + 1
+	// standard, the default, follows juice 12 except where juice disagrees
+	// with how browsers read the CSS.
+	standard Compatibility = iota
+
+	// Juice12 is juice 12.1.3, keeping juice's behaviour where the default
+	// follows the browser instead.
+	Juice12
 
 	// Juice9 is juice 9.1.0. juice 9 resolves no CSS variables, matches no
 	// :is() or :where(), and has none of juice 12's newer options or control

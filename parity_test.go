@@ -43,7 +43,7 @@ var parityRuns = []struct {
 }{
 	{"juice-12", "juice-12", Juice12, []string{"juice-12"}},
 	{"juice-9", "juice-9", Juice9, []string{"juice-9"}},
-	{"default", "juice-12", 0, []string{"juice-12", "default"}},
+	{"default", "juice-12", standard, []string{"juice-12", "default"}},
 }
 
 func TestParity(t *testing.T) {
@@ -110,7 +110,7 @@ func parityVariant(t *testing.T, target string, mode Compatibility, variant stri
 			fixtureOpts, fixtureUnsupported := loadOptions(t, strings.TrimSuffix(p, ".html")+".json")
 			opts = append(opts, fixtureOpts...)
 			unsupported = append(unsupported, fixtureUnsupported...)
-			if mode != 0 {
+			if mode != standard {
 				opts = append(opts, CompatibilityMode(mode))
 			}
 			want, wantErr := loadGolden(t, filepath.Join(target, name))
