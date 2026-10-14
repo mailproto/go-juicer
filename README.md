@@ -41,13 +41,14 @@ benchmark document allocates past its budget.
 
 ## Limits
 
-A document over `MaxInputSize` (16 MiB by default), or nesting elements or
-stylesheet blocks deeper than `MaxDepth` (1024 by default), fails with an
-error wrapping `ErrLimitExceeded` instead of being inlined. Unclosed tags nest
-without end, and a descendant selector walks every ancestor of every element,
-so depth multiplies the work; at the defaults the worst case found, 16 MiB of
-1000-deep chains under a descendant selector, takes about two seconds on a
-laptop. `TestScaling` fails when work grows faster than the input. Set either
+A document over `MaxInputSize` (16 MiB by default), or nesting elements, or
+a stylesheet's blocks and parentheses, deeper than `MaxDepth` (1024 by
+default), fails with an error wrapping `ErrLimitExceeded` instead of being
+inlined. Unclosed tags nest without end, and a descendant selector walks every
+ancestor of every element, so depth multiplies the work; at the defaults the
+worst case found, 16 MiB of 1000-deep chains under a descendant selector,
+takes about two seconds on a laptop, as does 16 MiB of selectors nested 1000
+deep. `TestScaling` fails when work grows faster than the input. Set either
 limit to 0 to remove it.
 
 ## Correctness
