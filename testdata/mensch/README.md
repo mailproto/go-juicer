@@ -1,4 +1,4 @@
-Test inputs for the mensch port (`mensch.go`), the CSS parser juice 9 uses.
+Test inputs for the mensch port (`internal/mensch`), the CSS parser juice 9 uses.
 
 `in/` holds every stylesheet mensch's own test suite (v0.3.4,
 https://github.com/brettstimmerman/mensch) feeds it, named after the test, under
