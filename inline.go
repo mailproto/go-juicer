@@ -20,6 +20,7 @@ import (
 
 	"github.com/andybalholm/cascadia"
 	"github.com/mailproto/go-juicer/internal/htmlparser2"
+	"github.com/mailproto/go-juicer/internal/selector"
 	"golang.org/x/net/html"
 )
 
@@ -581,7 +582,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 			if track {
 				in.matches = append(in.matches, matchEvent{r.group, doc, n})
 			}
-			if r.pseudo != pseudoNone {
+			if r.pseudo != selector.None {
 				// Declarations for ::before/::after belong to their own
 				// element; without materialization they are dropped. The
 				// base element is not touched either way.
@@ -717,8 +718,8 @@ func (in *pass) removeInlinedSelectors(root *html.Node) {
 		var parts []string
 		for _, n := range nodes {
 			if n.kind == 'r' {
-				arms := splitSelector([]byte(n.head))
-				keepWhole := in.o.preservePseudos && len(arms) > 0 && hasIgnoredPseudo(arms[0]) ||
+				arms := selector.Split([]byte(n.head))
+				keepWhole := in.o.preservePseudos && len(arms) > 0 && selector.IgnoredPseudo(arms[0]) ||
 					matchesPreserved(arms, in.o.preservedSelectors)
 				if !keepWhole {
 					var left [][]byte

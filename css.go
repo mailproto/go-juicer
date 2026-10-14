@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mailproto/go-juicer/internal/postcss"
+	"github.com/mailproto/go-juicer/internal/selector"
 )
 
 // decl is one declaration from a stylesheet.
@@ -50,7 +51,7 @@ func ownSemicolon(rest []byte) []byte {
 // case-sensitively, so "@MEDIA" is not preserved as a media query.
 func atRuleKind(prelude []byte) string {
 	p := bytes.TrimLeft(prelude, "@")
-	k := string(p[:identEnd(p, 0)])
+	k := string(p[:selector.IdentEnd(p, 0)])
 	// juice matches /^(-\w+-)?keyframes$/.
 	if strings.HasPrefix(k, "-") {
 		if i := strings.IndexByte(k[1:], '-'); i > 0 && k[i+2:] == "keyframes" {
@@ -185,7 +186,7 @@ func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved
 					rules = append(rules, armRules...)
 				}
 			}
-			if opts.keepAll || opts.preservePseudos && hasIgnoredPseudo(sels[0]) || matchesPreserved(sels, opts.preservedSelectors) {
+			if opts.keepAll || opts.preservePseudos && selector.IgnoredPseudo(sels[0]) || matchesPreserved(sels, opts.preservedSelectors) {
 				keep = append(keep, preserved{"pseudo", []byte(postcss.Stringify(n))})
 			}
 		default:
@@ -218,10 +219,43 @@ func blankCommentMarkers(css string) string {
 		case strings.HasPrefix(css[i:], "<!--"):
 			copy(b[i:], "    ")
 			i += 3
-		case strings.HasPrefix(css[i:], "-->") && (i == 0 || !isSelectorNameChar(b[i-1])):
+		case strings.HasPrefix(css[i:], "-->") && (i == 0 || !selector.IsNameChar(b[i-1])):
 			copy(b[i:], "   ")
 			i += 2
 		}
 	}
 	return string(b)
+}
+
+// parenEnd is where the parenthesis opening at b[i] closes, past it, or the end
+// of b when it never does.
+func parenEnd(b []byte, i int) int {
+	depth := 0
+	var quote byte
+	for i < len(b) {
+		c := b[i]
+		if quote != 0 {
+			if c == '\\' {
+				i += 2
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+		} else {
+			switch c {
+			case '"', '\'':
+				quote = c
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 {
+					return i + 1
+				}
+			}
+		}
+		i++
+	}
+	return len(b)
 }

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"slices"
 	"strings"
+
+	"github.com/mailproto/go-juicer/internal/selector"
 )
 
 // flattenNesting rewrites CSS nesting into flat rules the way juice does,
@@ -317,14 +319,14 @@ var selOrder = map[byte]int{'*': 0, 't': 1, 'e': 2, '&': 3, '#': 4, '.': 5, '[':
 // @csstools/selector-resolve-nested does.
 func resolveNested(child, parent string) string {
 	var par [][]selNode
-	for _, arm := range splitSelector([]byte(parent)) {
+	for _, arm := range selector.Split([]byte(parent)) {
 		par = append(par, parseComplex(arm))
 	}
 	if len(par) == 0 {
 		par = [][]selNode{nil}
 	}
 	var out []string
-	for _, arm := range splitSelector([]byte(child)) {
+	for _, arm := range selector.Split([]byte(child)) {
 		c := parseComplex(arm)
 		if !nodesHaveNesting(c) {
 			c = append([]selNode{{kind: '&'}, {kind: ' ', text: " "}}, c...)
@@ -337,7 +339,7 @@ func resolveNested(child, parent string) string {
 }
 
 func selectorHasNesting(sel string) bool {
-	for _, arm := range splitSelector([]byte(sel)) {
+	for _, arm := range selector.Split([]byte(sel)) {
 		if nodesHaveNesting(parseComplex(arm)) {
 			return true
 		}
@@ -438,16 +440,16 @@ func parseComplex(s []byte) []selNode {
 			n.kind = c
 		case '.', '#':
 			n.kind = c
-			j = identEnd(s, j)
+			j = selector.IdentEnd(s, j)
 		case '[':
 			n.kind = '['
-			j = attrEnd(s, i)
+			j = selector.AttrEnd(s, i)
 		case ':':
 			n.kind = ':'
 			if j < len(s) && s[j] == ':' {
 				j++
 			}
-			j = identEnd(s, j)
+			j = selector.IdentEnd(s, j)
 			name := strings.ToLower(string(s[i:j]))
 			if strings.HasPrefix(name, "::") || name == ":before" || name == ":after" || name == ":first-line" || name == ":first-letter" {
 				n.kind = 'e'
@@ -459,7 +461,7 @@ func parseComplex(s []byte) []selNode {
 				if k > j+1 && s[k-1] == ')' {
 					inner = s[j+1 : k-1]
 				}
-				for _, arm := range splitSelector(inner) {
+				for _, arm := range selector.Split(inner) {
 					n.args = append(n.args, parseComplex(arm))
 				}
 				out = append(out, n)

@@ -18,6 +18,10 @@ func TestScaling(t *testing.T) {
 		doc  func(n int) string
 	}{
 		{"template tags", 5000, func(n int) string { return strings.Repeat("<p>{{x}}</p>", n) }},
+		// Selectors nest n deep, the depth growing rather than their number.
+		{"nested selector lists", 60, func(n int) string { return nested(":is(", n) }},
+		{"nested negations", 60, func(n int) string { return nested(":not(:is(", n) }},
+		{"nested pseudo-class arguments", 60, func(n int) string { return nested(":nth-child(2n of ", n) }},
 	}
 	for _, s := range shapes {
 		t.Run(s.name, func(t *testing.T) {
@@ -66,6 +70,13 @@ func TestNestedSelectorLists(t *testing.T) {
 			t.Fatalf("%s nested 64 deep did not finish in 10s", open)
 		}
 	}
+}
+
+// nested is a stylesheet of selectors that open n levels of open, and a
+// paragraph they match.
+func nested(open string, n int) string {
+	sel := strings.Repeat(open, n) + "p" + strings.Repeat(")", n*strings.Count(open, "("))
+	return "<style>" + strings.Repeat(sel+"{color:red}\n", 20) + "</style><p>x</p>"
 }
 
 // fastest is the quickest of three runs, to keep scheduler noise out.
