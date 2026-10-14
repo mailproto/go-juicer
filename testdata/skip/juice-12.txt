@@ -17,3 +17,4 @@
 */css-inline-suite/tests/invalid_rule-test_case_5_x_y_a_b_invalid_rule_x_y_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_6_a_unexpected_token_curlybracketblock_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
 */css-inline-suite/tests/invalid_rule-test_case_7_end_of_input_expects  ALLOW: juice throws on a malformed style attribute and fails the whole document; we inline the rest
+*/l4-spec/is-large-list  an :is() or :where() list past 32 alternatives loses the rest, and later lists in the selector are left unexpanded

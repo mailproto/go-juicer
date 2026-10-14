@@ -53,6 +53,7 @@ l4-spec/is-complex-inside  premailer does not support :is()
 l4-spec/is-in-not  premailer does not support :is()
 l4-spec/is-matches-twice  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-nested  premailer's selector engine (Nokogiri) does not support :is() or :where()
+l4-spec/is-large-list  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-specificity  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/is-type-argument  premailer's selector engine (Nokogiri) does not support :is() or :where()
 l4-spec/universal-type  premailer does not match "*a"
