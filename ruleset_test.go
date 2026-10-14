@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mailproto/go-juicer/internal/htmlparser2"
 	"golang.org/x/net/html"
 )
 
@@ -19,7 +20,7 @@ func TestIndexMatchesBruteForce(t *testing.T) {
 	docs = append(docs, benchDoc())
 
 	for i, doc := range docs {
-		root := parseDocument([]byte(doc))
+		root := htmlparser2.Parse([]byte(doc), false)
 		o := defaults()
 
 		var rules []rule

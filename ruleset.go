@@ -121,11 +121,11 @@ func classTokens(s string) []string {
 	var out []string
 	i := 0
 	for i < len(s) {
-		for i < len(s) && isSpace(s[i]) {
+		for i < len(s) && isCSSSpace(s[i]) {
 			i++
 		}
 		j := i
-		for j < len(s) && !isSpace(s[j]) {
+		for j < len(s) && !isCSSSpace(s[j]) {
 			j++
 		}
 		if j > i {

@@ -6,9 +6,9 @@
 // CompatibilityMode(Juice12) keeps juice's behaviour. CompatibilityMode(Juice9)
 // matches juice 9 instead.
 //
-// The HTML parser and serializer in parse.go deliberately do not follow the
-// HTML5 tree construction spec: juice parses with htmlparser2, and matching
-// its output means matching that tree.
+// The HTML parser and serializer deliberately do not follow the HTML5 tree
+// construction spec: juice parses with htmlparser2, and matching its output
+// means matching that tree.
 package juicer
 
 import (
@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/andybalholm/cascadia"
+	"github.com/mailproto/go-juicer/internal/htmlparser2"
 	"golang.org/x/net/html"
 )
 
@@ -300,16 +301,17 @@ func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
 		return nil, err
 	}
 	src, blocks := encodeCodeBlocks(doc, in.opts.codeBlocks)
-	root := parseMarkup(src, in.opts.xmlMode)
+	root := htmlparser2.Parse(src, in.opts.xmlMode)
 	if err := in.process(root, src); err != nil {
 		return nil, err
 	}
+	var buf bytes.Buffer
 	if in.opts.xmlMode {
-		var buf bytes.Buffer
-		renderXML(&buf, root)
-		return decodeCodeBlocks(buf.Bytes(), blocks), nil
+		htmlparser2.RenderXML(&buf, root)
+	} else {
+		htmlparser2.Render(&buf, root)
 	}
-	return decodeCodeBlocks(renderDocument(root), blocks), nil
+	return decodeCodeBlocks(buf.Bytes(), blocks), nil
 }
 
 // Inline inlines doc's CSS using a default Inliner.
@@ -721,7 +723,7 @@ var listSeparator = regexp.MustCompile(`,\s*`)
 // mode a "<" in the rules is parsed as a tag.
 func (in *pass) appendPreserved(host *html.Node, keep []preserved) {
 	if in.o.xmlMode {
-		frag := parseMarkup(slices.Concat([]byte("<style>"), preservedText(keep), []byte("</style>")), true)
+		frag := htmlparser2.Parse(slices.Concat([]byte("<style>"), preservedText(keep), []byte("</style>")), true)
 		for c := frag.FirstChild; c != nil; c = frag.FirstChild {
 			frag.RemoveChild(c)
 			host.AppendChild(c)

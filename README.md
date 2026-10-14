@@ -168,9 +168,9 @@ almost every real document:
 | `href="?a=1&b=2"` | unchanged | `&` becomes `&amp;` |
 | `<p class="">` | `<p class>` | `class=""` |
 
-A mail client can see all of those. `parse.go` builds an htmlparser2-shaped
-tree over `html.NewTokenizer` instead, reading raw token bytes rather than the
-decoding accessors. It is also the faster path: the tokenizer is about twice
+A mail client can see all of those. `internal/htmlparser2` builds an
+htmlparser2-shaped tree over `html.NewTokenizer` instead, reading raw token
+bytes rather than the decoding accessors. It is also the faster path: the tokenizer is about twice
 as quick as the full parser, and nothing is escaped on the way out.
 
 ## Deliberate divergences from juice

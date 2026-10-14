@@ -1,17 +1,6 @@
-package juicer
-
-import (
-	"bytes"
-	"cmp"
-	"slices"
-	"strconv"
-	"strings"
-
-	"golang.org/x/net/html"
-)
-
-// HTML parsing and serialization matched to htmlparser2 in non-XML mode, which
-// is what juice parses with (cheerio is loaded with decodeEntities:false).
+// Package htmlparser2 parses HTML as htmlparser2 does and serializes it as
+// dom-serializer does, which is what juice uses (cheerio is loaded with
+// decodeEntities:false).
 //
 // This deliberately skips HTML5 tree construction: no implied <tbody>, no
 // <html>/<head>/<body> synthesis, no foster parenting, no reconstruction of
@@ -31,6 +20,17 @@ import (
 //
 // Namespace is set to "svg" or "math" on foreign content, which the serializer
 // uses to decide self-closing.
+package htmlparser2
+
+import (
+	"bytes"
+	"cmp"
+	"slices"
+	"strconv"
+	"strings"
+
+	"golang.org/x/net/html"
+)
 
 var voidElements = map[string]bool{
 	"area": true, "base": true, "basefont": true, "br": true, "col": true,
@@ -87,14 +87,11 @@ var reparseRaw = map[string]bool{
 
 func isForeign(tag string) bool { return tag == "svg" || tag == "math" }
 
-// parseDocument builds an htmlparser2-shaped tree. The returned root is a
-// synthetic container whose children are the document's top-level nodes.
-func parseDocument(src []byte) *html.Node { return parseMarkup(src, false) }
-
-// parseMarkup parses as htmlparser2 does, in its XML mode when xml is set:
+// Parse builds an htmlparser2-shaped tree, in its XML mode when xml is set:
 // names keep their case, any tag can close itself with "/>", and no element
-// is void, raw text, or closed by another's opening.
-func parseMarkup(src []byte, xml bool) *html.Node {
+// is void, raw text, or closed by another's opening. The returned root is a
+// synthetic container whose children are the document's top-level nodes.
+func Parse(src []byte, xml bool) *html.Node {
 	root := &html.Node{Type: html.DocumentNode}
 	cur := root
 	foreign := 0
@@ -250,7 +247,7 @@ func parseMarkup(src []byte, xml bool) *html.Node {
 
 // mergeText joins adjacent text nodes, as htmlparser2's DOM handler does.
 func mergeText(root *html.Node) {
-	walk(root, func(n *html.Node) {
+	Traverse(root, func(n *html.Node) bool {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type != html.TextNode || c.NextSibling == nil || c.NextSibling.Type != html.TextNode {
 				continue
@@ -263,7 +260,8 @@ func mergeText(root *html.Node) {
 			}
 			c.Data = b.String()
 		}
-	})
+		return true
+	}, func(*html.Node) {})
 }
 
 // markupDecl reads the "<!" or "<?" construct at src[p:] the way htmlparser2's
@@ -400,7 +398,7 @@ func reparseChildren(n *html.Node) {
 	}
 	text := n.FirstChild.Data
 	n.RemoveChild(n.FirstChild)
-	inner := parseDocument([]byte(text))
+	inner := Parse([]byte(text), false)
 	for c := inner.FirstChild; c != nil; {
 		next := c.NextSibling
 		inner.RemoveChild(c)
@@ -559,13 +557,13 @@ func foldName(b []byte, lower bool) string {
 	return string(b)
 }
 
-// render serializes the tree the way dom-serializer does with
+// Render serializes the tree the way dom-serializer does with
 // decodeEntities:false: text is written untouched and only the double quote is
 // escaped inside attribute values.
-func render(buf *bytes.Buffer, root *html.Node) {
+func Render(buf *bytes.Buffer, root *html.Node) {
 	// Childless elements in foreign content (svg, math) close themselves.
 	selfClosing := func(n *html.Node) bool { return n.Namespace != "" && n.FirstChild == nil }
-	traverse(root, func(n *html.Node) bool {
+	Traverse(root, func(n *html.Node) bool {
 		switch n.Type {
 		case html.TextNode, html.DoctypeNode, html.CommentNode:
 			// Comments hold their markup as htmlparser2 would serialize it.
@@ -614,22 +612,16 @@ func writeAttrValue(buf *bytes.Buffer, v string) {
 	}
 }
 
-func renderDocument(n *html.Node) []byte {
-	var buf bytes.Buffer
-	render(&buf, n)
-	return buf.Bytes()
-}
-
-// renderXML serializes as dom-serializer does in XML mode: an element without
+// RenderXML serializes as dom-serializer does in XML mode: an element without
 // children closes itself, and an empty attribute keeps its ="".
-func renderXML(buf *bytes.Buffer, root *html.Node) {
-	traverse(root, func(n *html.Node) bool {
+func RenderXML(buf *bytes.Buffer, root *html.Node) {
+	Traverse(root, func(n *html.Node) bool {
 		switch n.Type {
 		case html.DocumentNode:
 			return true
 		case html.ElementNode:
 		default:
-			render(buf, n)
+			Render(buf, n)
 			return false
 		}
 		buf.WriteByte('<')
@@ -689,55 +681,12 @@ func arrayIndex(s string) (uint64, bool) {
 	return v, err == nil && v <= 1<<32-2
 }
 
-// --- small helpers over html.Node ---
-
-func getAttr(n *html.Node, name string) (string, bool) {
-	for _, a := range n.Attr {
-		if a.Key == name {
-			return a.Val, true
-		}
-	}
-	return "", false
-}
-
-func setAttr(n *html.Node, name, v string) {
-	for i := range n.Attr {
-		if n.Attr[i].Key == name {
-			n.Attr[i].Val = v
-			return
-		}
-	}
-	n.Attr = append(n.Attr, html.Attribute{Key: name, Val: v})
-}
-
-func removeAttr(n *html.Node, name string) {
-	for i := range n.Attr {
-		if n.Attr[i].Key == name {
-			n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
-			return
-		}
-	}
-}
-
-func detach(n *html.Node) {
-	if n.Parent != nil {
-		n.Parent.RemoveChild(n)
-	}
-}
-
-// walk visits n and its descendants in document order. Callers that remove
-// nodes must collect them first: RemoveChild clears NextSibling, which would
-// silently truncate the walk.
-func walk(n *html.Node, fn func(*html.Node)) {
-	traverse(n, func(n *html.Node) bool { fn(n); return true }, func(*html.Node) {})
-}
-
-// traverse visits root and its descendants in document order, calling enter
+// Traverse visits root and its descendants in document order, calling enter
 // on the way down and leave on the way back up, once each per node. enter
 // reports whether to visit the node's children. It keeps no stack, so an
 // arbitrarily deep tree, which unclosed tags readily produce, cannot overflow
 // the goroutine's.
-func traverse(root *html.Node, enter func(*html.Node) bool, leave func(*html.Node)) {
+func Traverse(root *html.Node, enter func(*html.Node) bool, leave func(*html.Node)) {
 	n := root
 	for {
 		if enter(n) && n.FirstChild != nil {
@@ -754,15 +703,4 @@ func traverse(root *html.Node, enter func(*html.Node) bool, leave func(*html.Nod
 		}
 		n = n.NextSibling
 	}
-}
-
-func findFirst(root *html.Node, tag string) *html.Node {
-	var found *html.Node
-	traverse(root, func(n *html.Node) bool {
-		if found == nil && n.Type == html.ElementNode && n.Data == tag {
-			found = n
-		}
-		return found == nil
-	}, func(*html.Node) {})
-	return found
 }
