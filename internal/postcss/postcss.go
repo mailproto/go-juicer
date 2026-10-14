@@ -1,4 +1,7 @@
-package juicer
+// Package postcss is a port of the CSS reading juice 12 does: postcss 8's
+// tokenizer and parser with postcss-safe-parser's recovery, which never
+// fails, and the stringifier with juice's normalized raws for preserved rules.
+package postcss
 
 import (
 	"bytes"
@@ -6,45 +9,39 @@ import (
 	"strings"
 )
 
-// A port of the CSS reading juice 12 does: postcss 8's tokenizer and parser
-// with postcss-safe-parser's recovery, which never fails, and the stringifier
-// with juice's normalized raws for preserved rules. It replaces tdewolff and the
-// rewrites that bent it toward postcss: one parser, modelled on the one
-// juice uses, reads every stylesheet.
-
-type pcToken struct {
+type token struct {
 	kind       string // space word string at-word brackets comment ( ) [ ] { } : ;
 	text       string
 	start, end int
 }
 
-type pcTokenizer struct {
+type tokenizer struct {
 	css      string
 	pos      int
 	buffer   []string // words, for url( detection
-	returned []pcToken
+	returned []token
 	badParen int
 }
 
-func newPCTokenizer(css string) *pcTokenizer { return &pcTokenizer{css: css, badParen: -1} }
+func newTokenizer(css string) *tokenizer { return &tokenizer{css: css, badParen: -1} }
 
-func (t *pcTokenizer) endOfFile() bool { return len(t.returned) == 0 && t.pos >= len(t.css) }
+func (t *tokenizer) endOfFile() bool { return len(t.returned) == 0 && t.pos >= len(t.css) }
 
-func (t *pcTokenizer) back(tok pcToken) { t.returned = append(t.returned, tok) }
+func (t *tokenizer) back(tok token) { t.returned = append(t.returned, tok) }
 
-func (t *pcTokenizer) at(i int) byte {
+func (t *tokenizer) at(i int) byte {
 	if i < 0 || i >= len(t.css) {
 		return 0
 	}
 	return t.css[i]
 }
 
-func pcSpace(c byte) bool { return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '\f' }
+func isSpace(c byte) bool { return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '\f' }
 
 // atEnd and wordEnd are postcss's RE_AT_END and RE_WORD_END.
 func atEnd(c byte) bool { return strings.IndexByte("\t\n\f\r \"#'()/;[\\]{}", c) >= 0 }
 
-func (t *pcTokenizer) wordEnd(i int) bool {
+func (t *tokenizer) wordEnd(i int) bool {
 	c := t.css[i]
 	return strings.IndexByte("\t\n\f\r !\"#'():;@[\\]{}", c) >= 0 || c == '/' && t.at(i+1) == '*'
 }
@@ -53,7 +50,7 @@ func hexDigit(c byte) bool { return c >= '0' && c <= '9' || c|0x20 >= 'a' && c|0
 
 // next returns the next token, or ok false at the end. Unclosed strings,
 // brackets and comments are recovered from as postcss does with ignoreErrors.
-func (t *pcTokenizer) next() (tok pcToken, ok bool) {
+func (t *tokenizer) next() (tok token, ok bool) {
 	if n := len(t.returned); n > 0 {
 		tok = t.returned[n-1]
 		t.returned = t.returned[:n-1]
@@ -66,15 +63,15 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 	c := css[pos]
 	var next int
 	switch {
-	case pcSpace(c):
+	case isSpace(c):
 		next = pos
-		for next < len(css) && pcSpace(css[next]) {
+		for next < len(css) && isSpace(css[next]) {
 			next++
 		}
-		tok = pcToken{"space", css[pos:next], pos, next - 1}
+		tok = token{"space", css[pos:next], pos, next - 1}
 		pos = next - 1
 	case strings.IndexByte("[]{}:;)", c) >= 0:
-		tok = pcToken{css[pos : pos+1], css[pos : pos+1], pos, pos}
+		tok = token{css[pos : pos+1], css[pos : pos+1], pos, pos}
 	case c == '(':
 		prev := ""
 		if n := len(t.buffer); n > 0 {
@@ -82,7 +79,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 			t.buffer = t.buffer[:n-1]
 		}
 		n := t.at(pos + 1)
-		if prev == "url" && n != '\'' && n != '"' && !pcSpace(n) {
+		if prev == "url" && n != '\'' && n != '"' && !isSpace(n) {
 			next = pos
 			for {
 				escaped := false
@@ -99,24 +96,24 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 					break
 				}
 			}
-			tok = pcToken{"brackets", css[pos : next+1], pos, next}
+			tok = token{"brackets", css[pos : next+1], pos, next}
 			pos = next
 		} else if pos <= t.badParen {
-			tok = pcToken{"(", "(", pos, pos}
+			tok = token{"(", "(", pos, pos}
 		} else {
 			k := strings.IndexByte(css[pos+1:], ')')
 			if k < 0 {
 				t.badParen = len(css)
-				tok = pcToken{"(", "(", pos, pos}
+				tok = token{"(", "(", pos, pos}
 			} else {
 				next = pos + 1 + k
 				content := css[pos : next+1]
 				// RE_BAD_BRACKET: any of \r \n " ' ( / \ after the first character.
 				if strings.ContainsAny(content[1:], "\r\n\"'(/\\") {
 					t.badParen = next
-					tok = pcToken{"(", "(", pos, pos}
+					tok = token{"(", "(", pos, pos}
 				} else {
-					tok = pcToken{"brackets", content, pos, next}
+					tok = token{"brackets", content, pos, next}
 					pos = next
 				}
 			}
@@ -139,7 +136,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 			}
 		}
 		end := min(next+1, len(css))
-		tok = pcToken{"string", css[pos:end], pos, next}
+		tok = token{"string", css[pos:end], pos, next}
 		pos = next
 	case c == '@':
 		next = pos + 1
@@ -147,7 +144,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 			next++
 		}
 		next--
-		tok = pcToken{"at-word", css[pos : next+1], pos, next}
+		tok = token{"at-word", css[pos : next+1], pos, next}
 		pos = next
 	case c == '\\':
 		next = pos
@@ -156,7 +153,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 			next++
 			escape = !escape
 		}
-		if n := t.at(next + 1); escape && n != '/' && !pcSpace(n) && next+1 < len(css) {
+		if n := t.at(next + 1); escape && n != '/' && !isSpace(n) && next+1 < len(css) {
 			next++
 			if hexDigit(t.at(next)) {
 				for next+1 < len(css) && hexDigit(css[next+1]) {
@@ -167,7 +164,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 				}
 			}
 		}
-		tok = pcToken{"word", css[pos : next+1], pos, next}
+		tok = token{"word", css[pos : next+1], pos, next}
 		pos = next
 	case c == '/' && t.at(pos+1) == '*':
 		k := strings.Index(css[pos+2:], "*/")
@@ -176,7 +173,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 		} else {
 			next = pos + 2 + k + 1
 		}
-		tok = pcToken{"comment", css[pos : next+1], pos, next}
+		tok = token{"comment", css[pos : next+1], pos, next}
 		pos = next
 	default:
 		next = pos + 1
@@ -184,7 +181,7 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 			next++
 		}
 		next--
-		tok = pcToken{"word", css[pos : next+1], pos, next}
+		tok = token{"word", css[pos : next+1], pos, next}
 		t.buffer = append(t.buffer, tok.text)
 		pos = next
 	}
@@ -192,17 +189,17 @@ func (t *pcTokenizer) next() (tok pcToken, ok bool) {
 	return tok, true
 }
 
-// pcNode is a postcss node, with the raws juice's output depends on.
-type pcNode struct {
-	kind     string // root rule atrule decl comment
-	parent   *pcNode
-	nodes    []*pcNode
+// Node is a postcss node, with the raws juice's output depends on.
+type Node struct {
+	Type     string // root, rule, atrule, decl or comment
+	parent   *Node
+	Nodes    []*Node
 	hasNodes bool
 	start    int
 	vs, ve   int // where a comment-free value lies in the source, when it does
 
-	selector, name, params, prop, value, text string
-	important                                 bool
+	Selector, Name, Params, Prop, Value, Text string
+	Important                                 bool
 
 	before, between, after, afterName, ownSemicolon string
 	hasAfterName, semicolon                         bool
@@ -210,29 +207,31 @@ type pcNode struct {
 	raw                                             map[string][2]string // prop -> {raw, value}
 }
 
-func (n *pcNode) push(c *pcNode) {
+func (n *Node) push(c *Node) {
 	c.parent = n
-	if n.nodes == nil {
-		n.nodes = make([]*pcNode, 0, 4) // most rules hold a few declarations
+	if n.Nodes == nil {
+		n.Nodes = make([]*Node, 0, 4) // most rules hold a few declarations
 	}
-	n.nodes = append(n.nodes, c)
+	n.Nodes = append(n.Nodes, c)
 }
 
-// pcParser is postcss's Parser with SafeParser's overrides folded in.
-type pcParser struct {
-	t         *pcTokenizer
-	root      *pcNode
-	current   *pcNode
+// parser is postcss's Parser with SafeParser's overrides folded in.
+type parser struct {
+	t         *tokenizer
+	root      *Node
+	current   *Node
 	spaces    string
 	semicolon bool
-	scratch   []pcToken // reused by other for each statement
-	slab      []pcNode  // nodes are allocated from here, a block at a time
+	scratch   []token // reused by other for each statement
+	slab      []Node  // nodes are allocated from here, a block at a time
 	slabSize  int
 }
 
-func parsePostcss(css string) *pcNode {
-	root := &pcNode{kind: "root", hasNodes: true}
-	p := &pcParser{t: newPCTokenizer(css), root: root, current: root}
+// Parse reads css as postcss-safe-parser does, which never fails, into a
+// "root" node.
+func Parse(css string) *Node {
+	root := &Node{Type: "root", hasNodes: true}
+	p := &parser{t: newTokenizer(css), root: root, current: root}
 	for !p.t.endOfFile() {
 		tok, _ := p.t.next()
 		switch tok.kind {
@@ -257,32 +256,32 @@ func parsePostcss(css string) *pcNode {
 }
 
 // node allocates from a slab, since a stylesheet makes one per declaration.
-func (p *pcParser) node(kind string) *pcNode {
+func (p *parser) node(kind string) *Node {
 	if len(p.slab) == 0 {
 		// Blocks grow with the stylesheet, so a small one stays small.
 		p.slabSize = min(max(p.slabSize*2, 4), 256)
-		p.slab = make([]pcNode, p.slabSize)
+		p.slab = make([]Node, p.slabSize)
 	}
 	n := &p.slab[0]
 	p.slab = p.slab[1:]
-	n.kind = kind
+	n.Type = kind
 	return n
 }
 
-func (p *pcParser) init(n *pcNode, offset int) {
+func (p *parser) init(n *Node, offset int) {
 	p.current.push(n)
 	n.start = offset
 	n.before = p.spaces
 	p.spaces = ""
-	if n.kind != "comment" {
+	if n.Type != "comment" {
 		p.semicolon = false
 	}
 }
 
-func (p *pcParser) setRaw(n *pcNode, prop string, toks []pcToken, custom bool) {
+func (p *parser) setRaw(n *Node, prop string, toks []token, custom bool) {
 	// Without comments the value is the tokens' source, less a trailing
 	// space, so it can be sliced rather than built.
-	if !slices.ContainsFunc(toks, func(t pcToken) bool { return t.kind == "comment" }) {
+	if !slices.ContainsFunc(toks, func(t token) bool { return t.kind == "comment" }) {
 		v, clean := p.src(toks), true
 		if l := len(toks); l > 0 && toks[l-1].kind == "space" && !custom {
 			v, clean = p.src(toks[:l-1]), false
@@ -337,26 +336,26 @@ func (p *pcParser) setRaw(n *pcNode, prop string, toks []pcToken, custom bool) {
 	p.setProp(n, prop, v)
 }
 
-func (p *pcParser) setProp(n *pcNode, prop, v string) {
+func (p *parser) setProp(n *Node, prop, v string) {
 	switch prop {
 	case "selector":
-		n.selector = v
+		n.Selector = v
 	case "params":
-		n.params = v
+		n.Params = v
 	case "value":
-		n.value = v
+		n.Value = v
 	}
 }
 
 // src is the source text of consecutive tokens, sliced rather than joined.
-func (p *pcParser) src(toks []pcToken) string {
+func (p *parser) src(toks []token) string {
 	if len(toks) == 0 {
 		return ""
 	}
 	return p.t.css[toks[0].start:min(toks[len(toks)-1].end+1, len(p.t.css))]
 }
 
-func (p *pcParser) comment(tok pcToken) {
+func (p *parser) comment(tok token) {
 	n := p.node("comment")
 	p.init(n, tok.start)
 	text := strings.TrimPrefix(tok.text, "/*")
@@ -367,18 +366,18 @@ func (p *pcParser) comment(tok pcToken) {
 	}
 	trimmed := strings.TrimLeft(text, " \t\n\r\f\v")
 	n.left = text[:len(text)-len(trimmed)]
-	n.text = strings.TrimRight(trimmed, " \t\n\r\f\v")
-	n.right = trimmed[len(n.text):]
+	n.Text = strings.TrimRight(trimmed, " \t\n\r\f\v")
+	n.right = trimmed[len(n.Text):]
 }
 
-func (p *pcParser) emptyRule(tok pcToken) {
+func (p *parser) emptyRule(tok token) {
 	n := p.node("rule")
 	n.hasNodes = true
 	p.init(n, tok.start)
 	p.current = n
 }
 
-func (p *pcParser) other(start pcToken) {
+func (p *parser) other(start token) {
 	end, colon := false, false
 	var brackets []string
 	custom := strings.HasPrefix(start.text, "--")
@@ -441,9 +440,9 @@ done:
 	}
 }
 
-func (p *pcParser) unknownWord(toks []pcToken) { p.spaces += p.src(toks) }
+func (p *parser) unknownWord(toks []token) { p.spaces += p.src(toks) }
 
-func (p *pcParser) rule(toks []pcToken) {
+func (p *parser) rule(toks []token) {
 	toks = toks[:len(toks)-1]
 	n := p.node("rule")
 	n.hasNodes = true
@@ -453,7 +452,7 @@ func (p *pcParser) rule(toks []pcToken) {
 	p.current = n
 }
 
-func spacesAndCommentsFromEnd(toks []pcToken) (string, []pcToken) {
+func spacesAndCommentsFromEnd(toks []token) (string, []token) {
 	s := ""
 	for len(toks) > 0 {
 		k := toks[len(toks)-1].kind
@@ -466,7 +465,7 @@ func spacesAndCommentsFromEnd(toks []pcToken) (string, []pcToken) {
 	return s, toks
 }
 
-func (p *pcParser) decl(toks []pcToken) {
+func (p *parser) decl(toks []token) {
 	// SafeParser: only with more than one token and a word among them.
 	hasWord := false
 	for _, t := range toks {
@@ -497,7 +496,7 @@ func (p *pcParser) decl(toks []pcToken) {
 		}
 		i++
 	}
-	n.prop = p.src(toks[propStart:i])
+	n.Prop = p.src(toks[propStart:i])
 	betweenStart := i
 	for i < len(toks) {
 		tok := toks[i]
@@ -506,13 +505,13 @@ func (p *pcParser) decl(toks []pcToken) {
 			break
 		}
 		if tok.kind == "word" && strings.IndexFunc(tok.text, isWordRune) >= 0 {
-			p.unknownWord([]pcToken{tok})
+			p.unknownWord([]token{tok})
 		}
 	}
 	n.between = p.src(toks[betweenStart:i])
-	if n.prop != "" && (n.prop[0] == '_' || n.prop[0] == '*') {
-		n.before += n.prop[:1]
-		n.prop = n.prop[1:]
+	if n.Prop != "" && (n.Prop[0] == '_' || n.Prop[0] == '*') {
+		n.before += n.Prop[:1]
+		n.Prop = n.Prop[1:]
 	}
 	firstSpacesStart := i
 	for i < len(toks) {
@@ -527,7 +526,7 @@ func (p *pcParser) decl(toks []pcToken) {
 	for j := len(toks) - 1; j >= 0; j-- {
 		tok := toks[j]
 		if strings.EqualFold(tok.text, "!important") {
-			n.important = true
+			n.Important = true
 			str := p.src(toks[j:])
 			toks = toks[:j]
 			sp := ""
@@ -540,7 +539,7 @@ func (p *pcParser) decl(toks []pcToken) {
 			}
 			break
 		} else if strings.EqualFold(tok.text, "important") {
-			cache := append([]pcToken(nil), toks...)
+			cache := append([]token(nil), toks...)
 			str := ""
 			for k := j; k > 0; k-- {
 				if strings.HasPrefix(strings.TrimSpace(str), "!") && cache[k].kind != "space" {
@@ -550,7 +549,7 @@ func (p *pcParser) decl(toks []pcToken) {
 				cache = cache[:len(cache)-1]
 			}
 			if strings.HasPrefix(strings.TrimSpace(str), "!") {
-				n.important = true
+				n.Important = true
 				n.importantRaw = str
 				toks = cache
 			}
@@ -568,7 +567,7 @@ func (p *pcParser) decl(toks []pcToken) {
 		firstSpaces = nil
 	}
 	if len(firstSpaces) > 0 {
-		toks = append(append([]pcToken(nil), firstSpaces...), toks...)
+		toks = append(append([]token(nil), firstSpaces...), toks...)
 	}
 	p.setRaw(n, "value", toks, false)
 }
@@ -577,8 +576,8 @@ func isWordRune(r rune) bool {
 	return r == '_' || r >= '0' && r <= '9' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z'
 }
 
-// colon is the index of the first top-level colon, or -1.
-func pcColon(toks []pcToken) int {
+// findColon is the index of the first top-level colon, or -1.
+func findColon(toks []token) int {
 	brackets := 0
 	for i, t := range toks {
 		switch t.kind {
@@ -597,8 +596,8 @@ func pcColon(toks []pcToken) int {
 
 // precheckMissedSemicolon is SafeParser's: a second "word:" in a value
 // starts a declaration of its own.
-func (p *pcParser) precheckMissedSemicolon(toks []pcToken) []pcToken {
-	colon := pcColon(toks)
+func (p *parser) precheckMissedSemicolon(toks []token) []token {
+	colon := findColon(toks)
 	if colon < 0 {
 		return toks
 	}
@@ -618,18 +617,18 @@ func (p *pcParser) precheckMissedSemicolon(toks []pcToken) []pcToken {
 			break
 		}
 	}
-	other := append([]pcToken(nil), toks[nextStart:]...)
+	other := append([]token(nil), toks[nextStart:]...)
 	p.spaces = p.src(toks[prevEnd:nextStart])
 	toks = toks[:prevEnd]
 	p.decl(other)
 	return toks
 }
 
-func (p *pcParser) atrule(tok pcToken) {
+func (p *parser) atrule(tok token) {
 	n := p.node("atrule")
-	n.name = tok.text[1:]
+	n.Name = tok.text[1:]
 	p.init(n, tok.start)
-	var params []pcToken
+	var params []token
 	var brackets []string
 	last, open := false, false
 	for !p.t.endOfFile() {
@@ -688,18 +687,18 @@ func (p *pcParser) atrule(tok pcToken) {
 	}
 }
 
-func (p *pcParser) freeSemicolon(tok pcToken) {
+func (p *parser) freeSemicolon(tok token) {
 	p.spaces += tok.text
-	if c := p.current; c.hasNodes && len(c.nodes) > 0 {
-		if prev := c.nodes[len(c.nodes)-1]; prev.kind == "rule" && prev.ownSemicolon == "" {
+	if c := p.current; c.hasNodes && len(c.Nodes) > 0 {
+		if prev := c.Nodes[len(c.Nodes)-1]; prev.Type == "rule" && prev.ownSemicolon == "" {
 			prev.ownSemicolon = p.spaces
 			p.spaces = ""
 		}
 	}
 }
 
-func (p *pcParser) end(tok pcToken) {
-	if len(p.current.nodes) > 0 {
+func (p *parser) end(tok token) {
+	if len(p.current.Nodes) > 0 {
 		p.current.semicolon = p.semicolon
 	}
 	p.semicolon = false
@@ -712,8 +711,8 @@ func (p *pcParser) end(tok pcToken) {
 	}
 }
 
-func (p *pcParser) endFile() {
-	if len(p.current.nodes) > 0 {
+func (p *parser) endFile() {
+	if len(p.current.Nodes) > 0 {
 		p.current.semicolon = p.semicolon
 	}
 	p.current.after += p.spaces
@@ -723,29 +722,25 @@ func (p *pcParser) endFile() {
 	}
 }
 
-// selectors is postcss's rule.selectors: list.comma.
-func (n *pcNode) selectors() []string { return commaList(n.selector) }
-
-// selectorBytes is selectors sliced from src, the bytes the rule was parsed
-// from, when the selector is a slice of it.
-func (n *pcNode) selectorBytes(src []byte) [][]byte {
-	if n.ve > n.vs && n.ve-n.vs == len(n.selector) {
+// SelectorBytes is postcss's rule.selectors (list.comma), sliced from src, the
+// bytes the rule was parsed from, when the selector is a slice of it.
+func (n *Node) SelectorBytes(src []byte) [][]byte {
+	if n.ve > n.vs && n.ve-n.vs == len(n.Selector) {
 		return commaList(src[n.vs:n.ve:n.ve])
 	}
-	return commaList([]byte(n.selector))
+	return commaList([]byte(n.Selector))
 }
 
-func commaList[T string | []byte](s T) []T {
-	trim := func(v T) T {
-		switch v := any(v).(type) {
-		case string:
-			return T(strings.TrimSpace(v))
-		case []byte:
-			return T(bytes.TrimSpace(v))
-		}
-		return v
+// ValueBytes is a declaration's Value, sliced from src as SelectorBytes is.
+func (n *Node) ValueBytes(src []byte) []byte {
+	if n.ve > n.vs && n.ve-n.vs == len(n.Value) {
+		return src[n.vs:n.ve:n.ve]
 	}
-	var out []T
+	return []byte(n.Value)
+}
+
+func commaList(s []byte) [][]byte {
+	var out [][]byte
 	start := 0
 	fn, quote, escape := 0, byte(0), false
 	for i := 0; i < len(s); i++ {
@@ -768,42 +763,40 @@ func commaList[T string | []byte](s T) []T {
 				fn--
 			}
 		case fn == 0 && c == ',':
-			out = append(out, trim(s[start:i]))
+			out = append(out, bytes.TrimSpace(s[start:i]))
 			start = i + 1
 		}
 	}
-	return append(out, trim(s[start:]))
+	return append(out, bytes.TrimSpace(s[start:]))
 }
 
-// stringifyPreserved is juice's stringifyNodes: postcss's stringifier over
-// clones whose raws are normalized to one rule per line and two-space
+// Stringify is juice's stringifyNodes for one node: postcss's stringifier over
+// a clone whose raws are normalized to one rule per line and two-space
 // indentation.
-func stringifyPreserved(nodes []*pcNode) string {
+func Stringify(n *Node) string {
 	var b strings.Builder
-	for i, n := range nodes {
-		writeNode(&b, n, 0, i == 0, true)
-	}
+	writeNode(&b, n, 0, true, true)
 	return b.String()
 }
 
-func rawValue(n *pcNode, prop, value string) string {
+func rawValue(n *Node, prop, value string) string {
 	if r, ok := n.raw[prop]; ok && r[1] == value {
 		return r[0]
 	}
 	return value
 }
 
-func writeNode(b *strings.Builder, n *pcNode, depth int, first, semicolon bool) {
+func writeNode(b *strings.Builder, n *Node, depth int, first, semicolon bool) {
 	indent := strings.Repeat("  ", depth)
 	if !first {
 		b.WriteString("\n" + indent)
 	}
-	switch n.kind {
+	switch n.Type {
 	case "comment":
-		b.WriteString("/*" + n.left + n.text + n.right + "*/")
+		b.WriteString("/*" + n.left + n.Text + n.right + "*/")
 	case "decl":
-		b.WriteString(n.prop + ": " + rawValue(n, "value", n.value))
-		if n.important {
+		b.WriteString(n.Prop + ": " + rawValue(n, "value", n.Value))
+		if n.Important {
 			if n.importantRaw != "" {
 				b.WriteString(n.importantRaw)
 			} else {
@@ -814,13 +807,13 @@ func writeNode(b *strings.Builder, n *pcNode, depth int, first, semicolon bool) 
 			b.WriteByte(';')
 		}
 	case "rule", "atrule":
-		head := rawValue(n, "selector", n.selector)
-		if n.kind == "atrule" {
+		head := rawValue(n, "selector", n.Selector)
+		if n.Type == "atrule" {
 			params := ""
-			if n.params != "" {
-				params = rawValue(n, "params", n.params)
+			if n.Params != "" {
+				params = rawValue(n, "params", n.Params)
 			}
-			head = "@" + n.name
+			head = "@" + n.Name
 			if n.hasAfterName {
 				head += n.afterName
 			} else if params != "" {
@@ -836,105 +829,12 @@ func writeNode(b *strings.Builder, n *pcNode, depth int, first, semicolon bool) 
 			return
 		}
 		b.WriteString(head + " {")
-		for _, c := range n.nodes {
+		for _, c := range n.Nodes {
 			writeNode(b, c, depth+1, false, true)
 		}
 		b.WriteString("\n" + indent + "}")
-		if n.kind == "rule" {
+		if n.Type == "rule" {
 			b.WriteString(n.ownSemicolon)
 		}
 	}
-}
-
-// parseStylesheet reads a stylesheet as juice does, through postcss: juice's
-// parseCSS for the rules, and its getPreservedText for what stays behind.
-func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
-	flat := flattenNesting(src)
-	text := string(flat)
-	if opts.fixesJuiceBugs() {
-		if b := blankCommentMarkers(text); b != text {
-			text, flat = b, []byte(b)
-		}
-	}
-	root := parsePostcss(text)
-	var rules []rule
-	var keep []preserved
-	for _, n := range root.nodes {
-		switch n.kind {
-		case "atrule":
-			if kind := atRuleKind([]byte("@" + n.name)); preserveKind(kind, opts) {
-				keep = append(keep, preserved{kind, []byte(stringifyPreserved([]*pcNode{n}))})
-			}
-		case "rule":
-			decls := make([]decl, 0, len(n.nodes))
-			for _, c := range n.nodes {
-				if c.kind != "decl" || strings.TrimSpace(c.value) == "" {
-					continue
-				}
-				// A value sliced from the source needs no copy.
-				var v []byte
-				if c.ve > c.vs && c.ve-c.vs == len(c.value) {
-					v = flat[c.vs:c.ve:c.ve]
-				} else {
-					v = []byte(c.value)
-				}
-				d := decl{prop: c.prop, value: v, important: c.important, ord: ord}
-				if c.important {
-					d.bang = append(v[:len(v):len(v)], " !important"...)
-				}
-				decls = append(decls, d)
-				ord++
-			}
-			sels := n.selectorBytes(flat)
-			if len(decls) > 0 {
-				for _, sel := range sels {
-					armRules, ignored := compileRule(sel, decls, opts)
-					if ignored {
-						continue
-					}
-					for k := range armRules {
-						armRules[k].group = int32(len(rules))
-					}
-					rules = append(rules, armRules...)
-				}
-			}
-			if opts.keepAll || opts.preservePseudos && hasIgnoredPseudo(sels[0]) || matchesPreserved(sels, opts.preservedSelectors) {
-				keep = append(keep, preserved{"pseudo", []byte(stringifyPreserved([]*pcNode{n}))})
-			}
-		default:
-			if opts.keepAll && n.kind == "comment" {
-				keep = append(keep, preserved{"comment", []byte(stringifyPreserved([]*pcNode{n}))})
-			}
-		}
-	}
-	return rules, keep, ord
-}
-
-// blankCommentMarkers hides "<!--" and "-->" outside strings and comments,
-// which CSS ignores in a stylesheet and postcss reads as words.
-func blankCommentMarkers(css string) string {
-	if !strings.Contains(css, "<!--") && !strings.Contains(css, "-->") {
-		return css
-	}
-	b := []byte(css)
-	var q quotes
-	for i := 0; i < len(b); i++ {
-		switch {
-		case b[i] == '"' || b[i] == '\'':
-			i = q.end(b, i)
-		case b[i] == '/' && i+1 < len(b) && b[i+1] == '*':
-			if k := strings.Index(css[i+2:], "*/"); k >= 0 {
-				i += k + 3
-			} else {
-				i = len(b)
-			}
-		case strings.HasPrefix(css[i:], "<!--"):
-			copy(b[i:], "    ")
-			i += 3
-		case strings.HasPrefix(css[i:], "-->") && (i == 0 || !isSelectorNameChar(b[i-1])):
-			copy(b[i:], "   ")
-			i += 2
-		}
-	}
-	return string(b)
 }
