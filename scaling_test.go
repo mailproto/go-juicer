@@ -1,6 +1,7 @@
 package juicer
 
 import (
+	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,22 @@ func TestScaling(t *testing.T) {
 				t.Errorf("8x the input took %.0fx the time (%v vs %v)", ratio, large, small)
 			}
 		})
+	}
+}
+
+// TestDeepNesting inlines a tree far deeper than any stack-based walk could
+// survive under a small stack limit. Unclosed tags nest without bound, and a
+// goroutine stack overflow is fatal to the whole process, not a recoverable
+// panic.
+func TestDeepNesting(t *testing.T) {
+	defer debug.SetMaxStack(debug.SetMaxStack(16 << 20))
+	doc := "<style>b{color:red}</style>" + strings.Repeat("<b>", 500_000)
+	out, err := New().Inline(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := 500_000; strings.Count(out, `style="color: red;"`) != want {
+		t.Errorf("styled %d elements, want %d", strings.Count(out, `style="color: red;"`), want)
 	}
 }
 
