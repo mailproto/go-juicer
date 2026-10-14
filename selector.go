@@ -411,13 +411,23 @@ func scanSelector(arm []byte, browser bool) (text string, spec [3]int, pseudo ui
 			// pseudo-element, matched with every pseudo-element stripped.
 			call := arm[i:ae]
 			list := name == "is" || name == "where" || name == "matches" || name == "not"
+			// Selectors L4: :is(), :not() and :has() take the highest
+			// specificity among their arguments. Each argument is scanned
+			// once; scanning it again for its score doubled the work per
+			// level of nesting.
+			var argSpec [3]int
 			if arg != nil {
 				var parts [][]byte
 				inner := pseudoNone
 				for _, a := range splitSelector(arg) {
-					t, _, p, ign := scanSelector(a, false)
+					t, s, p, ign := scanSelector(a, browser)
 					if ign {
 						return "", spec, pseudoNone, true
+					}
+					if s[0] > argSpec[0] ||
+						(s[0] == argSpec[0] && s[1] > argSpec[1]) ||
+						(s[0] == argSpec[0] && s[1] == argSpec[1] && s[2] > argSpec[2]) {
+						argSpec = s
 					}
 					if inner == pseudoNone {
 						inner = p
@@ -458,12 +468,9 @@ func scanSelector(arm []byte, browser bool) (text string, spec [3]int, pseudo ui
 				// Selectors L4: :where() contributes zero specificity. The
 				// text is irrelevant because expandFunctional rewrites it.
 			case name == "is" || name == "matches" || name == "not" || name == "has":
-				// Selectors L4: these take the maximum specificity of
-				// their arguments.
-				s := argSpecificity(arg, browser)
-				spec[0] += s[0]
-				spec[1] += s[1]
-				spec[2] += s[2]
+				spec[0] += argSpec[0]
+				spec[1] += argSpec[1]
+				spec[2] += argSpec[2]
 				out = append(out, rewriteHas(call, name)...)
 			case name == "empty" && !dbl:
 				// css-select counts whitespace text as content; cascadia does not.
@@ -504,24 +511,6 @@ func scanSelector(arm []byte, browser bool) (text string, spec [3]int, pseudo ui
 		out = append(out, '*')
 	}
 	return string(out), spec, pseudo, false
-}
-
-// argSpecificity returns the highest specificity among a selector list, which
-// is how Selectors L4 scores :is(), :not() and :has().
-func argSpecificity(arg []byte, browser bool) [3]int {
-	var best [3]int
-	for _, a := range splitSelector(arg) {
-		_, s, _, ign := scanSelector(a, browser)
-		if ign {
-			continue
-		}
-		if s[0] > best[0] ||
-			(s[0] == best[0] && s[1] > best[1]) ||
-			(s[0] == best[0] && s[1] == best[1] && s[2] > best[2]) {
-			best = s
-		}
-	}
-	return best
 }
 
 // rewriteHas maps :has(> x) onto cascadia's :haschild(x). Sibling forms stay

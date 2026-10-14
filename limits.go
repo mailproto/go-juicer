@@ -22,9 +22,9 @@ const (
 // removes the limit.
 func MaxInputSize(n int) Option { return func(o *options) { o.maxInputSize = n } }
 
-// MaxDepth limits how deeply elements, and the blocks of a stylesheet, may
-// nest. A deeper document fails with an error wrapping ErrLimitExceeded. The
-// default is 1024; 0 removes the limit.
+// MaxDepth limits how deeply elements, and the blocks and parentheses of a
+// stylesheet, may nest. A deeper document fails with an error wrapping
+// ErrLimitExceeded. The default is 1024; 0 removes the limit.
 func MaxDepth(n int) Option { return func(o *options) { o.maxDepth = n } }
 
 func checkSize(doc []byte, o *options) error {
@@ -69,16 +69,17 @@ func checkDepth(root *html.Node, o *options) error {
 	return nil
 }
 
-// blockDepth is how deeply braces nest in css. Braces in strings and
+// blockDepth is how deeply braces and parentheses nest in css, together.
+// Selectors nest in parentheses, as in :is(:not(a)). Those in strings and
 // comments count too, which can only overstate it.
 func blockDepth(css string) int {
 	depth, deepest := 0, 0
 	for i := 0; i < len(css); i++ {
 		switch css[i] {
-		case '{':
+		case '{', '(':
 			depth++
 			deepest = max(deepest, depth)
-		case '}':
+		case '}', ')':
 			depth = max(depth-1, 0)
 		}
 	}
