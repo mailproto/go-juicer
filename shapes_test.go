@@ -81,7 +81,7 @@ var shapes = []struct {
 }
 
 func BenchmarkShapes(b *testing.B) {
-	in := New()
+	in := mustNew(b)
 	for _, s := range shapes {
 		doc := []byte(s.gen())
 		b.Run(s.name, func(b *testing.B) {

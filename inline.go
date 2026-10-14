@@ -28,6 +28,7 @@ type options struct {
 	extraCSS                    string
 	insertExtraCSS              bool
 	insertExtraCSSInto          string
+	insertInto                  cascadia.Matcher // insertExtraCSSInto, compiled by New
 	applyStyleTags              bool
 	removeStyleTags             bool
 	removeInlined               bool
@@ -188,7 +189,7 @@ func StyleAttributeName(name string) Option {
 // The default set covers Liquid, Handlebars and EJS. juice adds to its default
 // set by mutating the global juice.codeBlocks; the Go equivalent is
 // appending to DefaultCodeBlocks().
-func CodeBlocks(b []CodeBlock) Option { return func(o *options) { o.codeBlocks = b } }
+func CodeBlocks(b []CodeBlock) Option { return func(o *options) { o.codeBlocks = slices.Clone(b) } }
 
 // RemoveIDs replaces id attributes with a hash, rewriting internal anchors.
 func RemoveIDs(v bool) Option { return func(o *options) { o.removeIDs = v } }
@@ -202,11 +203,15 @@ func RemoveComments(v bool) Option { return func(o *options) { o.removeComments 
 // ResetContentEditable strips contenteditable attributes.
 func ResetContentEditable(v bool) Option { return func(o *options) { o.resetContentEditable = v } }
 
-// New returns an Inliner configured by opts.
-func New(opts ...Option) *Inliner {
+// New returns an Inliner configured by opts, or an error wrapping
+// ErrInvalidOption if they cannot be honoured.
+func New(opts ...Option) (*Inliner, error) {
 	o := defaults()
 	for _, fn := range opts {
 		fn(&o)
+	}
+	if err := o.validate(); err != nil {
+		return nil, err
 	}
 	if o.compat == Juice9 {
 		// juice 9 has none of these; it ignores the options.
@@ -215,7 +220,33 @@ func New(opts ...Option) *Inliner {
 		o.preservedSelectors = nil
 		o.removeInlined, o.inlineDuplicates = false, false
 	}
-	return &Inliner{opts: o}
+	return &Inliner{opts: o}, nil
+}
+
+// validate rejects options that would fail on every document, or never
+// finish, and compiles what can be compiled once.
+func (o *options) validate() error {
+	switch o.compat {
+	case standard, Juice12, Juice9:
+	default:
+		return fmt.Errorf("%w: unknown Compatibility %d", ErrInvalidOption, o.compat)
+	}
+	for _, b := range o.codeBlocks {
+		if b.Start == "" || b.End == "" {
+			return fmt.Errorf("%w: CodeBlocks: delimiters cannot be empty", ErrInvalidOption)
+		}
+	}
+	if o.styleAttributeName == "" {
+		return fmt.Errorf("%w: StyleAttributeName cannot be empty", ErrInvalidOption)
+	}
+	if o.insertExtraCSSInto != "" {
+		m, err := cascadia.Compile(o.insertExtraCSSInto)
+		if err != nil {
+			return fmt.Errorf("%w: InsertPreservedExtraCSSInto: %v", ErrInvalidOption, err)
+		}
+		o.insertInto = m
+	}
+	return nil
 }
 
 // Compatibility names an inliner whose output CompatibilityMode reproduces
@@ -269,7 +300,11 @@ func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
 
 // Inline inlines doc's CSS using a default Inliner.
 func Inline(doc string, opts ...Option) (string, error) {
-	return New(opts...).Inline(doc)
+	in, err := New(opts...)
+	if err != nil {
+		return "", err
+	}
+	return in.Inline(doc)
 }
 
 // resolvedEl pairs an element with the declarations resolved for it. The
@@ -596,11 +631,7 @@ func (in *pass) emitPreserved(root *html.Node, keep []preserved) error {
 	if len(keep) == 0 || !in.o.insertExtraCSS {
 		return nil
 	}
-	if sel := in.o.insertExtraCSSInto; sel != "" {
-		m, err := cascadia.Compile(sel)
-		if err != nil {
-			return fmt.Errorf("InsertPreservedExtraCSSInto: %w", err)
-		}
+	if m := in.o.insertInto; m != nil {
 		if host := cascadia.Query(root, m); host != nil {
 			in.appendPreserved(host, keep)
 		}

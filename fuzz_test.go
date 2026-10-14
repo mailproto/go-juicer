@@ -26,7 +26,7 @@ func FuzzCSS(f *testing.F) {
 	const skeleton = `<table><tr><td class="c" id="i" width="600">` +
 		`<p class="c x" style="margin:0"><span>t</span></p></td></tr></table>`
 
-	inliners := []*Inliner{New(), New(CompatibilityMode(Juice12)), New(CompatibilityMode(Juice9))}
+	inliners := []*Inliner{mustNew(f), mustNew(f, CompatibilityMode(Juice12)), mustNew(f, CompatibilityMode(Juice9))}
 	f.Fuzz(func(t *testing.T, css string) {
 		if len(css) > 8192 {
 			t.Skip()
@@ -73,7 +73,7 @@ func FuzzDocument(f *testing.F) {
 		for i, opt := range fuzzOptions {
 			opts = append(opts, opt(mask&(1<<i) != 0))
 		}
-		in := New(opts...)
+		in := mustNew(t, opts...)
 		a, errA := in.Inline(doc)
 		b, errB := in.Inline(doc)
 		if (errA == nil) != (errB == nil) {

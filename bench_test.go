@@ -13,7 +13,7 @@ func benchDoc() string { return GenEmail(60, 213) }
 
 func BenchmarkInline(b *testing.B) {
 	doc := []byte(benchDoc())
-	in := New()
+	in := mustNew(b)
 	b.SetBytes(int64(len(doc)))
 	b.ReportAllocs()
 	for b.Loop() {
@@ -76,7 +76,7 @@ func TestAllocBudget(t *testing.T) {
 	for _, s := range shapes {
 		docs[s.name] = s.gen()
 	}
-	in := New()
+	in := mustNew(t)
 	for name, doc := range docs {
 		budget, ok := budgets[name]
 		if !ok {

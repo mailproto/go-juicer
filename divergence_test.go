@@ -84,7 +84,7 @@ func TestLiquidSurvivesRoundTrip(t *testing.T) {
 }
 
 func TestConcurrentUse(t *testing.T) {
-	in := New()
+	in := mustNew(t)
 	doc := benchDoc()
 	want, err := in.Inline(doc)
 	if err != nil {

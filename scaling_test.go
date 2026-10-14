@@ -21,7 +21,7 @@ func TestScaling(t *testing.T) {
 	}
 	for _, s := range shapes {
 		t.Run(s.name, func(t *testing.T) {
-			small, large := fastest(s.doc(s.n)), fastest(s.doc(8*s.n))
+			small, large := fastest(t, s.doc(s.n)), fastest(t, s.doc(8*s.n))
 			if ratio := float64(large) / float64(small); ratio > 24 {
 				t.Errorf("8x the input took %.0fx the time (%v vs %v)", ratio, large, small)
 			}
@@ -36,7 +36,7 @@ func TestScaling(t *testing.T) {
 func TestDeepNesting(t *testing.T) {
 	defer debug.SetMaxStack(debug.SetMaxStack(16 << 20))
 	doc := "<style>b{color:red}</style>" + strings.Repeat("<b>", 500_000)
-	out, err := New().Inline(doc)
+	out, err := mustNew(t).Inline(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,8 +46,8 @@ func TestDeepNesting(t *testing.T) {
 }
 
 // fastest is the quickest of three runs, to keep scheduler noise out.
-func fastest(doc string) time.Duration {
-	in := New()
+func fastest(t *testing.T, doc string) time.Duration {
+	in := mustNew(t)
 	best := time.Duration(1<<63 - 1)
 	for range 3 {
 		start := time.Now()

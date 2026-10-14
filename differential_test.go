@@ -69,7 +69,7 @@ func TestDifferential(t *testing.T) {
 			mode = Juice9
 		}
 		opts = append(opts, CompatibilityMode(mode))
-		got, gotErr := New(opts...).Inline(c.HTML)
+		got, gotErr := mustNew(t, opts...).Inline(c.HTML)
 		switch {
 		case c.Err != nil && gotErr != nil:
 			continue
@@ -157,7 +157,7 @@ func (j *juiceProcess) inline(t *testing.T, html string, options map[string]any)
 // both outputs.
 func (j *juiceProcess) minimize(t *testing.T, html string, options map[string]any, opts []Option) (doc, want, got string) {
 	t.Helper()
-	in := New(opts...)
+	in := mustNew(t, opts...)
 	differs := func(doc string) (string, string, bool) {
 		// Shrinking drifts toward broken input, which has bugs of its own: keep
 		// it valid UTF-8, style elements closed with balanced braces, and no

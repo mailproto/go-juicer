@@ -115,7 +115,7 @@ func parityVariant(t *testing.T, target string, mode Compatibility, variant stri
 			}
 			want, wantErr := loadGolden(t, filepath.Join(target, name))
 
-			got, gotErr := New(opts...).InlineBytes(in)
+			got, gotErr := mustNew(t, opts...).InlineBytes(in)
 			ok := len(unsupported) == 0 && (gotErr != nil) == wantErr && (wantErr || bytes.Equal(got, want))
 
 			reason, isSkipped := skips[skipKey]
