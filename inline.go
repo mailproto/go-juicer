@@ -60,6 +60,7 @@ type options struct {
 	keepAll bool
 
 	compat Compatibility
+	quirks // resolved from compat in New
 
 	// Document cleanup, carried over from the Ruby premailer this package
 	// used to wrap. juice has no equivalent.
@@ -222,6 +223,7 @@ func New(opts ...Option) (*Inliner, error) {
 	if err := o.validate(); err != nil {
 		return nil, err
 	}
+	o.quirks = o.compat.quirks()
 	if o.compat == Juice9 {
 		// juice 9 has none of these; it ignores the options.
 		o.resolveCSSVariables = false
@@ -286,8 +288,40 @@ const (
 // that has to stay identical to an existing deployment of it.
 func CompatibilityMode(c Compatibility) Option { return func(o *options) { o.compat = c } }
 
-// fixesJuiceBugs reports whether the default mode's fixes for juice bugs apply.
-func (o *options) fixesJuiceBugs() bool { return o.compat == standard }
+// quirks are the juice behaviours a compatibility mode reproduces. The zero
+// value is the default mode.
+type quirks struct {
+	// juice bugs the default fixes, listed in testdata/skip/default.txt.
+	juiceSpecificity   bool // pseudo-classes score as type selectors
+	joinStylesheets    bool // every <style> block and extraCss parse as one stylesheet
+	ignoreStyleMedia   bool // a <style media> block applies whatever its media
+	keepCommentMarkers bool // "<!--" and "-->" are read as part of a selector
+	rawContent         bool // content strings are written as markup
+
+	// juice 9.
+	mensch          bool // mensch reads stylesheets and style attributes
+	juice9Selectors bool // selectors are matched and scored as juice 9 does
+	noControlAttrs  bool // data-juice-* attributes are not read
+}
+
+func (c Compatibility) quirks() quirks {
+	juice12 := quirks{
+		juiceSpecificity:   true,
+		joinStylesheets:    true,
+		ignoreStyleMedia:   true,
+		keepCommentMarkers: true,
+		rawContent:         true,
+	}
+	switch c {
+	case Juice12:
+		return juice12
+	case Juice9:
+		q := juice12
+		q.mensch, q.juice9Selectors, q.noControlAttrs = true, true, true
+		return q
+	}
+	return quirks{}
+}
 
 // Inline inlines the document's CSS into style attributes.
 func (in *Inliner) Inline(doc string) (string, error) {
@@ -357,7 +391,7 @@ func (in *Inliner) process(root *html.Node, src []byte) error {
 	if err := checkDepth(root, &in.opts); err != nil {
 		return err
 	}
-	p := &pass{o: &in.opts, controlAttrs: in.opts.compat != Juice9 && bytes.Contains(src, []byte("data-juice-"))}
+	p := &pass{o: &in.opts, controlAttrs: !in.opts.noControlAttrs && bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
 
@@ -389,16 +423,12 @@ func (in *pass) run(root *html.Node) error {
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)
 	}
-	if !o.fixesJuiceBugs() {
+	if o.joinStylesheets {
 		// juice inlines every <style> block and extraCss as one stylesheet,
 		// so an unclosed block runs on into the next. Browsers read each
 		// block on its own, as the default does.
 		css := append(bytes.Join(in.joinedCSS, []byte("\n")), "\n"+o.extraCSS...)
-		if o.compat == Juice9 {
-			rules, _, _ = parseMensch(css, o, 0)
-		} else {
-			rules, _, _ = parseWithDirectives(css, o, 0, &ignoreState{})
-		}
+		rules, _, _ = parseWithDirectives(css, o, 0, &ignoreState{})
 	}
 
 	in.applyRules(root, rules)
@@ -464,7 +494,7 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 			removeAttr(s, "data-embed")
 			continue
 		}
-		if v, ok := getAttr(s, "media"); ok && o.fixesJuiceBugs() && !screenMedia(v) {
+		if v, ok := getAttr(s, "media"); ok && !o.ignoreStyleMedia && !screenMedia(v) {
 			// juice ignores media; browsers apply these rules only where
 			// the query matches, so they stay as written, or go with
 			// @media blocks when those are not preserved.
@@ -481,7 +511,7 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 		if o.applyStyleTags {
 			r, k, ord = parseWithDirectives([]byte(s.FirstChild.Data), o, ord, st)
 			rules = appendRules(rules, r)
-			if !o.fixesJuiceBugs() {
+			if o.joinStylesheets {
 				in.joinedCSS = append(in.joinedCSS, []byte(s.FirstChild.Data))
 			}
 		}
@@ -518,7 +548,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		doc++
 		keep := -1 // whether n keeps !important; read on first match
 		dup := func() bool {
-			if o.compat == Juice9 {
+			if o.noControlAttrs {
 				return false
 			}
 			if v, ok := getAttr(n, "data-juice-duplicates"); ok {
@@ -529,7 +559,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		keepImportant := func() bool {
 			if keep < 0 {
 				keep = 0
-				if v, ok := getAttr(n, "data-juice-important"); ok && o.compat != Juice9 && v != "false" || (!ok || o.compat == Juice9) && o.preserveImportant {
+				if v, ok := getAttr(n, "data-juice-important"); ok && !o.noControlAttrs && v != "false" || (!ok || o.noControlAttrs) && o.preserveImportant {
 					keep = 1
 				}
 			}
@@ -566,7 +596,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
-					if err := m.seedInline([]byte(v), keepImportant(), o.compat == Juice9); err != nil && in.juiceErr == nil {
+					if err := m.seedInline([]byte(v), keepImportant(), o.mensch); err != nil && in.juiceErr == nil {
 						in.juiceErr = err
 					}
 				}

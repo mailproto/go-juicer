@@ -120,8 +120,7 @@ const maxExpansion = 32
 // no rules at all for one neither engine can match.
 func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bool) {
 	sel := string(arm)
-	juice9 := o.compat == Juice9
-	if juice9 {
+	if o.juice9Selectors {
 		if !balanced(arm) {
 			// Half of a list mensch split inside parentheses: cheerio
 			// throws on it and juice 9 skips the rule.
@@ -134,11 +133,11 @@ func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bo
 	}
 	// juice scores pseudo-classes like type selectors; CSS scores them like
 	// classes.
-	_, spec, pseudo, ign := scanSelector(arm, o.fixesJuiceBugs())
+	_, spec, pseudo, ign := scanSelector(arm, !o.juiceSpecificity)
 	if ign {
 		return nil, true
 	}
-	if juice9 {
+	if o.juice9Selectors {
 		spec = juice9Specificity([]byte(sel))
 	}
 
@@ -147,7 +146,7 @@ func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bo
 		if vIgn {
 			continue
 		}
-		if juice9 {
+		if o.juice9Selectors {
 			text = juice9Tail(variant, text)
 		}
 		m, err := cascadia.Parse(text)

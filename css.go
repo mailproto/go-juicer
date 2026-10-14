@@ -144,7 +144,7 @@ func trimCSS(b []byte) []byte {
 func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
 	flat := flattenNesting(src)
 	text := string(flat)
-	if opts.fixesJuiceBugs() {
+	if !opts.keepCommentMarkers {
 		if b := blankCommentMarkers(text); b != text {
 			text, flat = b, []byte(b)
 		}

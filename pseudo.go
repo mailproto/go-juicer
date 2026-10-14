@@ -162,7 +162,7 @@ func (in *pass) parseContent(content string, span, base *html.Node, scope *count
 // attr() is not passed through here: attribute values are kept as written,
 // already escaped.
 func (in *pass) contentText(s string) string {
-	if !in.o.fixesJuiceBugs() {
+	if in.o.rawContent {
 		return s
 	}
 	return htmlText.Replace(s)
