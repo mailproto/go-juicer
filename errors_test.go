@@ -43,6 +43,7 @@ func TestErrLimitExceeded(t *testing.T) {
 		{"input size", "<p>" + strings.Repeat("x", 100) + "</p>", []Option{MaxInputSize(64)}},
 		{"element depth", "<style>b{color:red}</style>" + deep("<b>", 1025), nil},
 		{"stylesheet depth", "<style>" + deep("@media print{", 1025) + "</style><p>x</p>", nil},
+		{"selector depth", "<style>" + deep(":is(", 1025) + "p{color:red}</style><p>x</p>", nil},
 		{"depth across stylesheets", "<style>" + deep("@media print{", 600) + "</style><style>" + deep("@media print{", 600) + "</style>", nil},
 		{"extra CSS depth", "<p>x</p>", []Option{ExtraCSS(deep("a{", 1025))}},
 		{"style attribute depth", `<style>p{color:red}</style><p style="` + deep("{", 1025) + `">x</p>`, nil},

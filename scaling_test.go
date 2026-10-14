@@ -45,6 +45,29 @@ func TestDeepNesting(t *testing.T) {
 	}
 }
 
+// TestNestedSelectorLists inlines functional pseudo-classes nested 64 deep.
+// Scanning each argument once for its text and again for its specificity
+// doubled the work per level, so this many levels never finished.
+func TestNestedSelectorLists(t *testing.T) {
+	in := mustNew(t)
+	for _, open := range []string{":is(", ":not(", ":has("} {
+		sel := strings.Repeat(open, 64) + "p" + strings.Repeat(")", 64)
+		done := make(chan error, 1)
+		go func() {
+			_, err := in.Inline("<style>" + sel + "{color:red}</style><p>x</p>")
+			done <- err
+		}()
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Errorf("%s: %v", open, err)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatalf("%s nested 64 deep did not finish in 10s", open)
+		}
+	}
+}
+
 // fastest is the quickest of three runs, to keep scheduler noise out.
 func fastest(t *testing.T, doc string) time.Duration {
 	in := mustNew(t)
