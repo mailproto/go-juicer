@@ -36,7 +36,7 @@ func TestScaling(t *testing.T) {
 func TestDeepNesting(t *testing.T) {
 	defer debug.SetMaxStack(debug.SetMaxStack(16 << 20))
 	doc := "<style>b{color:red}</style>" + strings.Repeat("<b>", 500_000)
-	out, err := mustNew(t).Inline(doc)
+	out, err := mustNew(t, MaxDepth(0)).Inline(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
