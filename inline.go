@@ -235,7 +235,7 @@ const (
 	// :is() or :where(), and has none of juice 12's newer options or control
 	// comments and attributes; those options are ignored as juice 9 ignores
 	// them. Nested CSS is not flattened, and a nested rule that juice 9
-	// throws on makes Inline return an error.
+	// throws on makes Inline return an error wrapping ErrJuiceFails.
 	Juice9
 )
 
@@ -287,8 +287,8 @@ type pass struct {
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 
-	controlAttrs bool // the document mentions data-juice-* attributes
-	juice9Err    error
+	controlAttrs bool     // the document mentions data-juice-* attributes
+	juiceErr     error    // the first place juice would fail, wrapping ErrJuiceFails
 	joinedCSS    [][]byte // the <style> blocks applied, in a compatibility mode
 
 	// RemoveInlinedSelectors only.
@@ -348,8 +348,8 @@ func (in *pass) run(root *html.Node) error {
 	}
 
 	in.applyRules(root, rules)
-	if in.juice9Err != nil {
-		return in.juice9Err
+	if in.juiceErr != nil {
+		return in.juiceErr
 	}
 	if in.controlAttrs {
 		// juice's per-element control attributes never reach the output.
@@ -488,8 +488,8 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				return
 			}
 			applied = r.group
-			if r.throws && in.juice9Err == nil {
-				in.juice9Err = fmt.Errorf("juicer: juice 9 fails on %q, which has a declaration with no value", r.sel)
+			if r.throws && in.juiceErr == nil {
+				in.juiceErr = fmt.Errorf("%w: juice 9 reads %q as a declaration with no value", ErrJuiceFails, r.sel)
 			}
 			if in.inlined != nil {
 				in.inlined[r.sel] = true
@@ -512,8 +512,8 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
 				if v, ok := getAttr(n, o.styleAttributeName); ok {
-					if err := m.seedInline([]byte(v), keepImportant(), o.compat == Juice9); err != nil && in.juice9Err == nil {
-						in.juice9Err = err
+					if err := m.seedInline([]byte(v), keepImportant(), o.compat == Juice9); err != nil && in.juiceErr == nil {
+						in.juiceErr = err
 					}
 				}
 			}

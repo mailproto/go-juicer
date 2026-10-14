@@ -1,7 +1,7 @@
 package juicer
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"slices"
 	"strconv"
@@ -103,7 +103,7 @@ var (
 )
 
 // errContent stands in for the TypeError juice throws while reading content.
-var errContent = errors.New("juice cannot read this pseudo-element content")
+var errContent = fmt.Errorf("%w: juice cannot read this pseudo-element content", ErrJuiceFails)
 
 // parseContent is juice's parseContent: it splits on quotes and reads
 // var(), counter() and attr() in any piece, quoted or not.

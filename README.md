@@ -102,7 +102,7 @@ juice 9's CSS parser (mensch), selectors are scored as juice 9 scores them,
 and there is no CSS variable resolution and none of juice 12's newer options
 and control comments. Every `<style>` block is read as one stylesheet, nested
 CSS is read as juice 9 reads it, and where juice 9 throws, `Inline` returns an
-error. The juice 9 suite runs with it set and passes in full, juice 9's own
+error wrapping `ErrJuiceFails`. The juice 9 suite runs with it set and passes in full, juice 9's own
 quirks included.
 juice 9 is pinned with cheerio 1.0.0-rc.12, the release it was built against;
 its `^1.0.0-rc.12` range now resolves to cheerio 1.x, whose serializer differs.
