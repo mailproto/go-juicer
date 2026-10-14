@@ -110,7 +110,8 @@ func splitSelector(sel []byte) [][]byte {
 	return out
 }
 
-// maxExpansion caps the cartesian blow-up from nested :is() lists.
+// maxExpansion caps the cartesian blow-up from nested :is() lists. A list
+// that would take it past the cap is kept whole instead, as :not(:not()).
 const maxExpansion = 32
 
 // compileRule turns one comma-arm into rules. :is() and :where() are
@@ -188,10 +189,14 @@ func expandFunctional(arm []byte) [][]byte {
 				continue
 			}
 			grew = true
-			for _, alt := range splitSelector(cand[open+1 : end-1]) {
-				if len(next) >= maxExpansion {
-					break
-				}
+			alts := splitSelector(cand[open+1 : end-1])
+			if len(next)+len(alts) > maxExpansion {
+				// Past the cap the list stays one selector, which matches
+				// exactly what the list does.
+				next = append(next, slices.Concat(cand[:at], []byte(":not(:not("), cand[open+1:end-1], []byte("))"), cand[end:]))
+				continue
+			}
+			for _, alt := range alts {
 				if at > 0 && bytes.ContainsAny(alt, " \t\n>+~") {
 					next = append(next, slices.Concat(cand[:at], []byte(":not(:not("), alt, []byte("))"), cand[end:]))
 				} else if v, ok := spliceAlternative(cand, at, end, alt); ok {
@@ -200,7 +205,7 @@ func expandFunctional(arm []byte) [][]byte {
 			}
 		}
 		out = next
-		if !grew || len(out) >= maxExpansion {
+		if !grew {
 			for i, v := range out {
 				out[i] = expandArguments(v)
 			}
