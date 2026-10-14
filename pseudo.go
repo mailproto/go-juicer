@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mailproto/go-juicer/internal/selector"
 	"golang.org/x/net/html"
 )
 
@@ -17,7 +18,7 @@ import (
 // pseudoMaps holds one element's ::before and ::after declarations.
 type pseudoMaps [2]*propMap
 
-func (in *pass) pseudoMap(n *html.Node, kind uint8, dup func() bool) *propMap {
+func (in *pass) pseudoMap(n *html.Node, kind selector.PseudoElement, dup func() bool) *propMap {
 	if in.pseudos == nil {
 		in.pseudos = map[*html.Node]*pseudoMaps{}
 		in.pseudoOrder = nil
@@ -28,7 +29,7 @@ func (in *pass) pseudoMap(n *html.Node, kind uint8, dup func() bool) *propMap {
 		in.pseudos[n] = pm
 		in.pseudoOrder = append(in.pseudoOrder, n)
 	}
-	i := kind - pseudoBefore
+	i := kind - selector.Before
 	if pm[i] == nil {
 		pm[i] = &propMap{dup: dup()}
 	}
@@ -250,7 +251,7 @@ type matchEvent struct {
 // the only case where juice's rule-major counter bookkeeping shows.
 func needCounters(rules []rule) bool {
 	return slices.ContainsFunc(rules, func(r rule) bool {
-		return r.pseudo != pseudoNone && slices.ContainsFunc(r.decls, func(d decl) bool {
+		return r.pseudo != selector.None && slices.ContainsFunc(r.decls, func(d decl) bool {
 			return d.prop == "content" && strings.Contains(strings.ToLower(string(d.value)), "counter")
 		})
 	})
@@ -284,7 +285,7 @@ func (in *pass) simulateCounters(rules []rule) map[*html.Node]*counterScope {
 			scopes[n] = s
 		}
 		r := &rules[ev.rule]
-		if r.pseudo == pseudoNone && !styled[n] {
+		if r.pseudo == selector.None && !styled[n] {
 			// The style attribute is read the first time a plain rule
 			// creates the element's styleProps.
 			styled[n] = true

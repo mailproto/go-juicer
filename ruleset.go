@@ -1,6 +1,7 @@
 package juicer
 
 import (
+	"github.com/mailproto/go-juicer/internal/selector"
 	"golang.org/x/net/html"
 )
 
@@ -45,11 +46,11 @@ func newRuleSet(rules []rule) *ruleSet {
 			continue
 		}
 		switch r.key {
-		case keyID:
+		case selector.KeyID:
 			rs.byID[r.keyName] = append(rs.byID[r.keyName], uint32(i))
-		case keyClass:
+		case selector.KeyClass:
 			rs.byClass[r.keyName] = append(rs.byClass[r.keyName], uint32(i))
-		case keyTag:
+		case selector.KeyTag:
 			rs.byTag[r.keyName] = append(rs.byTag[r.keyName], uint32(i))
 		default:
 			rs.any = append(rs.any, uint32(i))
