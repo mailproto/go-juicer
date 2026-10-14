@@ -1,10 +1,13 @@
 package juicer
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/mailproto/go-juicer/internal/htmlparser2"
 )
 
 // The benchmark document: ~99 KB, 1500 elements, 185 selectors, shaped like a
@@ -30,17 +33,18 @@ func BenchmarkParse(b *testing.B) {
 	b.SetBytes(int64(len(doc)))
 	b.ReportAllocs()
 	for b.Loop() {
-		parseDocument(doc)
+		htmlparser2.Parse(doc, false)
 	}
 }
 
 func BenchmarkRender(b *testing.B) {
 	doc := []byte(benchDoc())
-	root := parseDocument(doc)
+	root := htmlparser2.Parse(doc, false)
 	b.SetBytes(int64(len(doc)))
 	b.ReportAllocs()
 	for b.Loop() {
-		renderDocument(root)
+		var buf bytes.Buffer
+		htmlparser2.Render(&buf, root)
 	}
 }
 
