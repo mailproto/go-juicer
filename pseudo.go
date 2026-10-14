@@ -123,10 +123,10 @@ func (in *pass) parseContent(content string, span, base *html.Node, scope *count
 			v, ok := in.lookupVar(span, tok[m[2]:m[3]])
 			switch {
 			case ok && len(v) > 0:
-				b.WriteString(edgeQuote.ReplaceAllString(string(v), ""))
+				b.WriteString(in.contentText(edgeQuote.ReplaceAllString(string(v), "")))
 			case m[4] >= 0:
 				// juice falls back to the comma and all.
-				b.WriteString(edgeQuote.ReplaceAllString(tok[m[4]:m[5]], ""))
+				b.WriteString(in.contentText(edgeQuote.ReplaceAllString(tok[m[4]:m[5]], "")))
 			default:
 				return "", "", errContent
 			}
@@ -151,11 +151,24 @@ func (in *pass) parseContent(content string, span, base *html.Node, scope *count
 			b.WriteString(v)
 			continue
 		}
-		b.WriteString(tok)
+		b.WriteString(in.contentText(tok))
 	}
 	// juice's "naive unescape".
 	return strings.ReplaceAll(b.String(), `\`, ""), "", nil
 }
+
+// contentText is text from a CSS string in content. juice writes it into the
+// document as markup; a browser shows it as text, so the default escapes it.
+// attr() is not passed through here: attribute values are kept as written,
+// already escaped.
+func (in *pass) contentText(s string) string {
+	if !in.o.fixesJuiceBugs() {
+		return s
+	}
+	return htmlText.Replace(s)
+}
+
+var htmlText = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
 
 func counterStyle(n int, style string) (string, error) {
 	switch style {
