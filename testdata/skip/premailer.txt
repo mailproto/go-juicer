@@ -8,6 +8,7 @@
 
 at-rules/nested-not-inlined  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 cascade/dup-progressive  premailer keeps only the last of a repeated declaration, dropping the fallback juice keeps for older clients
+cascade/escaped-selectors  premailer splits a selector list at an escaped comma, so .a\,b never applies
 cascade/pseudo-class-specificity  premailer's selector engine (Nokogiri) does not support :is() or :where()
 cascade/pseudo-first-selector  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
 cascade/selector-list-ties  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
