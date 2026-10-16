@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // FuzzCSS checks two properties that do not need juice to verify: inlining
@@ -33,8 +34,10 @@ func FuzzCSS(f *testing.F) {
 		}
 		doc := []byte("<style>" + css + "</style>" + skeleton)
 		for _, in := range inliners {
-			a, errA := in.InlineBytes(doc)
-			b, errB := in.InlineBytes(doc)
+			var a, b []byte
+			var errA, errB error
+			inTime(t, func() { a, errA = in.InlineBytes(doc) })
+			inTime(t, func() { b, errB = in.InlineBytes(doc) })
 			if (errA == nil) != (errB == nil) {
 				t.Fatalf("nondeterministic error: %v vs %v", errA, errB)
 			}
@@ -74,8 +77,10 @@ func FuzzDocument(f *testing.F) {
 			opts = append(opts, opt(mask&(1<<i) != 0))
 		}
 		in := mustNew(t, opts...)
-		a, errA := in.Inline(doc)
-		b, errB := in.Inline(doc)
+		var a, b string
+		var errA, errB error
+		inTime(t, func() { a, errA = in.Inline(doc) })
+		inTime(t, func() { b, errB = in.Inline(doc) })
 		if (errA == nil) != (errB == nil) {
 			t.Fatalf("nondeterministic error: %v vs %v", errA, errB)
 		}
@@ -83,6 +88,21 @@ func FuzzDocument(f *testing.F) {
 			t.Fatalf("nondeterministic output for %q:\n  %q\n  %q", doc, a, b)
 		}
 	})
+}
+
+// slowInput is how long one inlining may take. A slow input stalls a fuzz
+// worker, and one still running when -fuzztime ends fails the run with
+// "context deadline exceeded" and saves nothing; past this it fails here and
+// the fuzzer keeps it.
+const slowInput = time.Second
+
+func inTime(t *testing.T, inline func()) {
+	t.Helper()
+	start := time.Now()
+	inline()
+	if d := time.Since(start); d > slowInput {
+		t.Fatalf("inlining took %v, over %v", d, slowInput)
+	}
 }
 
 func seedDocs(f *testing.F) []string {
