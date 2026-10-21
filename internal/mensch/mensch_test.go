@@ -1,4 +1,4 @@
-package juicer
+package mensch
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 // TestMensch checks the port against mensch's own test inputs, with goldens
 // from pinned mensch (testdata/mensch).
 func TestMensch(t *testing.T) {
-	files, err := filepath.Glob(filepath.Join("testdata", "mensch", "in", "*.css"))
+	files, err := filepath.Glob(filepath.Join("..", "..", "testdata", "mensch", "in", "*.css"))
 	if err != nil || len(files) == 0 {
 		t.Fatalf("no mensch inputs: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestMensch(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			b, err := os.ReadFile(filepath.Join("testdata", "mensch", "out", name+".json"))
+			b, err := os.ReadFile(filepath.Join("..", "..", "testdata", "mensch", "out", name+".json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -34,23 +34,23 @@ func TestMensch(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			toks := menschLex(string(css))
+			toks := Lex(string(css))
 			if len(toks) != len(want.Tokens) {
 				t.Errorf("%d tokens, want %d", len(toks), len(want.Tokens))
 			}
 			for i := range min(len(toks), len(want.Tokens)) {
 				g, w := toks[i], want.Tokens[i]
-				if g != (menschToken{w.Type, w.Name, w.Value, w.Text, w.Prefix}) {
+				if g != (Token{w.Type, w.Name, w.Value, w.Text, w.Prefix}) {
 					t.Fatalf("token %d: got %+v, want %+v", i, g, w)
 				}
 			}
 
-			nodes := menschParse(toks)
+			nodes := Parse(toks)
 			if len(nodes) != len(want.Text) {
 				t.Fatalf("%d nodes, want %d", len(nodes), len(want.Text))
 			}
 			for i, n := range nodes {
-				if got := string(menschStringify(n)); got != want.Text[i] {
+				if got := string(Stringify(n)); got != want.Text[i] {
 					t.Errorf("node %d:\n got %q\nwant %q", i, got, want.Text[i])
 				}
 			}

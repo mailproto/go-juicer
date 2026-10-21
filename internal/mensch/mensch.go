@@ -1,4 +1,9 @@
-package juicer
+// Package mensch is a port of mensch 0.3.4, the CSS parser juice 9 reads
+// stylesheets with and re-emits preserved rules through. Its recovery from
+// malformed CSS, comment handling and output formatting are all part of juice
+// 9's behaviour, so the port follows it state for state rather than
+// approximating it.
+package mensch
 
 import (
 	"bytes"
@@ -6,16 +11,12 @@ import (
 	"unicode"
 )
 
-// A port of mensch 0.3.4, the CSS parser juice 9 reads stylesheets with and
-// re-emits preserved rules through. Its recovery from malformed CSS, comment
-// handling and output formatting are all part of juice 9's behaviour, so the
-// Juice9 profile follows it state for state rather than approximating it.
-
-type menschToken struct {
-	typ, name, value, text, prefix string
+// Token is a token from mensch's lexer.
+type Token struct {
+	Type, Name, Value, Text, Prefix string
 }
 
-var menschAtRules = []struct{ name, typ, prefix, state string }{
+var atRules = []struct{ name, typ, prefix, state string }{
 	{"media", "", "", ""},
 	{"keyframes", "", "", ""},
 	{"-webkit-keyframes", "keyframes", "-webkit-", ""},
@@ -33,10 +34,10 @@ var menschAtRules = []struct{ name, typ, prefix, state string }{
 	{"page", "", "", ""},
 }
 
-// menschLex is mensch's lexer. A state of "" is JavaScript's undefined, which
+// Lex is mensch's lexer. A state of "" is JavaScript's undefined, which
 // mensch reaches by popping its last state on a stray "}". Setting a state on
 // the emptied stack writes its "-1" property, which neg stands in for.
-func menschLex(css string) []menschToken {
+func Lex(css string) []Token {
 	var (
 		buf    []byte
 		cursor = -1
@@ -44,8 +45,8 @@ func menschLex(css string) []menschToken {
 		state  = "before-selector"
 		stack  = []string{state}
 		neg    string
-		tok    menschToken
-		toks   []menschToken
+		tok    Token
+		toks   []Token
 	)
 	at := func(i int) byte {
 		if i < 0 || i >= len(css) {
@@ -89,9 +90,9 @@ func menschLex(css string) []menschToken {
 	addToken := func() {
 		toks = append(toks, tok)
 		buf = buf[:0]
-		tok = menschToken{}
+		tok = Token{}
 	}
-	initializeToken := func(typ string) { tok = menschToken{typ: typ} }
+	initializeToken := func(typ string) { tok = Token{Type: typ} }
 	trimmed := func() string { return jsTrim(string(buf)) }
 
 	for cursor++; cursor < len(css); cursor++ {
@@ -108,7 +109,7 @@ func menschLex(css string) []menschToken {
 				buf = append(buf, ch)
 			case "at-value":
 				if ch == '\n' {
-					tok.value = trimmed()
+					tok.Value = trimmed()
 					addToken()
 					popState()
 				}
@@ -116,7 +117,7 @@ func menschLex(css string) []menschToken {
 		case ':':
 			switch state {
 			case "name":
-				tok.name = trimmed()
+				tok.Name = trimmed()
 				buf = buf[:0]
 				replaceState("before-value")
 			case "before-selector":
@@ -133,14 +134,14 @@ func menschLex(css string) []menschToken {
 			switch state {
 			case "name", "before-value", "value":
 				if v := trimmed(); v != "" {
-					tok.value = v
+					tok.Value = v
 					addToken()
 				}
 				replaceState("before-name")
 			case "value-paren":
 				buf = append(buf, ch)
 			case "at-value":
-				tok.value = trimmed()
+				tok.Value = trimmed()
 				addToken()
 				popState()
 			case "before-name":
@@ -154,13 +155,13 @@ func menschLex(css string) []menschToken {
 					buf = append(buf, ch)
 					break
 				}
-				tok.text = trimmed()
+				tok.Text = trimmed()
 				addToken()
 				replaceState("before-name")
 				depth++
 			case "at-group":
-				tok.name = trimmed()
-				switch tok.typ {
+				tok.Name = trimmed()
+				switch tok.Type {
 				case "font-face", "viewport", "page":
 					pushState("before-name")
 				default:
@@ -169,7 +170,7 @@ func menschLex(css string) []menschToken {
 				addToken()
 				depth++
 			case "name", "at-rule":
-				tok.name = trimmed()
+				tok.Name = trimmed()
 				addToken()
 				pushState("before-name")
 				depth++
@@ -183,9 +184,9 @@ func menschLex(css string) []menschToken {
 			switch state {
 			case "before-name", "name", "before-value", "value":
 				if len(buf) > 0 {
-					tok.value = trimmed()
+					tok.Value = trimmed()
 				}
-				if tok.name != "" && tok.value != "" {
+				if tok.Name != "" && tok.Value != "" {
 					addToken()
 				}
 				initializeToken("end")
@@ -269,7 +270,7 @@ func menschLex(css string) []menschToken {
 			switch state {
 			case "comment":
 				if at(cursor+1) == '/' {
-					tok.text = string(buf)
+					tok.Text = string(buf)
 					cursor++
 					addToken()
 					popState()
@@ -295,7 +296,7 @@ func menschLex(css string) []menschToken {
 				buf = append(buf, ch)
 			default:
 				tokenized := false
-				for _, r := range menschAtRules {
+				for _, r := range atRules {
 					if !strings.HasPrefix(css[cursor+1:], r.name) {
 						continue
 					}
@@ -308,10 +309,10 @@ func menschLex(css string) []menschToken {
 					pushState(st)
 					cursor += len(r.name)
 					if r.prefix != "" {
-						tok.prefix = r.prefix
+						tok.Prefix = r.prefix
 					}
 					if r.typ != "" {
-						tok.typ = r.typ
+						tok.Type = r.typ
 					}
 					break
 				}
@@ -362,23 +363,23 @@ func stringState(quote byte) string {
 }
 
 // jsTrim is String.prototype.trim.
-func jsTrim(s string) string { return strings.TrimFunc(s, jsSpace) }
+func jsTrim(s string) string { return strings.TrimFunc(s, JSSpace) }
 
-// jsSpace is JavaScript's \s.
-func jsSpace(r rune) bool { return r == 0xfeff || r != 0x85 && unicode.IsSpace(r) }
+// JSSpace reports whether r is in JavaScript's \s.
+func JSSpace(r rune) bool { return r == 0xfeff || r != 0x85 && unicode.IsSpace(r) }
 
-// menschNode is a node of mensch's AST. rules is non-nil for an at-rule that
-// holds rules; decls for a rule or an at-rule that holds declarations.
-type menschNode struct {
-	typ, name, value, text, prefix string
-	selectors                      []string
-	decls, rules                   []menschNode
+// Node is a node of mensch's AST. Rules is non-nil for an at-rule that
+// holds rules; Decls for a rule or an at-rule that holds declarations.
+type Node struct {
+	Type, Name, Value, Text, Prefix string
+	Selectors                       []string
+	Decls, Rules                    []Node
 }
 
-// menschParse is mensch's parser, with comments kept as juice asks.
-func menschParse(toks []menschToken) []menschNode {
-	p := menschParser{toks: toks}
-	var rules []menschNode
+// Parse is mensch's parser, with comments kept as juice asks.
+func Parse(toks []Token) []Node {
+	p := parser{toks: toks}
+	var rules []Node
 	for len(p.toks) > 0 {
 		if n, ok := p.token(p.next()); ok {
 			rules = append(rules, n)
@@ -387,39 +388,39 @@ func menschParse(toks []menschToken) []menschNode {
 	return rules
 }
 
-type menschParser struct {
-	toks  []menschToken
+type parser struct {
+	toks  []Token
 	depth int // shared by every open at-rule, as in mensch
 }
 
-func (p *menschParser) next() menschToken {
+func (p *parser) next() Token {
 	t := p.toks[0]
 	p.toks = p.toks[1:]
 	return t
 }
 
-func (p *menschParser) token(t menschToken) (menschNode, bool) {
-	n := menschNode{typ: t.typ, name: t.name, value: t.value}
-	switch t.typ {
+func (p *parser) token(t Token) (Node, bool) {
+	n := Node{Type: t.Type, Name: t.Name, Value: t.Value}
+	switch t.Type {
 	case "property", "charset", "import", "namespace":
 	case "selector":
-		n.typ = "rule"
-		for _, s := range strings.Split(t.text, ",") {
-			n.selectors = append(n.selectors, jsTrim(s))
+		n.Type = "rule"
+		for _, s := range strings.Split(t.Text, ",") {
+			n.Selectors = append(n.Selectors, jsTrim(s))
 		}
-		n.decls = p.declarations()
+		n.Decls = p.declarations()
 	case "comment":
-		n.text = t.text
+		n.Text = t.Text
 	case "media", "keyframes", "supports", "document":
 		p.depth++
-		n.prefix = t.prefix
-		n.rules = p.while(func(menschToken) bool { return p.depth != 0 })
-		if n.rules == nil {
-			n.rules = []menschNode{}
+		n.Prefix = t.Prefix
+		n.Rules = p.while(func(Token) bool { return p.depth != 0 })
+		if n.Rules == nil {
+			n.Rules = []Node{}
 		}
 	case "font-face", "viewport", "page":
 		p.depth++
-		n.decls = p.declarations()
+		n.Decls = p.declarations()
 	case "at-group-end":
 		p.depth--
 		return n, false
@@ -431,13 +432,13 @@ func (p *menschParser) token(t menschToken) (menschNode, bool) {
 
 // while is mensch's parseTokensWhile, which drops the token that ends it if
 // that token is an "end".
-func (p *menschParser) while(cond func(menschToken) bool) []menschNode {
-	var nodes []menschNode
+func (p *parser) while(cond func(Token) bool) []Node {
+	var nodes []Node
 	for len(p.toks) > 0 {
 		t := p.next()
 		if !cond(t) {
-			if t.typ != "end" {
-				p.toks = append([]menschToken{t}, p.toks...)
+			if t.Type != "end" {
+				p.toks = append([]Token{t}, p.toks...)
 			}
 			return nodes
 		}
@@ -448,82 +449,82 @@ func (p *menschParser) while(cond func(menschToken) bool) []menschNode {
 	return nodes
 }
 
-func (p *menschParser) declarations() []menschNode {
-	return p.while(func(t menschToken) bool { return t.typ == "property" || t.typ == "comment" })
+func (p *parser) declarations() []Node {
+	return p.while(func(t Token) bool { return t.Type == "property" || t.Type == "comment" })
 }
 
-// menschStringify is mensch.stringify for one node, as juice 9 calls it:
+// Stringify is mensch.stringify for one node, as juice 9 calls it:
 // comments dropped, two-space indentation, trimmed.
-func menschStringify(n menschNode) []byte {
+func Stringify(n Node) []byte {
 	var b bytes.Buffer
-	menschNodeText(&b, n, 1)
+	nodeText(&b, n, 1)
 	return []byte(jsTrim(b.String()))
 }
 
-func menschIndent(b *bytes.Buffer, level int) {
+func indent(b *bytes.Buffer, level int) {
 	for range level - 1 {
 		b.WriteString("  ")
 	}
 }
 
-func menschNodeText(b *bytes.Buffer, n menschNode, level int) {
-	switch n.typ {
+func nodeText(b *bytes.Buffer, n Node, level int) {
+	switch n.Type {
 	case "rule":
-		menschRule(b, n, level)
+		writeRule(b, n, level)
 	case "import", "charset", "namespace":
-		b.WriteString("@" + n.typ + " " + n.value + ";\n")
+		b.WriteString("@" + n.Type + " " + n.Value + ";\n")
 	case "media", "keyframes", "font-face", "supports", "viewport", "document", "page":
-		b.WriteString("@" + n.prefix + n.typ)
-		if n.name != "" {
-			b.WriteString(" " + n.name)
+		b.WriteString("@" + n.Prefix + n.Type)
+		if n.Name != "" {
+			b.WriteString(" " + n.Name)
 		}
 		b.WriteByte(' ')
-		menschBlock(b, n, level, n.typ != "page")
+		writeBlock(b, n, level, n.Type != "page")
 		b.WriteByte('\n')
 	}
 }
 
-func menschRule(b *bytes.Buffer, n menschNode, level int) {
-	menschIndent(b, level)
-	if n.selectors != nil {
-		b.WriteString(strings.Join(n.selectors, ",\n"))
+func writeRule(b *bytes.Buffer, n Node, level int) {
+	indent(b, level)
+	if n.Selectors != nil {
+		b.WriteString(strings.Join(n.Selectors, ",\n"))
 	} else {
-		b.WriteString("@" + n.typ)
-		if n.name != "" {
-			b.WriteString(" " + n.name)
+		b.WriteString("@" + n.Type)
+		if n.Name != "" {
+			b.WriteString(" " + n.Name)
 		}
 	}
 	b.WriteByte(' ')
-	menschBlock(b, n, level, false)
+	writeBlock(b, n, level, false)
 	b.WriteByte('\n')
 }
 
-func menschBlock(b *bytes.Buffer, n menschNode, level int, chomp bool) {
+func writeBlock(b *bytes.Buffer, n Node, level int, chomp bool) {
 	var parts [][]byte
-	if n.rules != nil {
-		for _, c := range n.rules {
-			if c.typ == "comment" {
+	if n.Rules != nil {
+		for _, c := range n.Rules {
+			if c.Type == "comment" {
 				continue
 			}
 			var cb bytes.Buffer
-			menschRule(&cb, c, level+1)
+			writeRule(&cb, c, level+1)
 			parts = append(parts, cb.Bytes())
 		}
 	} else {
-		for _, c := range n.decls {
-			if c.typ != "property" {
+		for _, c := range n.Decls {
+			if c.Type != "property" {
 				continue
 			}
 			var cb bytes.Buffer
-			menschIndent(&cb, level+1)
-			if c.name != "" {
-				cb.WriteString(c.name + ": ")
+			indent(&cb, level+1)
+			if c.Name != "" {
+				cb.WriteString(c.Name + ": ")
 			}
-			if c.value == "" {
+			if c.Value == "" {
 				// Only a declaration cut short by "{" has no value.
 				cb.WriteString("undefined;")
 			} else {
-				cb.WriteString(c.value + ";")
+				cb.WriteString(c.Value + ";")
 			}
 			parts = append(parts, cb.Bytes())
 		}
@@ -536,6 +537,6 @@ func menschBlock(b *bytes.Buffer, n menschNode, level int, chomp bool) {
 			b.WriteByte('\n')
 		}
 	}
-	menschIndent(b, level)
+	indent(b, level)
 	b.WriteByte('}')
 }
