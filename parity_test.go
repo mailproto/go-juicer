@@ -22,7 +22,9 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -40,10 +42,11 @@ var parityRuns = []struct {
 	name, target string
 	mode         Compatibility
 	skipFiles    []string
+	readme       string // the run's row in the README table
 }{
-	{"juice-12", "juice-12", Juice12, []string{"juice-12"}},
-	{"juice-9", "juice-9", Juice9, []string{"juice-9"}},
-	{"default", "juice-12", standard, []string{"juice-12", "default"}},
+	{"juice-12", "juice-12", Juice12, []string{"juice-12"}, "juice 12.1.3, with `CompatibilityMode(Juice12)`"},
+	{"juice-9", "juice-9", Juice9, []string{"juice-9"}, "juice 9.1.0, with `CompatibilityMode(Juice9)`"},
+	{"default", "juice-12", standard, []string{"juice-12", "default"}, "juice 12.1.3, default mode"},
 }
 
 func TestParity(t *testing.T) {
@@ -74,6 +77,15 @@ func TestParity(t *testing.T) {
 			if total := n.pass + n.skipped + n.failed; total > 0 {
 				t.Logf("%s parity: %d/%d cases (%.1f%%), %d skipped, %d failed",
 					run.name, n.pass, total, 100*float64(n.pass)/float64(total), n.skipped, n.failed)
+			}
+			// Only a whole, passing run has the counts the README states.
+			if n.failed == 0 && n.pass+n.skipped == len(variants)*countFixtures(t) {
+				skipped := "none"
+				if n.skipped > 0 {
+					skipped = strconv.Itoa(n.skipped)
+				}
+				re := regexp.MustCompile(`\| ` + regexp.QuoteMeta(run.readme) + ` \| (\d+ \| \d+ \| (?:\d+|none))`)
+				checkREADME(t, re, fmt.Sprintf("%d | %d | %s", n.pass+n.skipped, n.pass, skipped))
 			}
 		})
 	}
