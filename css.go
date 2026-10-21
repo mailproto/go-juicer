@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"slices"
 	"strings"
+
+	"github.com/mailproto/go-juicer/internal/postcss"
 )
 
 // decl is one declaration from a stylesheet.
@@ -77,8 +79,6 @@ func preserveKind(kind string, o *options) bool {
 	return false
 }
 
-// selectorText recovers the selector as written. The span runs to just past
-
 // quotes finds where strings end. A quote that never closes means no later
 // quote of its kind does either, so it remembers that to stay linear.
 type quotes [2]int
@@ -103,8 +103,6 @@ func (q *quotes) end(src []byte, i int) int {
 	}
 	return min(i+1, len(src)-1)
 }
-
-// trimValue trims a value as postcss does: whitespace that a string takes in,
 
 // importantSuffix reports where a trailing !important begins, or -1.
 func importantSuffix(v []byte) int {
@@ -139,4 +137,91 @@ func trimCSS(b []byte) []byte {
 		b = b[:len(b)-1]
 	}
 	return b
+}
+
+// parseStylesheet reads a stylesheet as juice does, through postcss: juice's
+// parseCSS for the rules, and its getPreservedText for what stays behind.
+func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
+	flat := flattenNesting(src)
+	text := string(flat)
+	if opts.fixesJuiceBugs() {
+		if b := blankCommentMarkers(text); b != text {
+			text, flat = b, []byte(b)
+		}
+	}
+	root := postcss.Parse(text)
+	var rules []rule
+	var keep []preserved
+	for _, n := range root.Nodes {
+		switch n.Type {
+		case "atrule":
+			if kind := atRuleKind([]byte("@" + n.Name)); preserveKind(kind, opts) {
+				keep = append(keep, preserved{kind, []byte(postcss.Stringify(n))})
+			}
+		case "rule":
+			decls := make([]decl, 0, len(n.Nodes))
+			for _, c := range n.Nodes {
+				if c.Type != "decl" || strings.TrimSpace(c.Value) == "" {
+					continue
+				}
+				v := c.ValueBytes(flat)
+				d := decl{prop: c.Prop, value: v, important: c.Important, ord: ord}
+				if c.Important {
+					d.bang = append(v[:len(v):len(v)], " !important"...)
+				}
+				decls = append(decls, d)
+				ord++
+			}
+			sels := n.SelectorBytes(flat)
+			if len(decls) > 0 {
+				for _, sel := range sels {
+					armRules, ignored := compileRule(sel, decls, opts)
+					if ignored {
+						continue
+					}
+					for k := range armRules {
+						armRules[k].group = int32(len(rules))
+					}
+					rules = append(rules, armRules...)
+				}
+			}
+			if opts.keepAll || opts.preservePseudos && hasIgnoredPseudo(sels[0]) || matchesPreserved(sels, opts.preservedSelectors) {
+				keep = append(keep, preserved{"pseudo", []byte(postcss.Stringify(n))})
+			}
+		default:
+			if opts.keepAll && n.Type == "comment" {
+				keep = append(keep, preserved{"comment", []byte(postcss.Stringify(n))})
+			}
+		}
+	}
+	return rules, keep, ord
+}
+
+// blankCommentMarkers hides "<!--" and "-->" outside strings and comments,
+// which CSS ignores in a stylesheet and postcss reads as words.
+func blankCommentMarkers(css string) string {
+	if !strings.Contains(css, "<!--") && !strings.Contains(css, "-->") {
+		return css
+	}
+	b := []byte(css)
+	var q quotes
+	for i := 0; i < len(b); i++ {
+		switch {
+		case b[i] == '"' || b[i] == '\'':
+			i = q.end(b, i)
+		case b[i] == '/' && i+1 < len(b) && b[i+1] == '*':
+			if k := strings.Index(css[i+2:], "*/"); k >= 0 {
+				i += k + 3
+			} else {
+				i = len(b)
+			}
+		case strings.HasPrefix(css[i:], "<!--"):
+			copy(b[i:], "    ")
+			i += 3
+		case strings.HasPrefix(css[i:], "-->") && (i == 0 || !isSelectorNameChar(b[i-1])):
+			copy(b[i:], "   ")
+			i += 2
+		}
+	}
+	return string(b)
 }
