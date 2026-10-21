@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mailproto/go-juicer/internal/htmlparser2"
 	"golang.org/x/net/html"
 )
 
@@ -44,7 +45,7 @@ func checkDepth(root *html.Node, o *options) error {
 	depth, deepest := 0, 0
 	var css strings.Builder
 	css.WriteString(o.extraCSS)
-	traverse(root, func(n *html.Node) bool {
+	htmlparser2.Traverse(root, func(n *html.Node) bool {
 		if n.Type != html.ElementNode {
 			return true
 		}
