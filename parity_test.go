@@ -57,7 +57,7 @@ func TestParity(t *testing.T) {
 			for _, f := range run.skipFiles {
 				maps.Copy(skips, loadSkips(t, f))
 			}
-			var n tally
+			n := tally{freed: map[string]bool{}, still: map[string][]string{}}
 			for _, variant := range slices.Sorted(maps.Keys(variants)) {
 				t.Run(variant, func(t *testing.T) {
 					parityVariant(t, run.target, run.mode, variant, variants[variant], skips, &n)
@@ -80,6 +80,10 @@ func TestParity(t *testing.T) {
 			}
 			// Only a whole, passing run has the counts the README states.
 			if n.failed == 0 && n.pass+n.skipped == len(variants)*countFixtures(t) {
+				if ratcheting() {
+					own := run.skipFiles[len(run.skipFiles)-1]
+					rewriteSkips(t, own, n.ratchet(loadSkips(t, own)))
+				}
 				skipped := "none"
 				if n.skipped > 0 {
 					skipped = strconv.Itoa(n.skipped)
@@ -91,10 +95,34 @@ func TestParity(t *testing.T) {
 	}
 }
 
-type tally struct{ pass, skipped, failed int }
+// tally counts a run's cases. For `make ratchet` it also records which skip
+// lines had a case pass, and the variants each still fails in.
+type tally struct {
+	pass, skipped, failed int
+	freed                 map[string]bool
+	still                 map[string][]string
+}
 
 // parityVariant runs every fixture under one option variant. A skip line
 // names "<variant>/<fixture>", or "*/<fixture>" for every variant.
+// ratchet is the lines of the skip list own to rewrite: dropped where every
+// case now passes, and a "*/" line narrowed to the variants still failing.
+func (n tally) ratchet(own map[string]string) map[string][]string {
+	with := map[string][]string{}
+	for key := range n.freed {
+		reason, ok := own[key]
+		if !ok {
+			continue
+		}
+		var lines []string
+		for _, v := range n.still[key] {
+			lines = append(lines, v+"/"+strings.TrimPrefix(key, "*/")+"  "+reason)
+		}
+		with[key] = lines
+	}
+	return with
+}
+
 func parityVariant(t *testing.T, target string, mode Compatibility, variant string, variantOpts map[string]any, skips map[string]string, n *tally) {
 	root := filepath.Join("testdata", "in")
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
@@ -132,9 +160,13 @@ func parityVariant(t *testing.T, target string, mode Compatibility, variant stri
 
 			reason, isSkipped := skips[skipKey]
 			switch {
+			case isSkipped && ok && ratcheting():
+				n.freed[skipKey] = true
+				n.pass++
 			case isSkipped && ok:
-				t.Errorf("case now passes; drop its skip line\n  was: %s", reason)
+				t.Errorf("case now passes; drop its skip line (`make ratchet`)\n  was: %s", reason)
 			case isSkipped:
+				n.still[skipKey] = append(n.still[skipKey], variant)
 				n.skipped++
 				t.Skipf("known gap: %s", reason)
 			case !ok:
@@ -168,6 +200,48 @@ func loadVariants(t *testing.T) map[string]map[string]any {
 		t.Fatalf("bad testdata/variants.json: %v", err)
 	}
 	return v
+}
+
+func TestRatchetNarrows(t *testing.T) {
+	n := tally{
+		freed: map[string]bool{"*/a/fixed": true, "*/a/mixed": true, "v1/a/one": true, "*/a/elsewhere": true},
+		still: map[string][]string{"*/a/mixed": {"v1", "v3"}},
+	}
+	own := map[string]string{"*/a/fixed": "r1", "*/a/mixed": "r2", "v1/a/one": "r3"}
+	want := map[string][]string{"*/a/fixed": nil, "*/a/mixed": {"v1/a/mixed  r2", "v3/a/mixed  r2"}, "v1/a/one": nil}
+	if got := n.ratchet(own); !maps.EqualFunc(got, want, slices.Equal) {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// ratcheting reports whether skip lines whose cases now pass are rewritten
+// (`make ratchet`) rather than failing the test.
+func ratcheting() bool { return os.Getenv("JUICER_RATCHET") != "" }
+
+// rewriteSkips replaces each named line of testdata/skip/<target>.txt with
+// the given lines, dropping it when there are none.
+func rewriteSkips(t *testing.T, target string, with map[string][]string) {
+	t.Helper()
+	if len(with) == 0 {
+		return
+	}
+	path := filepath.Join("testdata", "skip", target+".txt")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out []string
+	for _, line := range strings.Split(strings.TrimSuffix(string(b), "\n"), "\n") {
+		name, _, _ := strings.Cut(strings.TrimSpace(line), " ")
+		if lines, ok := with[name]; ok && !strings.HasPrefix(name, "#") {
+			out = append(out, lines...)
+			continue
+		}
+		out = append(out, line)
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(out, "\n")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func loadSkips(t *testing.T, target string) map[string]string {

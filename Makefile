@@ -1,4 +1,4 @@
-.PHONY: test vet goldens goldens-verify cascade readme premailer-outputs premailer-verify bench fmt differential bench-report bench-compare
+.PHONY: test vet goldens goldens-verify cascade ratchet readme premailer-outputs premailer-verify bench fmt differential bench-report bench-compare
 
 ORACLE := testdata/oracle
 
@@ -22,6 +22,9 @@ CHROME_PATH ?= $(or $(shell command -v google-chrome),/Applications/Google Chrom
 cascade: ## render every fixture in headless Chrome as written and inlined; computed styles must match
 	cd $(ORACLE) && npm ci --silent
 	JUICER_CASCADE=1 CHROME_PATH="$(CHROME_PATH)" go test -run TestCascade -timeout 20m .
+
+ratchet: ## drop skip lines whose cases now pass, narrowing */ lines to the variants still failing, and update the README counts (cascade: JUICER_RATCHET=1 make cascade)
+	JUICER_RATCHET=1 JUICER_UPDATE_README=1 go test -run 'TestParity|TestPremailerSemantics' -count=1 .
 
 readme: ## rewrite the README's parity and premailer counts from the tests that measure them (cascade: JUICER_UPDATE_README=1 make cascade)
 	JUICER_UPDATE_README=1 go test -run 'TestParity|TestPremailerSemantics' -count=1 .
