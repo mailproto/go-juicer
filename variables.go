@@ -3,6 +3,7 @@ package juicer
 import (
 	"bytes"
 
+	"github.com/mailproto/go-juicer/internal/selector"
 	"golang.org/x/net/html"
 )
 
@@ -56,8 +57,8 @@ func (in *pass) substitute(n *html.Node, v []byte, depth int, budget *int) []byt
 		if at < 0 || *budget <= 0 {
 			return out
 		}
-		end := parenEnd(out, open)
-		// parenEnd falls back to the end of input when the parenthesis is
+		end := selector.ParenEnd(out, open)
+		// ParenEnd falls back to the end of input when the parenthesis is
 		// never closed, which is not a usable span.
 		if end < open+2 || out[end-1] != ')' {
 			return out
