@@ -106,6 +106,7 @@ func TestCascade(t *testing.T) {
 
 	known := loadSkips(t, "cascade")
 	var agree, listed, ran int
+	freed := map[string][]string{}
 	for _, name := range names {
 		t.Run(name, func(t *testing.T) {
 			ran++
@@ -115,8 +116,11 @@ func TestCascade(t *testing.T) {
 			}
 			reason, isKnown := known[name]
 			switch {
+			case isKnown && len(diffs) == 0 && ratcheting():
+				freed[name] = nil
+				agree++
 			case isKnown && len(diffs) == 0:
-				t.Errorf("now preserves the cascade; drop its line from testdata/skip/cascade.txt\n  was: %s", reason)
+				t.Errorf("now preserves the cascade; drop its line from testdata/skip/cascade.txt (`make ratchet`)\n  was: %s", reason)
 			case isKnown:
 				listed++
 				t.Skipf("known difference: %s", reason)
@@ -134,6 +138,9 @@ func TestCascade(t *testing.T) {
 	}
 	t.Logf("cascade: %d documents render the same inlined, %d known differences", agree, listed)
 	if !t.Failed() && ran == len(names) {
+		if ratcheting() {
+			rewriteSkips(t, "cascade", freed)
+		}
 		checkREADME(t, regexp.MustCompile(`(\d+ of \d+) render identically`), fmt.Sprintf("%d of %d", agree, agree+listed))
 	}
 }

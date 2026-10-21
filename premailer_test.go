@@ -244,6 +244,7 @@ func TestPremailerSemantics(t *testing.T) {
 	known := loadSkips(t, "premailer")
 	root := filepath.Join("testdata", "out", "premailer")
 	var agree, listed, docs, ran int
+	freed := map[string][]string{}
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") {
 			return err
@@ -277,8 +278,11 @@ func TestPremailerSemantics(t *testing.T) {
 
 			reason, isKnown := known[name]
 			switch {
+			case isKnown && len(diffs) == 0 && ratcheting():
+				freed[name] = nil
+				agree++
 			case isKnown && len(diffs) == 0:
-				t.Errorf("now agrees with premailer; drop its line from testdata/skip/premailer.txt\n  was: %s", reason)
+				t.Errorf("now agrees with premailer; drop its line from testdata/skip/premailer.txt (`make ratchet`)\n  was: %s", reason)
 			case isKnown:
 				listed++
 				t.Skipf("known difference: %s", reason)
@@ -300,6 +304,9 @@ func TestPremailerSemantics(t *testing.T) {
 	}
 	t.Logf("premailer semantics: %d agree, %d known differences", agree, listed)
 	if !t.Failed() && ran == docs {
+		if ratcheting() {
+			rewriteSkips(t, "premailer", freed)
+		}
 		checkREADME(t, regexp.MustCompile(`(\d+ of \d+) documents agree`), fmt.Sprintf("%d of %d", agree, agree+listed))
 	}
 }
