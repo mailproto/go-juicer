@@ -64,7 +64,7 @@ let count = 0;
 for (const [target, pkg] of Object.entries(TARGETS)) {
   const { default: juice } = await import(pkg);
   const version = require(`${pkg}/package.json`).version;
-  const stamp = `juice ${version}\nnode ${process.versions.node}\n`;
+  const stamp = `juice ${version}\n`;
   const defaults = Object.fromEntries(
     GLOBALS.filter((k) => juice[k] !== undefined).map((k) => [k, structuredClone(juice[k])]),
   );
