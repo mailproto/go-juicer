@@ -63,7 +63,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3, with `CompatibilityMode(Juice12)` | 4095 | 4046 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4095 | 3964 | 131: the same 49, plus 82 where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, default mode | 4095 | 3964 | 131: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4095 | 4095 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and

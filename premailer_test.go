@@ -243,7 +243,7 @@ func borderParts(v string) (width, style, color string) {
 func TestPremailerSemantics(t *testing.T) {
 	known := loadSkips(t, "premailer")
 	root := filepath.Join("testdata", "out", "premailer")
-	var agree, listed int
+	var agree, listed, docs, ran int
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") {
 			return err
@@ -253,7 +253,9 @@ func TestPremailerSemantics(t *testing.T) {
 			return err
 		}
 		name := filepath.ToSlash(strings.TrimSuffix(rel, ".html"))
+		docs++
 		t.Run(name, func(t *testing.T) {
+			ran++
 			want, err := os.ReadFile(p)
 			if err != nil {
 				t.Fatal(err)
@@ -297,6 +299,9 @@ func TestPremailerSemantics(t *testing.T) {
 		}
 	}
 	t.Logf("premailer semantics: %d agree, %d known differences", agree, listed)
+	if !t.Failed() && ran == docs {
+		checkREADME(t, regexp.MustCompile(`(\d+ of \d+) documents agree`), fmt.Sprintf("%d of %d", agree, agree+listed))
+	}
 }
 
 // compareStyled lists differences between premailer's elements (a) and ours

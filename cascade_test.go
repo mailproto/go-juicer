@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -103,9 +105,10 @@ func TestCascade(t *testing.T) {
 	}
 
 	known := loadSkips(t, "cascade")
-	var agree, listed int
+	var agree, listed, ran int
 	for _, name := range names {
 		t.Run(name, func(t *testing.T) {
+			ran++
 			diffs, ok := results[name]
 			if !ok {
 				t.Fatal("no result from cascade.mjs")
@@ -130,4 +133,7 @@ func TestCascade(t *testing.T) {
 		}
 	}
 	t.Logf("cascade: %d documents render the same inlined, %d known differences", agree, listed)
+	if !t.Failed() && ran == len(names) {
+		checkREADME(t, regexp.MustCompile(`(\d+ of \d+) render identically`), fmt.Sprintf("%d of %d", agree, agree+listed))
+	}
 }
