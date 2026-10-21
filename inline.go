@@ -202,7 +202,8 @@ func StyleAttributeName(name string) Option {
 // appending to DefaultCodeBlocks().
 func CodeBlocks(b []CodeBlock) Option { return func(o *options) { o.codeBlocks = slices.Clone(b) } }
 
-// RemoveIDs replaces id attributes with a hash, rewriting internal anchors.
+// RemoveIDs drops id attributes, keeping those that links target as a SHA-256
+// hash, with the links rewritten to match, as premailer does.
 func RemoveIDs(v bool) Option { return func(o *options) { o.removeIDs = v } }
 
 // RemoveClasses strips class attributes after inlining.

@@ -1,7 +1,7 @@
 package juicer
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"strings"
 
@@ -54,7 +54,7 @@ func (in *pass) cleanup(root *html.Node) {
 						removeAttr(n, "id")
 					}
 				}
-				if href, ok := getAttr(n, "href"); ok && strings.HasPrefix(href, "#") && len(href) > 1 {
+				if href, ok := getAttr(n, "href"); ok && n.Data == "a" && strings.HasPrefix(href, "#") && len(href) > 1 {
 					setAttr(n, "href", "#"+hashID(href[1:]))
 				}
 			}
@@ -68,7 +68,7 @@ func (in *pass) cleanup(root *html.Node) {
 }
 
 func hashID(id string) string {
-	sum := md5.Sum([]byte(id))
+	sum := sha256.Sum256([]byte(id))
 	return hex.EncodeToString(sum[:])
 }
 
