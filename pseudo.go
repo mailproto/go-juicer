@@ -31,7 +31,7 @@ func (in *pass) pseudoMap(n *html.Node, kind selector.PseudoElement, dup func() 
 	}
 	i := kind - selector.Before
 	if pm[i] == nil {
-		pm[i] = &propMap{dup: dup()}
+		pm[i] = &propMap{dup: dup(), pseudo: true}
 	}
 	return pm[i]
 }

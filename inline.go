@@ -294,17 +294,21 @@ func CompatibilityMode(c Compatibility) Option { return func(o *options) { o.com
 // value is the default mode.
 type quirks struct {
 	// juice bugs the default fixes, listed in testdata/skip/default.txt.
-	juiceSpecificity   bool // pseudo-classes score as type selectors
-	joinStylesheets    bool // every <style> block and extraCss parse as one stylesheet
-	ignoreStyleMedia   bool // a <style media> block applies whatever its media
-	keepCommentMarkers bool // "<!--" and "-->" are read as part of a selector
-	rawContent         bool // content strings are written as markup
-	unstyledMatch      bool // <style> elements are removed before selectors match
-	applyInvalid       bool // rules browsers reject, and strings left open, are read as postcss reads them
-	juiceScope         bool // :scope, a top-level & included, matches nothing
-	dropSupports       bool // @supports blocks are neither inlined nor preserved
-	dropExtraPseudos   bool // extraCss rules for :hover and friends are not preserved
-	loseIgnored        bool // a rule ignored from an earlier block, or by an unended "start ignore", is lost
+	juiceSpecificity     bool // pseudo-classes score as type selectors
+	joinStylesheets      bool // every <style> block and extraCss parse as one stylesheet
+	ignoreStyleMedia     bool // a <style media> block applies whatever its media
+	keepCommentMarkers   bool // "<!--" and "-->" are read as part of a selector
+	rawContent           bool // content strings are written as markup
+	unstyledMatch        bool // <style> elements are removed before selectors match
+	applyInvalid         bool // rules browsers reject, and strings left open, are read as postcss reads them
+	juiceScope           bool // :scope, a top-level & included, matches nothing
+	dropSupports         bool // @supports blocks are neither inlined nor preserved
+	dropExtraPseudos     bool // extraCss rules for :hover and friends are not preserved
+	loseIgnored          bool // a rule ignored from an earlier block, or by an unended "start ignore", is lost
+	dropContent          bool // content is dropped from every element
+	promoteInvalidColors bool // a color browsers drop still becomes a bgcolor
+	spacedVar            bool // "var (--x)", with a space, is resolved
+	headVars             bool // with duplicates kept, var() reads the first custom property set
 
 	// juice 9.
 	mensch          bool // mensch reads stylesheets and style attributes
@@ -314,17 +318,21 @@ type quirks struct {
 
 func (c Compatibility) quirks() quirks {
 	juice12 := quirks{
-		juiceSpecificity:   true,
-		joinStylesheets:    true,
-		ignoreStyleMedia:   true,
-		keepCommentMarkers: true,
-		rawContent:         true,
-		unstyledMatch:      true,
-		applyInvalid:       true,
-		juiceScope:         true,
-		dropSupports:       true,
-		dropExtraPseudos:   true,
-		loseIgnored:        true,
+		juiceSpecificity:     true,
+		joinStylesheets:      true,
+		ignoreStyleMedia:     true,
+		keepCommentMarkers:   true,
+		rawContent:           true,
+		unstyledMatch:        true,
+		applyInvalid:         true,
+		juiceScope:           true,
+		dropSupports:         true,
+		dropExtraPseudos:     true,
+		loseIgnored:          true,
+		dropContent:          true,
+		promoteInvalidColors: true,
+		spacedVar:            true,
+		headVars:             true,
 	}
 	switch c {
 	case Juice12:

@@ -63,7 +63,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3, with `CompatibilityMode(Juice12)` | 4109 | 4060 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4109 | 3839 | 270: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, default mode | 4109 | 3800 | 309: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4109 | 4109 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -79,18 +79,19 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 462 of 585 documents agree; the rest are
+splits, quotes and color spellings. 465 of 585 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 564 of 587 render identically. The rest are
-listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
-this package still copies for parity: `content` on
-`<img>`, an invalid color copied into `bgcolor`, and a few more. Each is a
-candidate for a deliberate divergence.
+every element's computed style. 569 of 587 render identically. The rest are
+listed with their reason in `testdata/skip/cascade.txt`. They are limits of
+inlining itself: a rule matching the `<html>` element a browser wraps around
+a fragment, an inlined declaration outranking a rule kept in `<style>`, the
+spans `InlinePseudoElements` adds. A few are documents htmlparser2 parses
+into a different tree than a browser does, as juice's parser does too.
 
 juice 12 is what this package implements by default, except where juice
 disagrees with how browsers read the CSS: there the default follows the
@@ -124,6 +125,14 @@ that has to match juice 12 byte for byte. So far:
   them.
 - **Rules for `:hover` and friends in `ExtraCSS` are preserved**, as those in
   the document are. juice drops them.
+- **`content` is inlined onto elements**, where on `<img>` it replaces the
+  image. juice drops it outside pseudo-elements.
+- **A color browsers reject is not copied into `bgcolor`**, whose legacy
+  parsing would turn it into a real color.
+- **`var (--x)`, with a space, is left as written**, as CSS does not read it
+  as `var()`. juice resolves it.
+- **With `InlineDuplicateProperties`, `var()` reads the custom property that
+  wins the cascade.** juice reads the first one set.
 - **A rule an ignore comment skips stays in `<style>`** when the comment is in
   an earlier block, or is a `start ignore` that never ends. juice neither
   inlines nor keeps it.

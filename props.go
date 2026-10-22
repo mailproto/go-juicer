@@ -28,8 +28,9 @@ type property struct {
 }
 
 type propMap struct {
-	slots []property
-	dup   bool // inlineDuplicateProperties: every declaration is kept
+	slots  []property
+	dup    bool // inlineDuplicateProperties: every declaration is kept
+	pseudo bool // a ::before or ::after, whose content becomes its text
 }
 
 // packKey lays the specificity vector out in one word so comparison is a
@@ -58,6 +59,22 @@ func (m *propMap) find(name string) int32 {
 		}
 	}
 	return -1
+}
+
+// winner returns the slot for name that wins the cascade, which with
+// duplicates kept need not be the head.
+func (m *propMap) winner(name string) int32 {
+	best := int32(-1)
+	for i := range m.slots {
+		p := &m.slots[i]
+		if p.dead || p.prop != name {
+			continue
+		}
+		if b := &m.slots[max(best, 0)]; best < 0 || p.key > b.key || p.key == b.key && p.ord >= b.ord {
+			best = int32(i)
+		}
+	}
+	return best
 }
 
 // add applies one declaration, following juice's addProps.
@@ -154,8 +171,9 @@ func (m *propMap) styleAttr(o *options) []byte {
 	var buf bytes.Buffer
 	for _, i := range idx {
 		p := &m.slots[i]
-		// `content` belongs to a pseudo-element, never to a style attribute.
-		if p.prop == "content" {
+		// A pseudo-element's content becomes its text. juice drops content
+		// from every element, though on <img> it replaces the image.
+		if p.prop == "content" && (m.pseudo || o.dropContent) {
 			continue
 		}
 		if o.resolveCSSVariables && strings.HasPrefix(p.prop, "--") {

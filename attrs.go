@@ -3,6 +3,7 @@ package juicer
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -126,10 +127,58 @@ func (in *pass) promoteAttributes(root *html.Node) {
 				if l := strings.ToLower(v); strings.Contains(l, "linear-gradient(") || strings.Contains(l, "radial-gradient(") {
 					continue
 				}
+				// Browsers drop an invalid color, but bgcolor's legacy
+				// parsing turns almost any text into one.
+				if attr == "bgcolor" && !o.promoteInvalidColors && !maybeColor(v) {
+					continue
+				}
 				setAttr(n, attr, v)
 			}
 		}
 	}
+}
+
+// maybeColor rejects colors with a malformed hex code or a wrong count of
+// rgb() or hsl() components.
+// ponytail: other values pass, unknown keywords included; a full CSS color
+// parser if those turn up.
+func maybeColor(v string) bool {
+	v = strings.TrimSpace(v)
+	if hex, ok := strings.CutPrefix(v, "#"); ok {
+		_, err := strconv.ParseUint(hex, 16, 64)
+		return err == nil && (len(hex) == 3 || len(hex) == 4 || len(hex) == 6 || len(hex) == 8)
+	}
+	name, args, _ := strings.Cut(v, "(")
+	switch strings.ToLower(name) {
+	case "rgb", "rgba", "hsl", "hsla":
+	default:
+		return true
+	}
+	args, ok := strings.CutSuffix(args, ")")
+	if !ok {
+		return false
+	}
+	// Nested calls such as calc() count as one component.
+	var flat strings.Builder
+	depth := 0
+	for i := range len(args) {
+		if args[i] == '(' {
+			depth++
+		}
+		if depth == 0 {
+			flat.WriteByte(args[i])
+		}
+		if args[i] == ')' && depth > 0 {
+			depth--
+		}
+	}
+	args = flat.String()
+	if strings.Contains(args, ",") {
+		n := strings.Count(args, ",") + 1
+		return n == 3 || n == 4
+	}
+	rgb, alpha, hasAlpha := strings.Cut(args, "/")
+	return len(strings.Fields(rgb)) == 3 && (!hasAlpha || len(strings.Fields(alpha)) == 1)
 }
 
 // attrValue drops a preserved !important, which has no place in an attribute.
