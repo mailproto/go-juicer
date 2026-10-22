@@ -29,6 +29,7 @@ nesting/dangling-combinator  juice bug: a nested selector ending in a combinator
 nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
 nesting/stray-paren  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
 nesting/top-level-amp  juice bug: a top-level & means :scope, the root element, which juice never matches
+nesting/top-level-amp-document  juice bug: a top-level & means :scope, the root element, which juice never matches
 premailer-suite/misc/style_with_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/unmergable_media_queries  limit: an inlined declaration outranks a later rule kept in a preserved @media block
@@ -37,4 +38,5 @@ pseudo-elements/content-markup  limit: inlinePseudoElements turns ::before/::aft
 pseudo-elements/empty-argument  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 pseudo-elements/trailing-combinator  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 roundtrip/p-not-closed  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
+style-tags/first-child  juice bug: <style> elements are removed before selectors are matched, so :first-child sees a different tree than the browser
 variables/function-name  juice bug: var (--x), with a space, is resolved, but CSS treats it as invalid

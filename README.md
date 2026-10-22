@@ -62,9 +62,9 @@ normalization**, prints a parity percentage per target on every run, and
 
 | target | cases | match | skipped |
 |---|---|---|---|
-| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4095 | 4046 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4095 | 3964 | 131: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
-| juice 9.1.0, with `CompatibilityMode(Juice9)` | 4095 | 4095 | none |
+| juice 12.1.3, with `CompatibilityMode(Juice12)` | 4109 | 4060 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
+| juice 12.1.3, default mode | 4109 | 3978 | 131: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 9.1.0, with `CompatibilityMode(Juice9)` | 4109 | 4109 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
 `testdata/in/css-inline-suite` hold the inputs from the test suites of juice,
@@ -79,14 +79,14 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 458 of 583 documents agree; the rest are
+splits, quotes and color spellings. 460 of 585 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 551 of 585 render identically. The rest are
+every element's computed style. 551 of 587 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
 this package still copies for parity: `:first-child` seeing a tree without `<style>` elements,
 `[width=600]` and `*a` applied though browsers drop them, `content` on
