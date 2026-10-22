@@ -81,3 +81,19 @@ no-attributes/ignore/whole-file-first-block  a rule a "juice ignore" in an earli
 no-css-variables/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
 no-preserve/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
 preserve-important/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+*/premailer-suite/misc/style_with_data_in_content  content is inlined onto elements, where on <img> it replaces the image; juice drops it from every element
+*/premailer-suite/misc/style_without_data_in_content  content is inlined onto elements, where on <img> it replaces the image; juice drops it from every element
+*/pseudo-elements/empty-argument  content is inlined onto elements, where on <img> it replaces the image; juice drops it from every element
+default/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+inline-pseudo-elements/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+keep-style-tags/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+no-css-variables/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+no-preserve/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+preserve-important/premailer-suite/premailer/rgb_color_is_not_matched_without_three_color_arguments  a color browsers drop as invalid is not copied into bgcolor, whose legacy parsing would turn it into a real color
+*/variables/function-name  "var (--c)", with a space, is not a var() call in CSS, so it is left as written; juice resolves it
+default/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+inline-pseudo-elements/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+keep-style-tags/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+no-attributes/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+no-preserve/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+preserve-important/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set

@@ -100,8 +100,6 @@ premailer-suite/links/non_convertable_inline_links  premailer parses with libxml
 premailer-suite/misc/css_to_attributes_preserves_existing_html_attributes  premailer lets an existing bgcolor attribute beat a stylesheet rule; in CSS the rule wins
 premailer-suite/misc/handling_shorthand_auto_properties  premailer's css_parser merges and splits shorthands lossily (border: none becomes border-style: none; margin: 0 auto loses longhands)
 premailer-suite/misc/ignoring_link_pseudo_selectors  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks
-premailer-suite/misc/style_with_data_in_content  premailer keeps the content property in style attributes; juice drops it
-premailer-suite/misc/style_without_data_in_content  premailer keeps the content property in style attributes; juice drops it
 premailer-suite/premailer/detecting_plain_text  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 premailer-suite/premailer/htmlentities  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
 premailer-suite/premailer/input_encoding  premailer parses with libxml2's HTML4 parser, which builds a different tree: it repairs malformed markup, closes <h1> and <p> before block elements, and wraps bare text in <p>
@@ -113,7 +111,6 @@ premailer-suite/premailer/rgb_color_without_commas_and_with_alpha_modifier  prem
 premailer-suite/premailer/rgb_color_without_commas_and_with_percentage_modifier  premailer drops a color's alpha channel when it writes bgcolor
 preserved-selectors/media-and-comments  premailer inlines rules inside @media print, which juice keeps in <style>
 pseudo-elements/content-markup  premailer does not turn ::before/::after content into elements
-pseudo-elements/empty-argument  premailer does not turn ::before/::after content into elements
 pseudo-elements/trailing-combinator  premailer does not turn ::before/::after content into elements
 remove-inlined/basic  premailer inlines rules inside @media print, which juice keeps in <style>
 remove-inlined/data-embed  premailer inlines rules juice keeps in <style>: @media print, :link/:visited, and juice's data-embed blocks

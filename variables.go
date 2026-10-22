@@ -26,7 +26,7 @@ func (in *pass) resolveVariables() {
 			if bytes.HasPrefix([]byte(p.prop), []byte("--")) {
 				continue
 			}
-			if at, _ := findVar(p.value, 0); at < 0 {
+			if at, _ := findVar(p.value, 0, in.o.spacedVar); at < 0 {
 				continue
 			}
 			budget := maxVarSubstitutions
@@ -53,7 +53,7 @@ func (in *pass) substitute(n *html.Node, v []byte, depth int, budget *int) []byt
 	// cannot be found again on the following pass.
 	from := 0
 	for from < len(out) {
-		at, open := findVar(out, from)
+		at, open := findVar(out, from, in.o.spacedVar)
 		if at < 0 || *budget <= 0 {
 			return out
 		}
@@ -95,7 +95,11 @@ func (in *pass) lookupVar(n *html.Node, name string) ([]byte, bool) {
 		if !ok {
 			continue
 		}
-		if i := m.find(name); i >= 0 {
+		i := m.find(name)
+		if m.dup && !in.o.headVars {
+			i = m.winner(name)
+		}
+		if i >= 0 {
 			return m.slots[i].value, true
 		}
 	}
@@ -104,16 +108,16 @@ func (in *pass) lookupVar(n *html.Node, name string) ([]byte, bool) {
 
 // findVar locates the next var() call at or after from, returning where its
 // name starts and the index of its "(", or -1. Like juice, the name is the
-// run of letters and hyphens before the parenthesis, matched case-insensitively
-// and allowed to be separated from it by whitespace, so `somevar(` is not a
-// var() call but `VAR (` is.
-func findVar(v []byte, from int) (at, open int) {
+// run of letters and hyphens before the parenthesis, matched case-insensitively,
+// so `somevar(` is not a var() call. juice also allows whitespace before the
+// parenthesis, reading `VAR (` as a call, where CSS does not; spaced allows it.
+func findVar(v []byte, from int, spaced bool) (at, open int) {
 	for i := from; i < len(v); i++ {
 		if v[i] != '(' {
 			continue
 		}
 		e := i
-		for e > from && isCSSSpace(v[e-1]) {
+		for spaced && e > from && isCSSSpace(v[e-1]) {
 			e--
 		}
 		s := e
