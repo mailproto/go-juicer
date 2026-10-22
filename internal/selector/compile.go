@@ -152,7 +152,10 @@ func isComb(c byte) bool { return c == '+' || c == '>' || c == '~' }
 // writer builds the text cascadia matches: pseudo-elements stripped,
 // :where() dropped, bare attribute values quoted, and :has(> x) and :empty
 // mapped onto what cascadia supports.
-type writer struct{ buf []byte }
+type writer struct {
+	buf  []byte
+	root bool // :scope is written as :root, which it is in a stylesheet
+}
 
 func (w *writer) arm(a *Arm) {
 	start := len(w.buf)
@@ -219,6 +222,8 @@ func (w *writer) pseudo(t *Token) {
 		if t.Name == "has" {
 			w.buf = append(w.buf[:start], hasChild(w.buf[start:])...)
 		}
+	case t.Name == "scope" && w.root && !t.is(call):
+		w.buf = append(w.buf, ":root"...)
 	case t.Name == "empty" && !t.is(double):
 		// css-select counts whitespace text as content; cascadia does not.
 		w.buf = append(w.buf, `:empty:not(:matchesOwn([\s\S]))`...)

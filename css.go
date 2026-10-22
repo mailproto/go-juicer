@@ -146,9 +146,91 @@ func readStylesheet(src []byte, opts *options) stylesheet {
 			text, src = b, []byte(b)
 		}
 	}
+	if !opts.applyInvalid {
+		if c := closeString(text); c != text {
+			text, src = c, []byte(c)
+		}
+	}
 	root := postcss.Parse(text)
+	if !opts.applyInvalid {
+		dropInvalid(root)
+	}
 	postcss.Nest(root)
 	return stylesheet{root, src}
+}
+
+// dropInvalid removes what browsers drop, where postcss reads past it:
+// declarations with stray text before their property, and nested rules with
+// selectors browsers reject, with all they hold. A top-level rule browsers
+// reject is marked Invalid instead, so ignore comments still count it, and
+// loses what is nested in it.
+func dropInvalid(root *postcss.Node) {
+	semicolon := false // a ";" postcss gave the rule before
+	for _, n := range root.Nodes {
+		switch n.Type {
+		case "rule":
+			if semicolon || junk(n.Before(), false) || slices.ContainsFunc(n.Nodes, isBlock) && !validSelectors(n, false) {
+				n.Invalid = true
+				n.Nodes = slices.DeleteFunc(n.Nodes, isBlock)
+			}
+			semicolon = strings.Contains(n.OwnSemicolon(), ";")
+			dropNested(n)
+		case "comment":
+		default:
+			semicolon = false
+		}
+	}
+}
+
+func isBlock(n *postcss.Node) bool { return n.Type == "rule" || n.Type == "atrule" }
+
+func dropNested(n *postcss.Node) {
+	n.Nodes = slices.DeleteFunc(n.Nodes, func(c *postcss.Node) bool {
+		switch c.Type {
+		case "decl":
+			return junk(c.Before(), true)
+		case "rule":
+			if !validSelectors(c, true) {
+				return true
+			}
+		}
+		dropNested(c)
+		return false
+	})
+}
+
+// junk reports whether raw text postcss set aside holds more than
+// whitespace and comments. Between declarations, only text after the last
+// semicolon counts: what comes before it is a declaration of its own.
+func junk(s string, semicolons bool) bool {
+	if semicolons {
+		s = s[strings.LastIndexByte(s, ';')+1:]
+	}
+	for i := 0; i < len(s); i++ {
+		switch {
+		case isCSSSpace(s[i]):
+		case strings.HasPrefix(s[i:], "/*"):
+			end := strings.Index(s[i+2:], "*/")
+			if end < 0 {
+				return false
+			}
+			i += end + 3
+		default:
+			return true
+		}
+	}
+	return false
+}
+
+// validSelectors reports whether browsers accept every selector of a rule's
+// list; one they reject drops the rule.
+func validSelectors(n *postcss.Node, relative bool) bool {
+	for _, s := range n.Selectors() {
+		if !selector.Valid([]byte(strings.TrimSpace(s)), relative) {
+			return false
+		}
+	}
+	return true
 }
 
 // read takes rules and preserved text from top-level nodes of the stylesheet.
@@ -177,9 +259,15 @@ func (s stylesheet) read(nodes []*postcss.Node, opts *options, ord uint32) ([]ru
 				ord++
 			}
 			sels := n.SelectorBytes(flat)
-			if len(decls) > 0 {
+			if len(decls) > 0 && !n.Invalid {
+				first := len(rules)
 				for _, sel := range sels {
-					armRules, ignored := compileRule(sel, decls, opts)
+					armRules, ignored, invalid := compileRule(sel, decls, opts)
+					if invalid {
+						// Browsers drop the whole rule.
+						rules = rules[:first]
+						break
+					}
 					if ignored {
 						continue
 					}
@@ -199,6 +287,35 @@ func (s stylesheet) read(nodes []*postcss.Node, opts *options, ord uint32) ([]ru
 		}
 	}
 	return rules, keep, ord
+}
+
+// closeString ends a string left open at the end of the stylesheet, which
+// browsers read to there; postcss ends it after one character and reads on.
+// ponytail: a string broken by a newline is left to postcss, though browsers
+// drop the declaration holding it; handle it if it turns up.
+func closeString(css string) string {
+	for i := 0; i < len(css); i++ {
+		switch c := css[i]; {
+		case c == '\\':
+			i++
+		case c == '/' && i+1 < len(css) && css[i+1] == '*':
+			end := strings.Index(css[i+2:], "*/")
+			if end < 0 {
+				return css
+			}
+			i += end + 3
+		case c == '"' || c == '\'':
+			for i++; i < len(css) && css[i] != c && css[i] != '\n' && css[i] != '\r' && css[i] != '\f'; i++ {
+				if css[i] == '\\' {
+					i++
+				}
+			}
+			if i >= len(css) {
+				return css + string(c)
+			}
+		}
+	}
+	return css
 }
 
 // blankCommentMarkers hides "<!--" and "-->" outside strings and comments,

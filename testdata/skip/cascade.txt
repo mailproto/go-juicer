@@ -9,7 +9,6 @@ cascade/selector-list-ties  limit: :only-child matches the <html> element a brow
 duplicates/variables  juice bug: with inlineDuplicateProperties, var() reads the first rule's custom property rather than the one that wins the cascade
 ignore/next-across-blocks  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
 ignore/next-rule  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
-ignore/pseudo-and-semicolon  juice bug: a stray semicolon before a rule makes browsers drop that rule as an invalid selector; juice applies it
 ignore/start-end  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
 ignore/start-unterminated  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
 important/attr-pseudo  limit: inlinePseudoElements turns ::after into a real <span>, an element the original never had
@@ -17,19 +16,10 @@ juice-suite/inline-content/ignore-pseudos  juice bug: pseudo-class rules in extr
 juice-suite/juice-content/nesting-atrule  limit: an inlined declaration outranks a later rule kept in a preserved @media block
 juice-suite/juice-content/pseudo-elements  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 juice-suite/juice-content/pseudo-elements-and-width-attr  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
-l4-spec/attr-unquoted  juice bug: [width=600] is not valid CSS (an unquoted value must be an identifier), so browsers drop the rule and juice applies it
-l4-spec/dangling-combinator  juice bug: a combinator with nothing on one side is not valid CSS, so browsers drop the rule and juice applies it
 l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates around a fragment, which has nothing to inline onto
-l4-spec/universal-type  juice bug: "*a" is not valid CSS, so browsers drop the rule and juice applies it to <a>
-malformed/stray-closing-bracket  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
-malformed/unclosed-double-quote  juice bug: browsers end a string that never closes only at a line break, so they drop the rules it runs over, and juice applies them
-malformed/unclosed-quote  juice bug: browsers end a string that never closes only at a line break, so they drop the rules it runs over, and juice applies them
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
-nesting/dangling-combinator  juice bug: a nested selector ending in a combinator is not valid CSS, so browsers drop the rule and juice applies it
 nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
-nesting/stray-paren  juice bug: browsers drop a declaration that starts with punctuation such as ")" and juice applies it
-nesting/top-level-amp  juice bug: a top-level & means :scope, the root element, which juice never matches
-nesting/top-level-amp-document  juice bug: a top-level & means :scope, the root element, which juice never matches
+nesting/top-level-amp  limit: a top-level & means :scope, the <html> element a browser creates around a fragment, which the fragment does not have
 premailer-suite/misc/style_with_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/unmergable_media_queries  limit: an inlined declaration outranks a later rule kept in a preserved @media block
