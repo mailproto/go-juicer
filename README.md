@@ -63,7 +63,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3, with `CompatibilityMode(Juice12)` | 4109 | 4060 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4109 | 3958 | 151: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, default mode | 4109 | 3879 | 230: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4109 | 4109 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -79,17 +79,16 @@ Ruby gem's output for every fixture (pinned in
 `TestPremailerSemantics` parses it and this package's output with the same
 HTML5 parser, then compares every element's declarations after folding
 together what does not change rendering: presentational attributes, shorthand
-splits, quotes and color spellings. 459 of 585 documents agree; the rest are
+splits, quotes and color spellings. 462 of 585 documents agree; the rest are
 listed with their reason in `testdata/skip/premailer.txt`, mostly premailer's
 own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 552 of 587 render identically. The rest are
+every element's computed style. 562 of 587 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
-this package still copies for parity:
-`[width=600]` and `*a` applied though browsers drop them, `content` on
+this package still copies for parity: `content` on
 `<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
 dropped, and a few more. Each is a candidate for a deliberate divergence.
 
@@ -115,6 +114,12 @@ that has to match juice 12 byte for byte. So far:
   `:first-child` and `:nth-child()` count them as a browser does. One a
   browser would parse into `<head>` is removed first. juice removes them all
   before matching.
+- **Rules browsers reject are not inlined.** That covers invalid selectors
+  (`[width=600]`, `*a`, a dangling combinator, a stray `;` before a rule) and
+  declarations with stray text before the property (`)color:red`). An
+  invalid argument to `:is()` or `:where()` is skipped, and a string left
+  open runs to the end of the stylesheet. juice applies all of these.
+- **A top-level `&` is `:scope`**, the root element. juice never matches it.
 
 juice 9 is still widely deployed, so `CompatibilityMode(Juice9)` switches to
 its behaviour where the two differ: stylesheets are read and preserved rules re-emitted through a port of

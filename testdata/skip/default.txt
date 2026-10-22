@@ -28,3 +28,16 @@ no-attributes/style-tags/first-child  <style> elements stay in the tree until se
 no-css-variables/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
 no-preserve/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
 preserve-important/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+*/l4-spec/attr-unquoted  a rule whose selector browsers reject is not inlined: [width=600] needs its value quoted, as 600 is not an identifier
+*/l4-spec/universal-type  a rule whose selector browsers reject is not inlined: "*a" puts a type selector after *
+*/l4-spec/dangling-combinator  a rule whose selector browsers reject is not inlined: a combinator with nothing after it, or in :not() with nothing before it
+*/nesting/dangling-combinator  a rule whose selector browsers reject is not inlined, nested rules included: "p+" ends in a combinator
+inline-pseudo-elements/pseudo-elements/not-last  a rule whose selector browsers reject is not inlined: ".a:after+" ends in a combinator
+*/ignore/pseudo-and-semicolon  a rule after a stray ";" is not inlined, as browsers read the ";" as part of its selector and reject it
+*/malformed/stray-closing-bracket  a declaration with stray text before its property, such as ")", is dropped, as browsers drop it
+*/nesting/stray-paren  a declaration with stray text before its property, such as ")", is dropped, as browsers drop it
+*/malformed/leading-colon  a declaration with stray text before its property, such as ":", is dropped, as browsers drop it
+*/malformed/unclosed-double-quote  a string left open runs to the end of the stylesheet, as in browsers, taking in the rules after it; postcss ends it after one character
+*/malformed/unclosed-quote  a string left open runs to the end of the stylesheet, as in browsers, taking in the rules after it; postcss ends it after one character
+inline-pseudo-elements/nesting/unclosed-quote  a string left open runs to the end of the stylesheet, as in browsers, taking in the rules after it; postcss ends it after one character
+*/nesting/top-level-amp-document  a top-level & is :scope, the root element, as in browsers; juice never matches it

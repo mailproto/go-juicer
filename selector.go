@@ -30,11 +30,12 @@ var nonVisualElements = map[string]bool{
 
 // compileRule turns one selector of a list into rules, one per :is()
 // alternative. It returns ignored=true for a selector juice preserves rather
-// than inlines, and no rules at all for one neither engine can match.
-func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bool) {
-	c := selector.Compile(arm, selector.Mode{JuiceSpecificity: o.juiceSpecificity, Juice9: o.juice9Selectors})
-	if c.Ignored {
-		return nil, true
+// than inlines, invalid=true for one browsers reject, and no rules at all for
+// one neither engine can match.
+func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored, invalid bool) {
+	c := selector.Compile(arm, selector.Mode{JuiceSpecificity: o.juiceSpecificity, Juice9: o.juice9Selectors, JuiceScope: o.juiceScope, Lenient: o.applyInvalid})
+	if c.Ignored || c.Invalid {
+		return nil, c.Ignored, c.Invalid
 	}
 	sel := string(arm)
 	for _, v := range c.Variants {
@@ -46,5 +47,5 @@ func compileRule(arm []byte, decls []decl, o *options) (rules []rule, ignored bo
 		r := rule{sel: sel, decls: decls, spec: c.Spec, pseudo: c.Pseudo, match: m, key: v.Key, keyName: v.KeyName}
 		rules = append(rules, r)
 	}
-	return rules, false
+	return rules, false, false
 }

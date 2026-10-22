@@ -10,6 +10,8 @@ import (
 type Mode struct {
 	JuiceSpecificity bool // pseudo-classes score as type selectors, as juice 12 scores them
 	Juice9           bool // as juice 9 reads selectors, with cheerio and slick
+	JuiceScope       bool // :scope matches nothing, as in juice, rather than the root
+	Lenient          bool // selectors browsers reject still match, as in juice
 }
 
 // Compiled is one selector of a list, as juice reads it.
@@ -17,6 +19,7 @@ type Compiled struct {
 	Spec    [3]int
 	Pseudo  PseudoElement
 	Ignored bool // juice preserves the selector rather than inlining it
+	Invalid bool // browsers reject the selector, and with it the rule
 
 	// Variants are what cascadia matches, one per :is() alternative.
 	// Specificity comes from the selector as written, which is exactly how
@@ -68,6 +71,15 @@ func Compile(sel []byte, m Mode) Compiled {
 			return c
 		}
 	}
+	if !m.Lenient {
+		if !validArm(a, false) {
+			c.Invalid = true
+			return c
+		}
+		if a.list {
+			prune(a)
+		}
+	}
 	in := analyze(a, !m.JuiceSpecificity)
 	if in.ignored {
 		c.Ignored = true
@@ -78,7 +90,7 @@ func Compile(sel []byte, m Mode) Compiled {
 		c.Spec = juice9Specificity(Parse(sel))
 	}
 	buf := texts.Get().(*[]byte)
-	w := writer{buf: (*buf)[:0]}
+	w := writer{buf: (*buf)[:0], root: !m.JuiceScope}
 	defer func() { *buf = w.buf[:0]; texts.Put(buf) }()
 	if !a.list {
 		c.add(&w, a, m)

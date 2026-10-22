@@ -200,12 +200,21 @@ type Node struct {
 
 	Selector, Name, Params, Prop, Value, Text string
 	Important                                 bool
+	Invalid                                   bool // set by the caller for a node browsers drop
 
 	before, between, after, afterName, ownSemicolon string
 	hasAfterName, semicolon                         bool
 	importantRaw, left, right                       string
 	raw                                             map[string][2]string // prop -> {raw, value}
 }
+
+// Before is the raw text postcss set aside ahead of n: whitespace and
+// comments, and in a declaration any punctuation ahead of its property.
+func (n *Node) Before() string { return n.before }
+
+// OwnSemicolon is the raw text after a rule when it starts with a semicolon,
+// which postcss gives the rule and browsers read as the start of the next.
+func (n *Node) OwnSemicolon() string { return n.ownSemicolon }
 
 func (n *Node) push(c *Node) {
 	c.parent = n

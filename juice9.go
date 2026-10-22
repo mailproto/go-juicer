@@ -31,7 +31,7 @@ func parseMensch(src []byte, opts *options, ord uint32) ([]rule, []preserved, ui
 			if sel == "" {
 				continue
 			}
-			armRules, _ := compileRule([]byte(sel), decls, opts)
+			armRules, _, _ := compileRule([]byte(sel), decls, opts)
 			for k := range armRules {
 				armRules[k].group = int32(len(rules))
 				armRules[k].throws = throws

@@ -300,6 +300,8 @@ type quirks struct {
 	keepCommentMarkers bool // "<!--" and "-->" are read as part of a selector
 	rawContent         bool // content strings are written as markup
 	unstyledMatch      bool // <style> elements are removed before selectors match
+	applyInvalid       bool // rules browsers reject, and strings left open, are read as postcss reads them
+	juiceScope         bool // :scope, a top-level & included, matches nothing
 
 	// juice 9.
 	mensch          bool // mensch reads stylesheets and style attributes
@@ -315,6 +317,8 @@ func (c Compatibility) quirks() quirks {
 		keepCommentMarkers: true,
 		rawContent:         true,
 		unstyledMatch:      true,
+		applyInvalid:       true,
+		juiceScope:         true,
 	}
 	switch c {
 	case Juice12:
