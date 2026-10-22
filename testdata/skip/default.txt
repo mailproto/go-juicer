@@ -41,3 +41,43 @@ inline-pseudo-elements/pseudo-elements/not-last  a rule whose selector browsers 
 */malformed/unclosed-quote  a string left open runs to the end of the stylesheet, as in browsers, taking in the rules after it; postcss ends it after one character
 inline-pseudo-elements/nesting/unclosed-quote  a string left open runs to the end of the stylesheet, as in browsers, taking in the rules after it; postcss ends it after one character
 */nesting/top-level-amp-document  a top-level & is :scope, the root element, as in browsers; juice never matches it
+default/at-rules/supports-dropped  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+inline-pseudo-elements/at-rules/supports-dropped  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+no-attributes/at-rules/supports-dropped  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+no-css-variables/at-rules/supports-dropped  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+preserve-important/at-rules/supports-dropped  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+default/nesting/media  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+inline-pseudo-elements/nesting/media  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+no-attributes/nesting/media  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+no-css-variables/nesting/media  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+preserve-important/nesting/media  @supports blocks are preserved as @media blocks are, since whether they apply depends on the client; juice drops them
+default/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+inline-pseudo-elements/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+keep-style-tags/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+no-attributes/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+no-css-variables/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+preserve-important/juice-suite/inline-content/ignore-pseudos  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+default/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+inline-pseudo-elements/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+keep-style-tags/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+no-attributes/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+no-css-variables/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+preserve-important/juice-suite/inline-content/normalize  rules for :hover and friends in extraCss are preserved, as those in the document are; juice drops them
+default/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+inline-pseudo-elements/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-attributes/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-css-variables/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-preserve/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+preserve-important/ignore/next-across-blocks  a rule an ignore comment in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+default/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+inline-pseudo-elements/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+no-attributes/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+no-css-variables/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+no-preserve/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+preserve-important/ignore/start-unterminated  a rule a "start ignore" skips stays in <style>, though no "end ignore" follows; juice neither inlines nor keeps it
+default/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+inline-pseudo-elements/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-attributes/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-css-variables/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+no-preserve/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it
+preserve-important/ignore/whole-file-first-block  a rule a "juice ignore" in an earlier <style> block skips stays in its own block; juice neither inlines nor keeps it

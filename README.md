@@ -63,7 +63,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3, with `CompatibilityMode(Juice12)` | 4109 | 4060 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4109 | 3879 | 230: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, default mode | 4109 | 3839 | 270: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4109 | 4109 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -86,11 +86,11 @@ own behaviour (its libxml2 tree, no `:is()`, lossy shorthand handling).
 Finally, a browser judges whether inlining preserved the cascade at all.
 `make cascade` (`TestCascade`, `testdata/oracle/cascade.mjs`) renders every
 fixture in headless Chrome twice, as written and as inlined, and compares
-every element's computed style. 562 of 587 render identically. The rest are
+every element's computed style. 564 of 587 render identically. The rest are
 listed with their reason in `testdata/skip/cascade.txt`. Most are juice bugs
 this package still copies for parity: `content` on
-`<img>`, pseudo-class rules dropped from `extraCss`, `@supports` blocks
-dropped, and a few more. Each is a candidate for a deliberate divergence.
+`<img>`, an invalid color copied into `bgcolor`, and a few more. Each is a
+candidate for a deliberate divergence.
 
 juice 12 is what this package implements by default, except where juice
 disagrees with how browsers read the CSS: there the default follows the
@@ -120,6 +120,13 @@ that has to match juice 12 byte for byte. So far:
   invalid argument to `:is()` or `:where()` is skipped, and a string left
   open runs to the end of the stylesheet. juice applies all of these.
 - **A top-level `&` is `:scope`**, the root element. juice never matches it.
+- **`@supports` blocks are preserved** as `@media` blocks are. juice drops
+  them.
+- **Rules for `:hover` and friends in `ExtraCSS` are preserved**, as those in
+  the document are. juice drops them.
+- **A rule an ignore comment skips stays in `<style>`** when the comment is in
+  an earlier block, or is a `start ignore` that never ends. juice neither
+  inlines nor keeps it.
 
 juice 9 is still widely deployed, so `CompatibilityMode(Juice9)` switches to
 its behaviour where the two differ: stylesheets are read and preserved rules re-emitted through a port of

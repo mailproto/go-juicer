@@ -53,6 +53,9 @@ func preserveKind(kind string, o *options) bool {
 	switch kind {
 	case "media":
 		return o.preserveMediaQueries
+	case "supports":
+		// Kept as @media is: whether it applies depends on the client.
+		return o.preserveMediaQueries && !o.dropSupports
 	case "font-face":
 		return o.preserveFontFaces
 	case "keyframes":
