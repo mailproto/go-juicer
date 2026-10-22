@@ -25,26 +25,11 @@ type preserved struct {
 	text []byte
 }
 
-const cssSpaces = " \t\n\r\f"
-
 // matchesPreserved is juice's matchesPreservedSelector over every arm.
 func matchesPreserved(arms [][]byte, patterns []string) bool {
 	return slices.ContainsFunc(arms, func(a []byte) bool {
 		return slices.ContainsFunc(patterns, func(p string) bool { return bytes.Contains(a, []byte(p)) })
 	})
-}
-
-// ownSemicolon is a semicolon following a rule, which postcss keeps with the
-// rule and re-emits after its closing brace, along with the space before it.
-func ownSemicolon(rest []byte) []byte {
-	i := 0
-	for i < len(rest) && isCSSSpace(rest[i]) {
-		i++
-	}
-	if i < len(rest) && rest[i] == ';' {
-		return rest[:i+1]
-	}
-	return nil
 }
 
 // atRuleKind is the at-rule's name as written: juice compares names
@@ -143,17 +128,35 @@ func trimCSS(b []byte) []byte {
 // parseStylesheet reads a stylesheet as juice does, through postcss: juice's
 // parseCSS for the rules, and its getPreservedText for what stays behind.
 func parseStylesheet(src []byte, opts *options, ord uint32) ([]rule, []preserved, uint32) {
-	flat := flattenNesting(src)
-	text := string(flat)
+	s := readStylesheet(src, opts)
+	return s.read(s.root.Nodes, opts, ord)
+}
+
+// stylesheet is postcss's tree for a stylesheet, with nesting flattened, and
+// the text it was read from.
+type stylesheet struct {
+	root *postcss.Node
+	src  []byte
+}
+
+func readStylesheet(src []byte, opts *options) stylesheet {
+	text := string(src)
 	if !opts.keepCommentMarkers {
 		if b := blankCommentMarkers(text); b != text {
-			text, flat = b, []byte(b)
+			text, src = b, []byte(b)
 		}
 	}
 	root := postcss.Parse(text)
+	postcss.Nest(root)
+	return stylesheet{root, src}
+}
+
+// read takes rules and preserved text from top-level nodes of the stylesheet.
+func (s stylesheet) read(nodes []*postcss.Node, opts *options, ord uint32) ([]rule, []preserved, uint32) {
+	flat := s.src
 	var rules []rule
 	var keep []preserved
-	for _, n := range root.Nodes {
+	for _, n := range nodes {
 		switch n.Type {
 		case "atrule":
 			if kind := atRuleKind([]byte("@" + n.Name)); preserveKind(kind, opts) {
@@ -225,37 +228,4 @@ func blankCommentMarkers(css string) string {
 		}
 	}
 	return string(b)
-}
-
-// parenEnd is where the parenthesis opening at b[i] closes, past it, or the end
-// of b when it never does.
-func parenEnd(b []byte, i int) int {
-	depth := 0
-	var quote byte
-	for i < len(b) {
-		c := b[i]
-		if quote != 0 {
-			if c == '\\' {
-				i += 2
-				continue
-			}
-			if c == quote {
-				quote = 0
-			}
-		} else {
-			switch c {
-			case '"', '\'':
-				quote = c
-			case '(':
-				depth++
-			case ')':
-				depth--
-				if depth == 0 {
-					return i + 1
-				}
-			}
-		}
-		i++
-	}
-	return len(b)
 }

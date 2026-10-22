@@ -715,29 +715,25 @@ func (in *pass) removeInlinedSelectors(root *html.Node) {
 		if s.FirstChild == nil || s.FirstChild != s.LastChild || s.FirstChild.Type != html.TextNode {
 			continue
 		}
-		nodes, _ := parseCSSNodes(flattenNesting([]byte(s.FirstChild.Data)), 0, false)
+		sheet := readStylesheet([]byte(s.FirstChild.Data), in.o)
 		var parts []string
-		for _, n := range nodes {
-			if n.kind == 'r' {
-				arms := selector.Split([]byte(n.head))
-				keepWhole := in.o.preservePseudos && len(arms) > 0 && selector.IgnoredPseudo(arms[0]) ||
-					matchesPreserved(arms, in.o.preservedSelectors)
+		for _, n := range sheet.root.Nodes {
+			if n.Type == "rule" {
+				arms := n.Selectors()
+				keepWhole := in.o.preservePseudos && selector.IgnoredPseudo(arms[0]) ||
+					slices.ContainsFunc(arms, func(a string) bool { return matchesPreserved([][]byte{[]byte(a)}, in.o.preservedSelectors) })
 				if !keepWhole {
-					var left [][]byte
-					for _, a := range arms {
-						if !in.inlined[string(a)] {
-							left = append(left, a)
-						}
-					}
+					left := slices.DeleteFunc(arms, func(a string) bool { return in.inlined[a] })
 					if len(left) == 0 {
 						continue
 					}
 					// postcss rejoins the list with its first separator.
-					sep := listSeparator.FindString(n.head)
-					n = &cssNode{kind: 'r', head: string(bytes.Join(left, []byte(sep))), kids: n.kids, block: true, semi: n.semi}
+					sep := listSeparator.FindString(n.Selector)
+					n = n.Copy()
+					n.SetSelector(strings.Join(left, sep))
 				}
 			}
-			if t := formatNode(n, &keepAll); t != "" {
+			if t := sheet.format(n, &keepAll); t != "" {
 				parts = append(parts, t)
 			}
 		}

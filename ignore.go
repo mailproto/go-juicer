@@ -2,7 +2,10 @@ package juicer
 
 import (
 	"bytes"
+	"slices"
 	"strings"
+
+	"github.com/mailproto/go-juicer/internal/postcss"
 )
 
 // juice's ignore comments. Inlining reads them over one stream, every <style>
@@ -31,8 +34,8 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 		}
 		return parseStylesheet(src, opts, ord)
 	}
-	flat := flattenNesting(src)
-	nodes, _ := parseCSSNodes(flat, 0, false)
+	s := readStylesheet(src, opts)
+	nodes := s.root.Nodes
 
 	// Inlining, forward over the shared stream.
 	inline := make([]bool, len(nodes))
@@ -45,7 +48,7 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 		case st.off:
 		case st.skipNext:
 			st.skipNext = false
-		case n.kind == 'c':
+		case n.Type == "comment":
 			switch directive(n) {
 			case "juice start ignore":
 				st.ignoring = true
@@ -65,7 +68,7 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 		for i, n := range nodes {
 			if inline[i] {
 				var r []rule
-				r, _, ord = parseStylesheet(withoutIgnoredDecls(n), inlineOnly(opts), ord)
+				r, _, ord = s.read(one(withoutIgnoredDecls(n)), inlineOnly(opts), ord)
 				rules = appendRules(rules, r)
 			}
 		}
@@ -73,10 +76,10 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 	}
 	forced := make([]bool, len(nodes))
 	for i, n := range nodes {
-		if n.kind == 'c' && directive(n) == "juice ignore next" && i+1 < len(nodes) {
+		if n.Type == "comment" && directive(n) == "juice ignore next" && i+1 < len(nodes) {
 			forced[i+1] = true
 		}
-		if n.kind == 'r' && hasInnerIgnoreNext(n) {
+		if n.Type == "rule" && hasInnerIgnoreNext(n) {
 			forced[i] = true
 		}
 	}
@@ -87,7 +90,7 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		group[i] = -1
 		n := nodes[i]
-		if n.kind == 'c' {
+		if n.Type == "comment" {
 			switch directive(n) {
 			case "juice end ignore":
 				ignoring, end = true, i
@@ -118,26 +121,26 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 			var parts []string
 			for j := i; j < len(nodes); j++ {
 				if group[j] == i {
-					parts = append(parts, formatNode(nodes[j], &keepAll))
+					parts = append(parts, s.format(nodes[j], &keepAll))
 				}
 			}
 			keep = append(keep, preserved{"ignore", []byte(strings.Join(parts, "\n"))})
 		}
-		normal := !inBlock[i] && !forced[i] && n.kind != 'c'
+		normal := !inBlock[i] && !forced[i] && n.Type != "comment"
 		switch {
 		case normal && inline[i] && !hasInnerIgnoreNext(n):
-			r, k, o := parseStylesheet(nodeText(n), opts, ord)
+			r, k, o := s.read(one(n), opts, ord)
 			rules, keep, ord = appendRules(rules, r), append(keep, k...), o
 			continue
 		case normal:
-			_, k, _ := parseStylesheet(nodeText(n), opts, ord)
+			_, k, _ := s.read(one(n), opts, ord)
 			keep = append(keep, k...)
-		case forced[i] && !inBlock[i] && n.kind != 'c':
-			keep = append(keep, preserved{"ignore", []byte(formatNode(n, &keepAll))})
+		case forced[i] && !inBlock[i] && n.Type != "comment":
+			keep = append(keep, preserved{"ignore", []byte(s.format(n, &keepAll))})
 		}
-		if inline[i] && n.kind != 'c' {
+		if inline[i] && n.Type != "comment" {
 			var r []rule
-			r, _, ord = parseStylesheet(withoutIgnoredDecls(n), inlineOnly(opts), ord)
+			r, _, ord = s.read(one(withoutIgnoredDecls(n)), inlineOnly(opts), ord)
 			rules = appendRules(rules, r)
 		}
 	}
@@ -145,56 +148,45 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 }
 
 // directive is a comment node's text, trimmed, or "".
-func directive(n *cssNode) string {
-	if n.kind != 'c' {
+func directive(n *postcss.Node) string {
+	if n.Type != "comment" {
 		return ""
 	}
-	return strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(string(n.raw), "/*"), "*/"))
+	return strings.TrimSpace(n.Text)
 }
 
-func hasInnerIgnoreNext(n *cssNode) bool {
-	for _, k := range n.kids {
-		if directive(k) == "juice ignore next" {
-			return true
-		}
-	}
-	return false
+func hasInnerIgnoreNext(n *postcss.Node) bool {
+	return slices.ContainsFunc(n.Nodes, func(k *postcss.Node) bool { return directive(k) == "juice ignore next" })
 }
 
-func nodeText(n *cssNode) []byte {
-	var b bytes.Buffer
-	writeCSSNodes(&b, []*cssNode{n}, true)
-	return b.Bytes()
-}
+func one(n *postcss.Node) []*postcss.Node { return []*postcss.Node{n} }
 
 // withoutIgnoredDecls drops each declaration that follows a "juice ignore
 // next" comment inside a rule.
-func withoutIgnoredDecls(n *cssNode) []byte {
-	if n.kind != 'r' || !hasInnerIgnoreNext(n) {
-		return nodeText(n)
+func withoutIgnoredDecls(n *postcss.Node) *postcss.Node {
+	if n.Type != "rule" || !hasInnerIgnoreNext(n) {
+		return n
 	}
-	var kids []*cssNode
+	c := n.Copy()
+	c.Nodes = nil
 	skip := false
-	for _, k := range n.kids {
+	for _, k := range n.Nodes {
 		switch {
 		case directive(k) == "juice ignore next":
 			skip = true
 			continue
-		case skip && k.kind == 'd':
+		case skip && k.Type == "decl":
 			skip = false
 			continue
 		}
-		kids = append(kids, k)
+		c.Nodes = append(c.Nodes, k)
 	}
-	return nodeText(&cssNode{kind: 'r', head: n.head, kids: kids, block: true, semi: n.semi})
+	return c
 }
 
-// formatNode renders a node the way juice's stringifyNodes does.
-func formatNode(n *cssNode, keepAll *options) string {
-	if n.kind == 'c' {
-		return string(n.raw)
-	}
-	_, k, _ := parseStylesheet(nodeText(n), keepAll, 0)
+// format renders a node the way juice's stringifyNodes does.
+func (s stylesheet) format(n *postcss.Node, keepAll *options) string {
+	_, k, _ := s.read(one(n), keepAll, 0)
 	var parts []string
 	for _, p := range k {
 		parts = append(parts, string(p.text))

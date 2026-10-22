@@ -404,3 +404,36 @@ func AttrEnd(b []byte, i int) int {
 	}
 	return len(b)
 }
+
+// ParenEnd is where the parenthesis opening at b[i] closes, past it, or the end
+// of b when it never does.
+func ParenEnd(b []byte, i int) int {
+	depth := 0
+	var quote byte
+	for i < len(b) {
+		c := b[i]
+		if quote != 0 {
+			if c == '\\' {
+				i += 2
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+		} else {
+			switch c {
+			case '"', '\'':
+				quote = c
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 {
+					return i + 1
+				}
+			}
+		}
+		i++
+	}
+	return len(b)
+}
