@@ -2,10 +2,9 @@ package juicer
 
 import "errors"
 
-// ErrJuiceFails is wrapped by the error Inline returns where juice itself
-// fails on the document and this package reproduces the failure: in a
-// compatibility mode, and for pseudo-element content juice cannot read. A
-// caller can tell it apart from any other failure with errors.Is.
+// ErrJuiceFails is wrapped by the error Inline returns, in a compatibility
+// mode, where juice itself fails on the document. A caller can tell it apart
+// from any other failure with errors.Is.
 var ErrJuiceFails = errors.New("juice fails on this document")
 
 // ErrInvalidOption is wrapped by the error New returns for options that

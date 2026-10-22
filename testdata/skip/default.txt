@@ -97,3 +97,4 @@ keep-style-tags/duplicates/variables  with inlineDuplicateProperties, var() read
 no-attributes/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
 no-preserve/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
 preserve-important/duplicates/variables  with inlineDuplicateProperties, var() reads the custom property that wins the cascade; juice reads the first one set
+inline-pseudo-elements/pseudo-elements/unreadable-content  pseudo-element content browsers read as invalid, such as var() of an unset property, renders no pseudo-element, and a counter past its style's range falls back to decimal; juice throws

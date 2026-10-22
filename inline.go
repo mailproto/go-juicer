@@ -243,7 +243,7 @@ func New(opts ...Option) (*Inliner, error) {
 // finish, and compiles what can be compiled once.
 func (o *options) validate() error {
 	switch o.compat {
-	case standard, Juice12, Juice9:
+	case Default, Juice12, Juice9:
 	default:
 		return fmt.Errorf("%w: unknown Compatibility %d", ErrInvalidOption, o.compat)
 	}
@@ -273,9 +273,10 @@ func (o *options) validate() error {
 type Compatibility int
 
 const (
-	// standard, the default, follows juice 12 except where juice disagrees
-	// with how browsers read the CSS.
-	standard Compatibility = iota
+	// Default follows juice 12 except where juice disagrees with how
+	// browsers read the CSS. It is what an Inliner uses without
+	// CompatibilityMode.
+	Default Compatibility = iota
 
 	// Juice12 is juice 12.1.3, keeping juice's behaviour where the default
 	// follows the browser instead.
@@ -302,6 +303,7 @@ type quirks struct {
 	ignoreStyleMedia     bool // a <style media> block applies whatever its media
 	keepCommentMarkers   bool // "<!--" and "-->" are read as part of a selector
 	rawContent           bool // content strings are written as markup
+	contentFails         bool // content juice cannot read fails the document
 	unstyledMatch        bool // <style> elements are removed before selectors match
 	applyInvalid         bool // rules browsers reject, and strings left open, are read as postcss reads them
 	juiceScope           bool // :scope, a top-level & included, matches nothing
@@ -326,6 +328,7 @@ func (c Compatibility) quirks() quirks {
 		ignoreStyleMedia:     true,
 		keepCommentMarkers:   true,
 		rawContent:           true,
+		contentFails:         true,
 		unstyledMatch:        true,
 		applyInvalid:         true,
 		juiceScope:           true,

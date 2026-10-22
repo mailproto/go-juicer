@@ -23,7 +23,7 @@ func TestErrJuiceFails(t *testing.T) {
 	}{
 		{"juice 9 nested rule", `<style>.a{color:red;.b{margin:0}}</style><p class="a">x</p>`, []Option{CompatibilityMode(Juice9)}},
 		{"juice 9 style attribute", `<style>p{color:red}</style><p style="a{">x</p>`, []Option{CompatibilityMode(Juice9)}},
-		{"unreadable content", `<style>p::before{content:var(--missing)}</style><p>x</p>`, []Option{InlinePseudoElements(true)}},
+		{"unreadable content", `<style>p::before{content:var(--missing)}</style><p>x</p>`, []Option{InlinePseudoElements(true), CompatibilityMode(Juice12)}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			_, err := mustNew(t, c.opts...).Inline(c.doc)
@@ -31,6 +31,19 @@ func TestErrJuiceFails(t *testing.T) {
 				t.Errorf("got %v, want an error wrapping ErrJuiceFails", err)
 			}
 		})
+	}
+}
+
+// The default mode renders content juice cannot read as a browser does.
+func TestUnreadableContent(t *testing.T) {
+	for doc, want := range map[string]string{
+		`<style>p::before{content:var(--missing)}</style><p>x</p>`:                               `<p>x</p>`,
+		`<style>p{counter-reset:n -1}p::before{content:counter(n, lower-alpha)}</style><p>x</p>`: `<p style="counter-reset: n -1;"><span>-1</span>x</p>`,
+	} {
+		got, err := mustNew(t, InlinePseudoElements(true)).Inline(doc)
+		if err != nil || got != want {
+			t.Errorf("%s\n got %q, %v\nwant %q", doc, got, err, want)
+		}
 	}
 }
 
