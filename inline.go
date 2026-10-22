@@ -99,7 +99,10 @@ func defaults() options {
 	}
 }
 
-// Option configures an Inliner.
+// Option configures an Inliner. Defaults are juice's: ApplyStyleTags,
+// RemoveStyleTags, InsertPreservedExtraCSS, ResolveCSSVariables, the Apply*
+// attribute options and the Preserve* options other than PreserveImportant
+// are on; every other boolean option is off.
 type Option func(*options)
 
 // ExtraCSS is appended to the CSS collected from the document.
