@@ -302,6 +302,9 @@ type quirks struct {
 	unstyledMatch      bool // <style> elements are removed before selectors match
 	applyInvalid       bool // rules browsers reject, and strings left open, are read as postcss reads them
 	juiceScope         bool // :scope, a top-level & included, matches nothing
+	dropSupports       bool // @supports blocks are neither inlined nor preserved
+	dropExtraPseudos   bool // extraCss rules for :hover and friends are not preserved
+	loseIgnored        bool // a rule ignored from an earlier block, or by an unended "start ignore", is lost
 
 	// juice 9.
 	mensch          bool // mensch reads stylesheets and style attributes
@@ -319,6 +322,9 @@ func (c Compatibility) quirks() quirks {
 		unstyledMatch:      true,
 		applyInvalid:       true,
 		juiceScope:         true,
+		dropSupports:       true,
+		dropExtraPseudos:   true,
+		loseIgnored:        true,
 	}
 	switch c {
 	case Juice12:
@@ -425,9 +431,8 @@ func (in *pass) run(root *html.Node) error {
 	rules := in.collectCSS(root, &st)
 	var keep []preserved
 	if extra := strings.TrimSpace(o.extraCSS); extra != "" {
-		// juice never preserves pseudo-class rules from extraCss.
 		eo := *o
-		eo.preservePseudos = false
+		eo.preservePseudos = o.preservePseudos && !o.dropExtraPseudos
 		r, k, _ := parseWithDirectives([]byte(extra), &eo, uint32(len(rules))<<8, &st)
 		rules = appendRules(rules, r)
 		keep = append(keep, k...)

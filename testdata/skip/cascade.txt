@@ -7,18 +7,16 @@
 cascade/nonvisual  limit: the rule matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 cascade/selector-list-ties  limit: :only-child matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 duplicates/variables  juice bug: with inlineDuplicateProperties, var() reads the first rule's custom property rather than the one that wins the cascade
-ignore/next-across-blocks  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
+ignore/next-across-blocks  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
 ignore/next-rule  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
 ignore/start-end  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
-ignore/start-unterminated  juice bug: an ignore comment carried into the next <style> block stops that rule being inlined, but that block does not keep it, so it is lost
+ignore/start-unterminated  limit: a rule juice is told to ignore stays in <style>, where inlined declarations outrank it
 important/attr-pseudo  limit: inlinePseudoElements turns ::after into a real <span>, an element the original never had
-juice-suite/inline-content/ignore-pseudos  juice bug: pseudo-class rules in extraCss are dropped rather than preserved, so a:link styles are lost
 juice-suite/juice-content/nesting-atrule  limit: an inlined declaration outranks a later rule kept in a preserved @media block
 juice-suite/juice-content/pseudo-elements  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 juice-suite/juice-content/pseudo-elements-and-width-attr  limit: inlinePseudoElements turns ::before/::after into real <span>s, elements the original never had
 l4-spec/is-in-not  limit: :not() matches the <html> element a browser creates around a fragment, which has nothing to inline onto
 markup-decl/close-tags  parser: the browser parses the original by HTML5 rules, and the output follows htmlparser2's tree, as juice's does
-nesting/media  juice bug: @supports blocks are neither inlined nor preserved, so their rules are lost
 nesting/top-level-amp  limit: a top-level & means :scope, the <html> element a browser creates around a fragment, which the fragment does not have
 premailer-suite/misc/style_with_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image
 premailer-suite/misc/style_without_data_in_content  juice bug: the content property is dropped from elements, but on <img> it replaces the image

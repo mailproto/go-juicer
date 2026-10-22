@@ -132,6 +132,10 @@ func parseWithDirectives(src []byte, opts *options, ord uint32, st *ignoreState)
 			r, k, o := s.read(one(n), opts, ord)
 			rules, keep, ord = appendRules(rules, r), append(keep, k...), o
 			continue
+		case normal && !inline[i] && !opts.loseIgnored:
+			// Ignored by a comment in an earlier block, or after a "start
+			// ignore" never ended, which juice neither inlines nor keeps.
+			keep = append(keep, preserved{"ignore", []byte(s.format(n, &keepAll))})
 		case normal:
 			_, k, _ := s.read(one(n), opts, ord)
 			keep = append(keep, k...)
