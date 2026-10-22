@@ -29,7 +29,15 @@ const launch = () => puppeteer.launch({
   headless: true,
   args: ['--no-sandbox', '--disable-gpu'],
 });
-let browser = await launch();
+// A browser that has exited is relaunched before the next document, rather
+// than each call waiting out its timeout.
+let browser, alive;
+async function start() {
+  browser = await launch();
+  alive = true;
+  browser.on('disconnected', () => { alive = false; });
+}
+await start();
 
 let page;
 async function newPage() {
@@ -83,12 +91,13 @@ const withTimeout = (p) =>
 // one: a crashed Chrome otherwise leaves every later call waiting forever.
 async function recover() {
   try {
+    if (!alive) throw new Error('browser exited');
     await withTimeout(newPage());
   } catch {
     browser.process()?.kill('SIGKILL');
-    browser = await launch();
     page = undefined;
-    await newPage();
+    // Failing to start Chrome again ends the run rather than hanging it.
+    await withTimeout((async () => { await start(); await newPage(); })());
   }
 }
 
@@ -96,6 +105,7 @@ let n = 0;
 for await (const line of readline.createInterface({ input: process.stdin })) {
   if (!line) continue;
   const { name, original, inlined } = JSON.parse(line);
+  if (!alive) await recover();
   let diffs;
   try {
     diffs = await withTimeout((async () => compare(await computed(original), await computed(inlined)))());
@@ -106,4 +116,6 @@ for await (const line of readline.createInterface({ input: process.stdin })) {
   process.stdout.write(JSON.stringify({ name, diffs }) + '\n');
   if (++n % 100 === 0) process.stderr.write(`cascade.mjs: ${n} documents\n`);
 }
-await browser.close();
+// Closing a browser that has died can wait forever, after every result is out.
+await withTimeout(browser.close()).catch(() => browser.process()?.kill('SIGKILL'));
+process.exit(0);
