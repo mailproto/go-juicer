@@ -15,10 +15,14 @@ JavaScript ecosystem uses; this ports its semantics to Go.
 ## Performance
 
 Typically several to tens of times faster than juice, depending on the
-document. Current numbers come from CI rather than this file: every push to
-main posts a table of this package against juice, on the same documents and
-the same runner, to its job summary. `make bench-report` produces the same
-table locally.
+document, and faster than the other Go inliners,
+[go-premailer](https://github.com/vanng822/go-premailer) and
+[douceur](https://github.com/aymerick/douceur), on most documents. Current
+numbers come from CI rather than this file: every push to main posts a table
+of this package against juice and those two, on the same documents and the
+same runner, to its job summary. `make bench-report` produces the same table
+locally; the other inliners are benchmarked from `bench/others`, a separate
+module so their dependencies stay out of this one.
 
 The documents are `BenchmarkInline`'s 99 KB marketing email and
 `BenchmarkShapes`, which includes shapes chosen to be unfavourable here;

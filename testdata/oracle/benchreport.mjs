@@ -1,5 +1,5 @@
-// Benchmarks this package and juice on the same documents, on this machine,
-// and prints a markdown table. CI posts it to the job summary of every push
+// Benchmarks this package, juice and other Go inliners (bench/others) on the
+// same documents, on this machine, and prints a markdown table. CI posts it to the job summary of every push
 // to main. Speedups are the headline because both sides run on the same
 // machine; absolute times are labelled with the hardware and versions that
 // produced them.
@@ -40,9 +40,10 @@ function timeJuice(doc) {
   return median(rounds);
 }
 
-function timeGo() {
-  const out = execFileSync('go', ['test', '-run', '^$', '-bench', '^(BenchmarkInline|BenchmarkShapes)$',
-    '-benchmem', '-count', String(ROUNDS), '.'], { cwd: ROOT, encoding: 'utf8' });
+// goBench runs Go benchmarks and returns the median ms and allocs by name.
+function goBench(dir, pattern, env) {
+  const out = execFileSync('go', ['test', '-run', '^$', '-bench', pattern,
+    '-benchmem', '-count', String(ROUNDS), '.'], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...env } });
   const runs = {};
   for (const line of out.split('\n')) {
     const m = line.match(/^Benchmark(\S+?)(?:-\d+)?\s+\d+\s+([\d.]+) ns\/op.*?(\d+) allocs\/op/);
@@ -57,26 +58,39 @@ function timeGo() {
 const fmtMs = (ms) => ms.toFixed(ms < 0.1 ? 3 : ms < 10 ? 2 : ms < 100 ? 1 : 0);
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`);
 
-const go = timeGo();
+// The other inliners read the same documents from files; a name's "/" becomes "_".
+const docDir = fs.mkdtempSync(path.join(os.tmpdir(), 'juicer-bench-'));
+for (const [name, [, doc]] of Object.entries(docs)) fs.writeFileSync(path.join(docDir, `${name.replace('/', '_')}.html`), doc);
+const others = ['go-premailer', 'douceur'];
+
+const go = goBench(ROOT, '^(BenchmarkInline|BenchmarkShapes)$');
+const other = goBench(path.join(ROOT, 'bench/others'), '^BenchmarkOthers$', { JUICER_BENCH_DOCS: docDir });
+fs.rmSync(docDir, { recursive: true });
 const rows = Object.entries(docs).map(([name, [label, doc]]) => {
   const g = go[name];
   if (!g) throw new Error(`no Go result for Benchmark${name}`);
   const j = timeJuice(doc);
-  return { label, bytes: doc.length, go: g.ms, allocs: g.allocs, juice: j, x: j / g.ms };
+  const o = others.map((n) => other[`Others/${n}/${name.replace('/', '_')}`]?.ms);
+  return { label, bytes: doc.length, go: g.ms, allocs: g.allocs, juice: j, x: j / g.ms, others: o };
 });
 
 const goVersion = execFileSync('go', ['env', 'GOVERSION'], { encoding: 'utf8' }).trim();
 const juiceVersion = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'node_modules/juice/package.json'))).version;
 const slowest = rows.reduce((a, b) => (a.x < b.x ? a : b));
+// Versions as bench/others/go.mod pins them.
+const othersMod = fs.readFileSync(path.join(ROOT, 'bench/others/go.mod'), 'utf8');
+const otherVersions = others.map((n) => `${n} ${othersMod.match(new RegExp(`/${n} (v\\S+)`))[1]}`).join(', ');
 const table = [
-  `${os.cpus()[0].model.trim()}, ${goVersion}, Node ${process.versions.node}, juice ${juiceVersion}. ` +
+  `${os.cpus()[0].model.trim()}, ${goVersion}, Node ${process.versions.node}, juice ${juiceVersion}, ${otherVersions}. ` +
     `Median of ${ROUNDS} runs; ms per document.`,
   '',
-  '| document | size | this package | juice | speedup | allocs |',
-  '|---|---|---|---|---|---|',
-  ...rows.map((r) => `| ${r.label} | ${fmtBytes(r.bytes)} | ${fmtMs(r.go)} | ${fmtMs(r.juice)} | ${r.x.toFixed(1)}x | ${r.allocs} |`),
+  `| document | size | this package | juice | ${others.join(' | ')} | speedup over juice | allocs |`,
+  `|---|---|---|---|${others.map(() => '---|').join('')}---|---|`,
+  ...rows.map((r) => `| ${r.label} | ${fmtBytes(r.bytes)} | ${fmtMs(r.go)} | ${fmtMs(r.juice)} | ` +
+    `${r.others.map((ms) => (ms === undefined ? 'fails' : fmtMs(ms))).join(' | ')} | ${r.x.toFixed(1)}x | ${r.allocs} |`),
   '',
-  `Narrowest margin: ${slowest.x.toFixed(1)}x (${slowest.label}).`,
+  `Narrowest margin over juice: ${slowest.x.toFixed(1)}x (${slowest.label}). ` +
+    `${others.join(' and ')} run with their default options; only their speed is compared here.`,
 ].join('\n');
 
 console.log(table);
