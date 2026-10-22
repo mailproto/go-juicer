@@ -299,6 +299,7 @@ type quirks struct {
 	ignoreStyleMedia   bool // a <style media> block applies whatever its media
 	keepCommentMarkers bool // "<!--" and "-->" are read as part of a selector
 	rawContent         bool // content strings are written as markup
+	unstyledMatch      bool // <style> elements are removed before selectors match
 
 	// juice 9.
 	mensch          bool // mensch reads stylesheets and style attributes
@@ -313,6 +314,7 @@ func (c Compatibility) quirks() quirks {
 		ignoreStyleMedia:   true,
 		keepCommentMarkers: true,
 		rawContent:         true,
+		unstyledMatch:      true,
 	}
 	switch c {
 	case Juice12:
@@ -374,9 +376,10 @@ type pass struct {
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 
-	controlAttrs bool     // the document mentions data-juice-* attributes
-	juiceErr     error    // the first place juice would fail, wrapping ErrJuiceFails
-	joinedCSS    [][]byte // the <style> blocks applied, in a compatibility mode
+	controlAttrs bool         // the document mentions data-juice-* attributes
+	juiceErr     error        // the first place juice would fail, wrapping ErrJuiceFails
+	joinedCSS    [][]byte     // the <style> blocks applied, in a compatibility mode
+	removed      []*html.Node // <style> elements to remove once rules have matched
 
 	// RemoveInlinedSelectors only.
 	inlined  map[string]bool     // selectors that matched a visible element
@@ -434,6 +437,9 @@ func (in *pass) run(root *html.Node) error {
 	}
 
 	in.applyRules(root, rules)
+	for _, s := range in.removed {
+		detach(s)
+	}
 	if in.juiceErr != nil {
 		return in.juiceErr
 	}
@@ -485,7 +491,7 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 		// juice ignores a <style> that is not exactly one text node.
 		if s.FirstChild == nil || s.FirstChild != s.LastChild || s.FirstChild.Type != html.TextNode {
 			if o.removeStyleTags {
-				detach(s)
+				in.remove(s)
 			}
 			continue
 		}
@@ -501,7 +507,7 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 			// the query matches, so they stay as written, or go with
 			// @media blocks when those are not preserved.
 			if o.removeStyleTags && !o.preserveMediaQueries {
-				detach(s)
+				in.remove(s)
 			} else if in.embedded != nil {
 				in.embedded[s] = true
 			}
@@ -522,13 +528,48 @@ func (in *pass) collectCSS(root *html.Node, st *ignoreState) []rule {
 			continue
 		}
 		if len(k) == 0 {
-			detach(s)
+			in.remove(s)
 			continue
 		}
 		// Rules that could not be inlined stay behind in this tag.
 		s.FirstChild.Data = string(preservedText(k))
 	}
 	return rules
+}
+
+// remove drops a <style> element once rules have matched, as it is part of
+// the tree selectors such as :first-child see. One a browser would move into
+// <head> goes at once.
+func (in *pass) remove(s *html.Node) {
+	if in.o.unstyledMatch || hoisted(s) {
+		detach(s)
+		return
+	}
+	in.removed = append(in.removed, s)
+}
+
+// headContent is what browsers place in <head> when it comes before the body.
+var headContent = map[string]bool{
+	"head": true, "title": true, "base": true, "link": true, "meta": true,
+	"style": true, "script": true, "noscript": true, "template": true,
+}
+
+// hoisted reports whether n sits outside <body> with nothing but head
+// content before it, where browsers parse it into <head>.
+func hoisted(n *html.Node) bool {
+	if p := n.Parent; p.Type != html.DocumentNode && !(p.Type == html.ElementNode && p.Data == "html") {
+		return false
+	}
+	for c := n.PrevSibling; c != nil; c = c.PrevSibling {
+		switch {
+		case c.Type == html.CommentNode || c.Type == html.DoctypeNode:
+		case c.Type == html.TextNode && strings.TrimLeft(c.Data, " \t\n\r\f") == "":
+		case c.Type == html.ElementNode && headContent[c.Data]:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // applyRules walks the document once in order, applying every matching rule to

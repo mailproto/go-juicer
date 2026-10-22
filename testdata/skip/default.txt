@@ -20,3 +20,11 @@ inline-pseudo-elements/serialization/style-in-string  each <style> block is its 
 */premailer-suite/misc/commented_out_styles_in_the_body  CSS ignores <!-- and --> in a stylesheet, so browsers apply the rule; juice reads "<!-- p" as a selector and applies nothing
 */pseudo-elements/content-markup  pseudo-element content is text, as browsers show it, so markup and "&" in a content string are escaped; juice writes them into the document as HTML
 */pseudo-elements/trailing-combinator  pseudo-element content is text, as browsers show it, so content:">" is written &gt;; juice writes it raw
+*/juice-suite/juice-content/pseudo-elements  <style> elements stay in the tree until selectors have matched, as in browsers, so a:first-child does not match an <a> after one; juice removes them first
+*/juice-suite/juice-content/pseudo-elements-and-width-attr  <style> elements stay in the tree until selectors have matched, as in browsers, so a:first-child does not match an <a> after one; juice removes them first
+default/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+inline-pseudo-elements/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+no-attributes/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+no-css-variables/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+no-preserve/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
+preserve-important/style-tags/first-child  <style> elements stay in the tree until selectors have matched, as in browsers, so a <p> after one is not :first-child; juice removes them first
