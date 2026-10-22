@@ -6,13 +6,18 @@ on:
     - cron: '17 6 * * *'
 
 jobs:
+  # go.mod's floor is oldstable; both supported releases must pass.
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: [oldstable, stable]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: ${{ matrix.go }}
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -24,7 +29,19 @@ jobs:
       # Verified, never regenerated: regenerating here would let a juice patch
       # release silently change our expectations with nobody reviewing it.
       - name: goldens match pinned juice
+        if: matrix.go == 'stable'
         run: make goldens-verify
+
+  # Nightly too, so a newly published vulnerability fails the build.
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   fuzz:
     runs-on: ubuntu-latest
@@ -36,8 +53,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          # 1.27 stops treating -fuzztime running out as a failure (go.dev/issue/75804).
-          go-version: '1.27.x'
+          # Needs 1.27+: earlier releases fail a run whose -fuzztime runs out (go.dev/issue/75804).
+          go-version: stable
           cache: true
       # A smoke run on every change; the nightly run digs deeper.
       - run: go test -run '^$' -fuzz '^${{ matrix.target }}$' -fuzztime ${{ github.event_name == 'schedule' && '5m' || '30s' }} .
@@ -61,7 +78,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: stable
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -87,7 +104,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: stable
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -124,7 +141,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: stable
           cache: true
       - uses: actions/setup-node@v4
         with:
