@@ -55,6 +55,7 @@ type options struct {
 	styleAttributeName          string
 	xmlMode                     bool
 	codeBlocks                  []CodeBlock
+	elementHook                 func(Element) []Attribute
 
 	// keepAll preserves every top-level rule and at-rule; it formats what a
 	// juice ignore comment keeps.
@@ -358,13 +359,24 @@ func (in *Inliner) Inline(doc string) (string, error) {
 }
 
 // InlineBytes is Inline over a byte slice.
-func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) {
+func (in *Inliner) InlineBytes(doc []byte) ([]byte, error) { return in.inline(doc, nil) }
+
+// InlineCSS inlines css into doc as juice's inlineDocument does: the
+// document's <style> elements are neither read nor changed, and rules from
+// css that cannot be inlined are dropped rather than preserved.
+func (in *Inliner) InlineCSS(doc, css string) (string, error) {
+	out, err := in.inline([]byte(doc), &css)
+	return string(out), err
+}
+
+// inline inlines doc's own CSS, or css instead when it is not nil.
+func (in *Inliner) inline(doc []byte, css *string) ([]byte, error) {
 	if err := checkSize(doc, &in.opts); err != nil {
 		return nil, err
 	}
 	src, blocks := encodeCodeBlocks(doc, in.opts.codeBlocks)
 	root := htmlparser2.Parse(src, in.opts.xmlMode)
-	if err := in.process(root, src); err != nil {
+	if err := in.process(root, src, css); err != nil {
 		return nil, err
 	}
 	var buf bytes.Buffer
@@ -400,6 +412,7 @@ type pass struct {
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 
+	css          *string      // InlineCSS's stylesheet, read instead of the document's
 	controlAttrs bool         // the document mentions data-juice-* attributes
 	juiceErr     error        // the first place juice would fail, wrapping ErrJuiceFails
 	joinedCSS    [][]byte     // the <style> blocks applied, in a compatibility mode
@@ -416,11 +429,11 @@ type pass struct {
 }
 
 // process runs the inlining pipeline over an already-parsed tree.
-func (in *Inliner) process(root *html.Node, src []byte) error {
+func (in *Inliner) process(root *html.Node, src []byte, css *string) error {
 	if err := checkDepth(root, &in.opts); err != nil {
 		return err
 	}
-	p := &pass{o: &in.opts, controlAttrs: !in.opts.noControlAttrs && bytes.Contains(src, []byte("data-juice-"))}
+	p := &pass{o: &in.opts, css: css, controlAttrs: !in.opts.noControlAttrs && bytes.Contains(src, []byte("data-juice-"))}
 	return p.run(root)
 }
 
@@ -437,6 +450,9 @@ func appendRules(dst, src []rule) []rule {
 func (in *pass) run(root *html.Node) error {
 	o := in.o
 
+	if in.css != nil {
+		return in.inlineRules(root, in.parseOnly(*in.css), nil)
+	}
 	if o.removeInlined && !o.removeStyleTags {
 		in.inlined = map[string]bool{}
 		in.embedded = map[*html.Node]bool{}
@@ -458,7 +474,19 @@ func (in *pass) run(root *html.Node) error {
 		css := append(bytes.Join(in.joinedCSS, []byte("\n")), "\n"+o.extraCSS...)
 		rules, _, _ = parseWithDirectives(css, o, 0, &ignoreState{})
 	}
+	return in.inlineRules(root, rules, keep)
+}
 
+// parseOnly reads css for InlineCSS.
+func (in *pass) parseOnly(css string) []rule {
+	rules, _, _ := parseWithDirectives([]byte(css), in.o, 0, &ignoreState{})
+	return rules
+}
+
+// inlineRules applies rules to the document and writes the result, keeping
+// what could not be inlined.
+func (in *pass) inlineRules(root *html.Node, rules []rule, keep []preserved) error {
+	o := in.o
 	in.applyRules(root, rules)
 	for _, s := range in.removed {
 		detach(s)
@@ -485,6 +513,9 @@ func (in *pass) run(root *html.Node) error {
 		img.apply()
 	}
 	in.promoteAttributes(root)
+	if o.elementHook != nil {
+		in.runElementHook(root)
+	}
 	if err := in.emitPreserved(root, keep); err != nil {
 		return err
 	}
