@@ -103,3 +103,44 @@ func ExampleCodeBlocks() {
 	// Output:
 	// <td [[ if .VIP ]]class="vip" [[ end ]] style="color: red;">{{ name }}</td>
 }
+
+func ExampleInliner_InlineCSS() {
+	// The <style> elements are left exactly as written, and the @media rule,
+	// which cannot be inlined, is dropped.
+	doc := `<style data-embed>p{margin:0}</style><style>p{color:red} @media print{p{color:blue}}</style><p>x</p>`
+	css := `p{font-weight:bold} @media (max-width:600px){p{color:green}}`
+	for _, c := range []juicer.Compatibility{juicer.Default, juicer.Juice12, juicer.Juice9} {
+		in, err := juicer.New(juicer.CompatibilityMode(c))
+		if err != nil {
+			panic(err)
+		}
+		out, err := in.InlineCSS(doc, css)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(out)
+	}
+	// Output:
+	// <style data-embed>p{margin:0}</style><style>p{color:red} @media print{p{color:blue}}</style><p style="font-weight: bold;">x</p>
+	// <style data-embed>p{margin:0}</style><style>p{color:red} @media print{p{color:blue}}</style><p style="font-weight: bold;">x</p>
+	// <style data-embed>p{margin:0}</style><style>p{color:red} @media print{p{color:blue}}</style><p style="font-weight: bold;">x</p>
+}
+
+func ExampleElementHook() {
+	// Mirror text-align onto <p align="">, which old email clients read.
+	align := func(el juicer.Element) []juicer.Attribute {
+		for _, d := range el.Declarations {
+			if el.Tag == "p" && d.Property == "text-align" {
+				return []juicer.Attribute{{Name: "align", Value: d.Value}}
+			}
+		}
+		return nil
+	}
+	out, err := juicer.Inline(`<style>p{text-align:center}</style><p>Hi</p>`, juicer.ElementHook(align))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
+	// Output:
+	// <p style="text-align: center;" align="center">Hi</p>
+}
