@@ -67,7 +67,7 @@ normalization**, prints a parity percentage per target on every run, and
 | target | cases | match | skipped |
 |---|---|---|---|
 | juice 12.1.3, with `CompatibilityMode(Juice12)` | 4116 | 4067 | 49: juice throwing on malformed style attributes (divergence 3 below), in `testdata/skip/juice-12.txt` |
-| juice 12.1.3, default mode | 4116 | 3807 | 309: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
+| juice 12.1.3, default mode | 4116 | 3806 | 310: those above, plus those where the default follows the browser (`testdata/skip/default.txt`) |
 | juice 9.1.0, with `CompatibilityMode(Juice9)` | 4116 | 4116 | none |
 
 `testdata/in/juice-suite`, `testdata/in/premailer-suite` and
@@ -137,6 +137,9 @@ that has to match juice 12 byte for byte. So far:
   as `var()`. juice resolves it.
 - **With `InlineDuplicateProperties`, `var()` reads the custom property that
   wins the cascade.** juice reads the first one set.
+- **Pseudo-element `content` browsers read as invalid**, such as `var()` of an
+  unset property, renders no pseudo-element, and a counter past its style's
+  range falls back to decimal. juice throws, failing the whole document.
 - **A rule an ignore comment skips stays in `<style>`** when the comment is in
   an earlier block, or is a `start ignore` that never ends. juice neither
   inlines nor keeps it.

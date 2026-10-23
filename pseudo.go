@@ -67,8 +67,16 @@ func (in *pass) materializePseudos(rules []rule) (imgs []pseudoImg, err error) {
 			in.byNode[span] = m
 
 			text, img, err := in.parseContent(string(m.slots[c].value), span, base, counters[base])
-			if err != nil {
+			if err != nil && in.o.contentFails {
 				return nil, err
+			}
+			if err != nil {
+				// Browsers render no pseudo-element for content they read as
+				// invalid, such as var() of an unset property.
+				base.RemoveChild(span)
+				in.resolved = in.resolved[:len(in.resolved)-1]
+				delete(in.byNode, span)
+				continue
 			}
 			if img != "" {
 				imgs = append(imgs, pseudoImg{span, img})
@@ -140,6 +148,10 @@ func (in *pass) parseContent(content string, span, base *html.Node, scope *count
 					style = tok[m[6]:m[7]]
 				}
 				s, err := counterStyle(v, style)
+				if err != nil && !in.o.contentFails {
+					// Past its range, a counter style falls back to decimal.
+					s, err = strconv.Itoa(v), nil
+				}
 				if err != nil {
 					return "", "", err
 				}
