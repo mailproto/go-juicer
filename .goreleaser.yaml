@@ -1,0 +1,23 @@
+version: 2
+
+# A library: the release is its notes, and the Go checksum database covers the source.
+builds:
+  - skip: true
+
+checksum:
+  disable: true
+
+release:
+  header: "{{ .TagBody }}" # the annotated tag's summary, above the grouped commits
+
+changelog:
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Other
+      order: 999
