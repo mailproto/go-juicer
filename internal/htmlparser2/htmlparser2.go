@@ -561,8 +561,14 @@ func foldName(b []byte, lower bool) string {
 // decodeEntities:false: text is written untouched and only the double quote is
 // escaped inside attribute values.
 func Render(buf *bytes.Buffer, root *html.Node) {
-	// Childless elements in foreign content (svg, math) close themselves.
-	selfClosing := func(n *html.Node) bool { return n.Namespace != "" && n.FirstChild == nil }
+	// Inside svg and math, up to an integration point, dom-serializer is in foreign
+	// mode: it restores mixed-case names, keeps empty attributes' ="", and closes
+	// childless elements itself.
+	type frame struct {
+		name    string
+		foreign bool
+	}
+	var open []frame
 	Traverse(root, func(n *html.Node) bool {
 		switch n.Type {
 		case html.TextNode, html.DoctypeNode, html.CommentNode:
@@ -570,18 +576,29 @@ func Render(buf *bytes.Buffer, root *html.Node) {
 			buf.WriteString(n.Data)
 			return false
 		case html.ElementNode:
+			f := frame{name: n.Data}
+			if len(open) > 0 && open[len(open)-1].foreign {
+				f.name = cmp.Or(foreignElementNames[n.Data], n.Data)
+				f.foreign = !foreignIntegrationPoints[open[len(open)-1].name]
+			}
+			f.foreign = f.foreign || n.Data == "svg" || n.Data == "math"
+			open = append(open, f)
 			buf.WriteByte('<')
-			buf.WriteString(n.Data)
+			buf.WriteString(f.name)
 			for _, a := range jsKeyOrder(n.Attr) {
 				buf.WriteByte(' ')
-				buf.WriteString(a.Key)
-				if a.Val != "" {
+				if f.foreign {
+					buf.WriteString(cmp.Or(foreignAttributeNames[a.Key], a.Key))
+				} else {
+					buf.WriteString(a.Key)
+				}
+				if a.Val != "" || f.foreign {
 					buf.WriteString(`="`)
 					writeAttrValue(buf, a.Val)
 					buf.WriteByte('"')
 				}
 			}
-			if selfClosing(n) {
+			if f.foreign && n.FirstChild == nil {
 				buf.WriteString("/>")
 				return false
 			}
@@ -589,13 +606,19 @@ func Render(buf *bytes.Buffer, root *html.Node) {
 		}
 		return true
 	}, func(n *html.Node) {
+		if n.Type != html.ElementNode {
+			return
+		}
+		f := open[len(open)-1]
+		open = open[:len(open)-1]
 		// Only a materialized pseudo-element gives a void element children;
 		// dom-serializer writes them after the tag, unclosed.
-		if n.Type == html.ElementNode && !selfClosing(n) && !voidElements[n.Data] {
-			buf.WriteString("</")
-			buf.WriteString(n.Data)
-			buf.WriteByte('>')
+		if f.foreign && n.FirstChild == nil || !f.foreign && voidElements[n.Data] {
+			return
 		}
+		buf.WriteString("</")
+		buf.WriteString(f.name)
+		buf.WriteByte('>')
 	})
 }
 
