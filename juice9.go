@@ -69,7 +69,7 @@ func menschDecls(n mensch.Node, ord uint32) (decls []decl, throws bool, _ uint32
 			// A word with no colon, which juice 9 writes out as it reads it.
 			name = "undefined"
 		}
-		decls = append(decls, decl{prop: name, value: []byte(v), important: important, bang: []byte(d.Value), ord: ord})
+		decls = append(decls, decl{prop: name, value: []byte(v), important: important, bang: []byte(d.Value), ord: ord, keepEmpty: true})
 		ord++
 	}
 	return decls, throws, ord

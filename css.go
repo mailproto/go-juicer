@@ -16,6 +16,7 @@ type decl struct {
 	important bool
 	bang      []byte // value + " !important", for elements that keep it
 	ord       uint32 // position in the stylesheet; breaks specificity ties
+	keepEmpty bool   // juice 9 writes a declaration whose value is only !important
 }
 
 // preserved is a rule that cannot be inlined and is re-emitted into a

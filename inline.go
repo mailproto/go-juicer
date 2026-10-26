@@ -713,7 +713,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 
 func addDecls(m *propMap, r *rule, i int, keepImportant bool) {
 	for _, d := range r.decls {
-		if d.prop == "" || len(d.value) == 0 {
+		if d.prop == "" || len(d.value) == 0 && !d.keepEmpty {
 			continue
 		}
 		prio := 0
