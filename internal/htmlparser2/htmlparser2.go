@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 var voidElements = map[string]bool{
@@ -94,6 +95,17 @@ func isForeign(tag string) bool { return tag == "svg" || tag == "math" }
 func Parse(src []byte, xml bool) *html.Node {
 	root := &html.Node{Type: html.DocumentNode}
 	cur := root
+	// Nodes come from slabs that double up to 256, so a small document pays
+	// for little and a large one allocates once per 256 nodes.
+	// ponytail: a slab stays alive while any of its nodes does; per-node allocation if detached subtrees must free early.
+	var slab []html.Node
+	newNode := func(n html.Node) *html.Node {
+		if len(slab) == cap(slab) {
+			slab = make([]html.Node, 0, min(max(2*cap(slab), 8), 256))
+		}
+		slab = append(slab, n)
+		return &slab[len(slab)-1]
+	}
 	foreign := 0
 	z := html.NewTokenizer(bytes.NewReader(src))
 	pos := 0 // offset in src of the tokenizer's next byte
@@ -123,7 +135,7 @@ func Parse(src []byte, xml bool) *html.Node {
 		} else if !xml && (name == "br" || name == "p") {
 			// htmlparser2 turns an unmatched </br> into <br> and an
 			// unmatched </p> into an empty <p></p>.
-			cur.AppendChild(&html.Node{Type: html.ElementNode, Data: name})
+			cur.AppendChild(newNode(html.Node{Type: html.ElementNode, Data: name}))
 		}
 		// Any other unmatched end tag is dropped.
 	}
@@ -157,7 +169,7 @@ func Parse(src []byte, xml bool) *html.Node {
 			}
 			if k >= 0 {
 				if k > 0 {
-					cur.AppendChild(&html.Node{Type: html.TextNode, Data: string(raw[:k])})
+					cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: string(raw[:k])}))
 				}
 				s := start + k
 				e := tagEnd(src, s)
@@ -167,7 +179,7 @@ func Parse(src []byte, xml bool) *html.Node {
 					continue
 				}
 				name, attrs := scanStartTag(src[s:e], false)
-				n := &html.Node{Type: html.ElementNode, Data: name, Attr: attrs}
+				n := newNode(html.Node{Type: html.ElementNode, Data: name, Attr: attrs})
 				cur.AppendChild(n)
 				if !bytes.HasSuffix(src[s:e], []byte("/>")) {
 					cur = n
@@ -175,7 +187,7 @@ func Parse(src []byte, xml bool) *html.Node {
 				resume(e)
 				continue
 			}
-			cur.AppendChild(&html.Node{Type: html.TextNode, Data: string(raw)})
+			cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: string(raw)}))
 
 		case html.CommentToken, html.DoctypeToken:
 			var n *html.Node
@@ -203,7 +215,7 @@ func Parse(src []byte, xml bool) *html.Node {
 				continue
 			}
 			if xml {
-				n := &html.Node{Type: html.ElementNode, Data: name, Attr: attrs}
+				n := newNode(html.Node{Type: html.ElementNode, Data: name, Attr: attrs})
 				cur.AppendChild(n)
 				if tt == html.StartTagToken {
 					cur = n
@@ -216,7 +228,7 @@ func Parse(src []byte, xml bool) *html.Node {
 					cur = cur.Parent
 				}
 			}
-			n := &html.Node{Type: html.ElementNode, Data: name, Attr: attrs}
+			n := newNode(html.Node{Type: html.ElementNode, Data: name, Attr: attrs})
 			if foreign > 0 || isForeign(name) {
 				n.Namespace = "svg"
 			}
@@ -412,19 +424,28 @@ func isSpace(c byte) bool {
 }
 
 func lowerASCII(b []byte) string {
+	var stack [32]byte
+	l := b
 	for _, c := range b {
 		if 'A' <= c && c <= 'Z' {
-			out := make([]byte, len(b))
-			for i, c := range b {
+			l = stack[:0]
+			if len(b) > len(stack) {
+				l = make([]byte, 0, len(b))
+			}
+			for _, c := range b {
 				if 'A' <= c && c <= 'Z' {
 					c += 'a' - 'A'
 				}
-				out[i] = c
+				l = append(l, c)
 			}
-			return string(out)
+			break
 		}
 	}
-	return string(b)
+	// Known tag and attribute names share atom's static strings.
+	if a := atom.Lookup(l); a != 0 {
+		return a.String()
+	}
+	return string(l)
 }
 
 // scanStartTag reads a tag name and attributes from raw start-tag bytes,

@@ -42,7 +42,7 @@ func (in *pass) runElementHook(root *html.Node) {
 		}
 		if m := in.byNode[n]; m != nil {
 			el.Declarations = []Declaration{}
-			for _, i := range m.order() {
+			for _, i := range m.order(nil) {
 				el.Declarations = append(el.Declarations, Declaration{m.slots[i].prop, string(m.slots[i].value)})
 			}
 		}

@@ -103,6 +103,7 @@ var styleToAttribute = map[string]string{
 
 func (in *pass) promoteAttributes(root *html.Node) {
 	o := in.o
+	var heads []int32
 	for _, el := range in.resolved {
 		n, m := el.node, el.props
 		if o.applyWidthAttributes {
@@ -114,7 +115,8 @@ func (in *pass) promoteAttributes(root *html.Node) {
 		if o.applyAttributesTableElement && tableElements[foldedName(n)] {
 			// juice walks the element's properties, so attributes land in
 			// property order rather than table order.
-			for _, i := range m.order() {
+			heads = m.order(heads[:0])
+			for _, i := range heads {
 				attr, ok := styleToAttribute[m.slots[i].prop]
 				if !ok {
 					continue

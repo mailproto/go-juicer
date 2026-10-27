@@ -411,6 +411,7 @@ type pass struct {
 	o        *options
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
+	maps     []propMap               // slab newPropMap hands out from
 
 	css          *string      // InlineCSS's stylesheet, read instead of the document's
 	controlAttrs bool         // the document mentions data-juice-* attributes
@@ -688,7 +689,7 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 				return
 			}
 			if m == nil {
-				m = &propMap{dup: dup()}
+				m = in.newPropMap(dup(), len(r.decls))
 				// The existing style attribute seeds the map on first match.
 				// An element no rule touches is never visited, so its style
 				// attribute is left exactly as written.
@@ -709,6 +710,16 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 		}
 		in.byNode[n] = m
 	})
+}
+
+// newPropMap returns an element's map from slabs that double up to 256, with
+// room for n declarations.
+func (in *pass) newPropMap(dup bool, n int) *propMap {
+	if len(in.maps) == cap(in.maps) {
+		in.maps = make([]propMap, 0, min(max(2*cap(in.maps), 4), 256))
+	}
+	in.maps = append(in.maps, propMap{dup: dup, slots: make([]property, 0, max(n, 1))})
+	return &in.maps[len(in.maps)-1]
 }
 
 func addDecls(m *propMap, r *rule, i int, keepImportant bool) {
@@ -738,8 +749,9 @@ func addDecls(m *propMap, r *rule, i int, keepImportant bool) {
 // accumulation because attribute promotion reads the same property map, and
 // after variable resolution so the promoted values are the substituted ones.
 func (in *pass) writeStyles() {
+	var s styleScratch
 	for _, el := range in.resolved {
-		if v := el.props.styleAttr(in.o); v != nil {
+		if v := el.props.styleAttr(in.o, &s); v != nil {
 			setAttr(el.node, in.o.styleAttributeName, string(v))
 		}
 	}
