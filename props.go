@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"cmp"
 	"slices"
-	"sort"
 	"strings"
 )
 
@@ -115,7 +114,7 @@ func (m *propMap) add(p property) {
 // order returns the live properties in juice's styleProps key order: where a
 // property was first set, except that an override from a different rule moves
 // it to the end. A same-rule chain therefore sits where its oldest slot does.
-func (m *propMap) order() []int32 {
+func (m *propMap) order(heads []int32) []int32 {
 	pos := func(i int32) int32 {
 		for m.slots[i].next >= 0 {
 			i = m.slots[i].next
@@ -128,7 +127,6 @@ func (m *propMap) order() []int32 {
 			return int32(slices.IndexFunc(m.slots, func(p property) bool { return p.prop == m.slots[i].prop }))
 		}
 	}
-	var heads []int32
 	for i := range m.slots {
 		if !m.slots[i].dead && !m.slots[i].extra {
 			heads = append(heads, int32(i))
@@ -138,10 +136,15 @@ func (m *propMap) order() []int32 {
 	return heads
 }
 
-// live returns the emittable slots, newest-wins order resolved, chains
+// styleScratch is reused across styleAttr calls in one pass.
+type styleScratch struct {
+	idx []int32
+	buf bytes.Buffer
+}
+
+// live appends to out the emittable slots, newest-wins order resolved, chains
 // flattened.
-func (m *propMap) live() []int32 {
-	var out []int32
+func (m *propMap) live(out []int32) []int32 {
 	for i := range m.slots {
 		if m.slots[i].dead {
 			continue
@@ -155,20 +158,23 @@ func (m *propMap) live() []int32 {
 
 // styleAttr renders the style attribute value, or nil when nothing survives
 // filtering. juice writes no attribute at all in that case.
-func (m *propMap) styleAttr(o *options) []byte {
-	idx := m.live()
+// The result is valid until the next call with the same scratch.
+func (m *propMap) styleAttr(o *options, s *styleScratch) []byte {
+	idx := m.live(s.idx[:0])
+	s.idx = idx
 	if len(idx) == 0 {
 		return nil
 	}
-	sort.SliceStable(idx, func(a, b int) bool {
-		x, y := &m.slots[idx[a]], &m.slots[idx[b]]
-		if x.key != y.key {
-			return x.key < y.key
+	slices.SortStableFunc(idx, func(a, b int32) int {
+		x, y := &m.slots[a], &m.slots[b]
+		if c := cmp.Compare(x.key, y.key); c != 0 {
+			return c
 		}
-		return x.ord < y.ord
+		return cmp.Compare(x.ord, y.ord)
 	})
 
-	var buf bytes.Buffer
+	buf := &s.buf
+	buf.Reset()
 	for _, i := range idx {
 		p := &m.slots[i]
 		// A pseudo-element's content becomes its text. juice drops content
@@ -186,7 +192,7 @@ func (m *propMap) styleAttr(o *options) []byte {
 		buf.WriteString(": ")
 		// The value lands inside a double-quoted attribute, so juice swaps
 		// double quotes for single ones rather than escaping them.
-		writeSingleQuoted(&buf, p.value)
+		writeSingleQuoted(buf, p.value)
 		buf.WriteByte(';')
 	}
 	if buf.Len() == 0 {

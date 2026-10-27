@@ -67,14 +67,14 @@ func BenchmarkParseCSS(b *testing.B) {
 // commit; lower it when an improvement lands so the gain cannot quietly erode.
 func TestAllocBudget(t *testing.T) {
 	budgets := map[string]float64{
-		"inline":            31000,
-		"tiny":              75,
-		"small":             950,
-		"manyRulesFewNodes": 18500,
-		"fewRulesManyNodes": 79500,
-		"unbucketable":      8200,
-		"deepDescendant":    8400,
-		"large":             152000,
+		"inline":            16500,
+		"tiny":              65,
+		"small":             550,
+		"manyRulesFewNodes": 11700,
+		"fewRulesManyNodes": 33000,
+		"unbucketable":      5300,
+		"deepDescendant":    4600,
+		"large":             70000,
 	}
 	docs := map[string]string{"inline": benchDoc()}
 	for _, s := range shapes {
