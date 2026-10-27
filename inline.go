@@ -412,6 +412,7 @@ type pass struct {
 	resolved []resolvedEl
 	byNode   map[*html.Node]*propMap // ancestor lookup for var() resolution
 	maps     []propMap               // slab newPropMap hands out from
+	props    []property              // slab of slots newPropMap carves from
 
 	css          *string      // InlineCSS's stylesheet, read instead of the document's
 	controlAttrs bool         // the document mentions data-juice-* attributes
@@ -713,12 +714,19 @@ func (in *pass) applyRules(root *html.Node, rules []rule) {
 }
 
 // newPropMap returns an element's map from slabs that double up to 256, with
-// room for n declarations.
+// room for n declarations carved from a slab of slots. The carve's capacity is
+// capped, so a map that outgrows it reallocates rather than overwriting the next.
 func (in *pass) newPropMap(dup bool, n int) *propMap {
 	if len(in.maps) == cap(in.maps) {
 		in.maps = make([]propMap, 0, min(max(2*cap(in.maps), 4), 256))
 	}
-	in.maps = append(in.maps, propMap{dup: dup, slots: make([]property, 0, max(n, 1))})
+	n++ // room for a later rule without reallocating
+	if cap(in.props)-len(in.props) < n {
+		in.props = make([]property, 0, max(n, min(max(2*cap(in.props), 8), 1024)))
+	}
+	k := len(in.props)
+	in.props = in.props[:k+n]
+	in.maps = append(in.maps, propMap{dup: dup, slots: in.props[k : k : k+n]})
 	return &in.maps[len(in.maps)-1]
 }
 
@@ -750,9 +758,21 @@ func addDecls(m *propMap, r *rule, i int, keepImportant bool) {
 // after variable resolution so the promoted values are the substituted ones.
 func (in *pass) writeStyles() {
 	var s styleScratch
+	var slab []html.Attribute // grown attribute lists, carved with capped capacity
 	for _, el := range in.resolved {
 		if v := el.props.styleAttr(in.o, &s); v != nil {
-			setAttr(el.node, in.o.styleAttributeName, string(v))
+			n := el.node
+			if _, ok := getAttr(n, in.o.styleAttributeName); !ok && len(n.Attr) == cap(n.Attr) {
+				need := len(n.Attr) + 1
+				if cap(slab)-len(slab) < need {
+					slab = make([]html.Attribute, 0, max(need, min(max(2*cap(slab), 8), 256)))
+				}
+				k := len(slab)
+				slab = append(slab, n.Attr...)
+				n.Attr = slab[k : len(slab) : k+need]
+				slab = slab[:k+need]
+			}
+			setAttr(n, in.o.styleAttributeName, string(v))
 		}
 	}
 }

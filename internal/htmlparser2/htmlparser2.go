@@ -106,6 +106,24 @@ func Parse(src []byte, xml bool) *html.Node {
 		slab = append(slab, n)
 		return &slab[len(slab)-1]
 	}
+	// Text, attribute values and XML names are substrings of one copy of src.
+	text := string(src)
+	// Attributes come from slabs too. Each carve's capacity is capped, so an
+	// append reallocates rather than overwriting the next element's.
+	var scratch, attrSlab []html.Attribute
+	startTag := func(b string, lower bool) (string, []html.Attribute) {
+		name, a := scanStartTag(b, lower, scratch[:0])
+		scratch = a
+		if len(a) == 0 {
+			return name, nil
+		}
+		if cap(attrSlab)-len(attrSlab) < len(a) {
+			attrSlab = make([]html.Attribute, 0, max(len(a), min(max(2*cap(attrSlab), 8), 256)))
+		}
+		k := len(attrSlab)
+		attrSlab = append(attrSlab, a...)
+		return name, attrSlab[k:len(attrSlab):len(attrSlab)]
+	}
 	foreign := 0
 	z := html.NewTokenizer(bytes.NewReader(src))
 	pos := 0 // offset in src of the tokenizer's next byte
@@ -169,7 +187,7 @@ func Parse(src []byte, xml bool) *html.Node {
 			}
 			if k >= 0 {
 				if k > 0 {
-					cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: string(raw[:k])}))
+					cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: text[start : start+k]}))
 				}
 				s := start + k
 				e := tagEnd(src, s)
@@ -178,7 +196,7 @@ func Parse(src []byte, xml bool) *html.Node {
 					resume(len(src))
 					continue
 				}
-				name, attrs := scanStartTag(src[s:e], false)
+				name, attrs := startTag(text[s:e], false)
 				n := newNode(html.Node{Type: html.ElementNode, Data: name, Attr: attrs})
 				cur.AppendChild(n)
 				if !bytes.HasSuffix(src[s:e], []byte("/>")) {
@@ -187,7 +205,7 @@ func Parse(src []byte, xml bool) *html.Node {
 				resume(e)
 				continue
 			}
-			cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: string(raw)}))
+			cur.AppendChild(newNode(html.Node{Type: html.TextNode, Data: text[start:pos]}))
 
 		case html.CommentToken, html.DoctypeToken:
 			var n *html.Node
@@ -197,7 +215,7 @@ func Parse(src []byte, xml bool) *html.Node {
 				n, name, end = closeTagLike(src, start, xml)
 				if name != "" {
 					if !xml {
-						name = lowerASCII([]byte(name))
+						name = lowerASCII(name)
 					}
 					closeTag(name)
 				}
@@ -210,7 +228,7 @@ func Parse(src []byte, xml bool) *html.Node {
 			resume(end)
 
 		case html.StartTagToken, html.SelfClosingTagToken:
-			name, attrs := scanStartTag(raw, !xml)
+			name, attrs := startTag(text[start:pos], !xml)
 			if name == "" {
 				continue
 			}
@@ -247,7 +265,7 @@ func Parse(src []byte, xml bool) *html.Node {
 			}
 
 		case html.EndTagToken:
-			if name := scanEndTag(raw, !xml); name != "" {
+			if name := scanEndTag(text[start:pos], !xml); name != "" {
 				closeTag(name)
 			}
 		}
@@ -423,35 +441,36 @@ func isSpace(c byte) bool {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'
 }
 
-func lowerASCII(b []byte) string {
+// lowerASCII returns s lowercased: atom's static string for a known tag or
+// attribute name, s itself when it has no uppercase, or else a new string.
+func lowerASCII(s string) string {
 	var stack [32]byte
-	l := b
-	for _, c := range b {
-		if 'A' <= c && c <= 'Z' {
-			l = stack[:0]
-			if len(b) > len(stack) {
-				l = make([]byte, 0, len(b))
-			}
-			for _, c := range b {
-				if 'A' <= c && c <= 'Z' {
-					c += 'a' - 'A'
-				}
-				l = append(l, c)
-			}
-			break
-		}
+	l, upper := stack[:0], false
+	if len(s) > len(stack) {
+		l = make([]byte, 0, len(s))
 	}
-	// Known tag and attribute names share atom's static strings.
+	l = l[:len(s)]
+	for i := range len(s) {
+		c := s[i]
+		if 'A' <= c && c <= 'Z' {
+			c += 'a' - 'A'
+			upper = true
+		}
+		l[i] = c
+	}
 	if a := atom.Lookup(l); a != 0 {
 		return a.String()
+	}
+	if !upper {
+		return s
 	}
 	return string(l)
 }
 
-// scanStartTag reads a tag name and attributes from raw start-tag bytes,
-// keeping values exactly as written. x/net/html's TagAttr decodes entities,
-// which loses the difference between "&amp;" and a literal "&".
-func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
+// scanStartTag reads a tag name and attributes from a raw start tag, keeping
+// values exactly as written and appending them to attrs. x/net/html's TagAttr
+// decodes entities, which loses the difference between "&amp;" and a literal "&".
+func scanStartTag(b string, lower bool, attrs []html.Attribute) (string, []html.Attribute) {
 	i := 1 // skip '<'
 	start := i
 	for i < len(b) && !isSpace(b[i]) && b[i] != '>' && b[i] != '/' {
@@ -459,10 +478,9 @@ func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
 	}
 	name := foldName(b[start:i], lower)
 	if name == "" {
-		return "", nil
+		return "", attrs
 	}
 
-	var attrs []html.Attribute
 	for i < len(b) {
 		for i < len(b) && (isSpace(b[i]) || b[i] == '/') {
 			i++
@@ -493,7 +511,7 @@ func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
 				for i < len(b) && b[i] != q {
 					i++
 				}
-				val = string(b[vs:i])
+				val = b[vs:i]
 				if i < len(b) {
 					i++
 				}
@@ -502,7 +520,7 @@ func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
 				for i < len(b) && !isSpace(b[i]) && b[i] != '>' {
 					i++
 				}
-				val = string(b[vs:i])
+				val = b[vs:i]
 			}
 		}
 		if an == "" {
@@ -523,7 +541,7 @@ func scanStartTag(b []byte, lower bool) (string, []html.Attribute) {
 	return name, attrs
 }
 
-func scanEndTag(b []byte, lower bool) string {
+func scanEndTag(b string, lower bool) string {
 	if len(b) < 3 {
 		return ""
 	}
@@ -571,11 +589,11 @@ func tagEnd(src []byte, s int) int {
 }
 
 // foldName lowercases a name outside XML mode.
-func foldName(b []byte, lower bool) string {
+func foldName(b string, lower bool) string {
 	if lower {
 		return lowerASCII(b)
 	}
-	return string(b)
+	return b
 }
 
 // Render serializes the tree the way dom-serializer does with

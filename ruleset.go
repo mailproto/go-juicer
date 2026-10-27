@@ -1,6 +1,8 @@
 package juicer
 
 import (
+	"iter"
+
 	"github.com/mailproto/go-juicer/internal/selector"
 	"golang.org/x/net/html"
 )
@@ -80,7 +82,7 @@ func (rs *ruleSet) forEach(n *html.Node, sc *scratch, fn func(i int, r *rule)) {
 		case "id":
 			add(rs.byID[a.Val])
 		case "class":
-			for _, tok := range classTokens(a.Val) {
+			for tok := range classTokens(a.Val) {
 				add(rs.byClass[tok])
 			}
 		}
@@ -117,22 +119,22 @@ func (rs *ruleSet) forEach(n *html.Node, sc *scratch, fn func(i int, r *rule)) {
 	}
 }
 
-// classTokens splits a class attribute without allocating for the common case.
-func classTokens(s string) []string {
-	var out []string
-	i := 0
-	for i < len(s) {
-		for i < len(s) && isCSSSpace(s[i]) {
-			i++
+// classTokens yields a class attribute's tokens without allocating.
+func classTokens(s string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		i := 0
+		for i < len(s) {
+			for i < len(s) && isCSSSpace(s[i]) {
+				i++
+			}
+			j := i
+			for j < len(s) && !isCSSSpace(s[j]) {
+				j++
+			}
+			if j > i && !yield(s[i:j]) {
+				return
+			}
+			i = j
 		}
-		j := i
-		for j < len(s) && !isCSSSpace(s[j]) {
-			j++
-		}
-		if j > i {
-			out = append(out, s[i:j])
-		}
-		i = j
 	}
-	return out
 }
